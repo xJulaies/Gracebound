@@ -4,6 +4,7 @@ export default defineConfig({
   test: {
     environment: "node",
     exclude: ["dist/**", "node_modules/**"],
+    fileParallelism: false,
     setupFiles: ["./src/test/setupEnvironment.ts"],
   },
 });

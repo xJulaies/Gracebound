@@ -8,6 +8,8 @@ describe("parseEnvironment", () => {
       PORT: "4000",
       CORS_ORIGIN: "https://gracebound.example",
       MONGODB_URL: "mongodb://127.0.0.1:27017/gracebound",
+      CLERK_PUBLISHABLE_KEY: "pk_test_publishable",
+      CLERK_SECRET_KEY: "sk_test_secret",
     });
 
     expect(result).toEqual({
@@ -15,12 +17,16 @@ describe("parseEnvironment", () => {
       PORT: 4000,
       CORS_ORIGIN: "https://gracebound.example",
       MONGODB_URL: "mongodb://127.0.0.1:27017/gracebound",
+      CLERK_PUBLISHABLE_KEY: "pk_test_publishable",
+      CLERK_SECRET_KEY: "sk_test_secret",
     });
   });
 
   it("uses development defaults", () => {
     const result = parseEnvironment({
       MONGODB_URL: "mongodb://127.0.0.1:27017/gracebound",
+      CLERK_PUBLISHABLE_KEY: "pk_test_publishable",
+      CLERK_SECRET_KEY: "sk_test_secret",
     });
 
     expect(result.NODE_ENV).toBe("development");
@@ -35,6 +41,8 @@ describe("parseEnvironment", () => {
         parseEnvironment({
           PORT: port,
           MONGODB_URL: "mongodb://127.0.0.1:27017/gracebound",
+          CLERK_PUBLISHABLE_KEY: "pk_test_publishable",
+          CLERK_SECRET_KEY: "sk_test_secret",
         }),
       ).toThrow("Invalid environment configuration: PORT");
     },
@@ -43,12 +51,18 @@ describe("parseEnvironment", () => {
   it("rejects an invalid MongoDB URL without exposing its value", () => {
     const invalidUrl = "invalid-uri-with-secret-value";
 
-    expect(() => parseEnvironment({ MONGODB_URL: invalidUrl })).toThrow(
+    const environment = {
+      MONGODB_URL: invalidUrl,
+      CLERK_PUBLISHABLE_KEY: "pk_test_publishable",
+      CLERK_SECRET_KEY: "sk_test_secret",
+    };
+
+    expect(() => parseEnvironment(environment)).toThrow(
       "Invalid environment configuration: MONGODB_URL",
     );
 
     try {
-      parseEnvironment({ MONGODB_URL: invalidUrl });
+      parseEnvironment(environment);
     } catch (error) {
       expect((error as Error).message).not.toContain(invalidUrl);
     }
@@ -59,7 +73,19 @@ describe("parseEnvironment", () => {
       parseEnvironment({
         CORS_ORIGIN: "not-a-url",
         MONGODB_URL: "mongodb://127.0.0.1:27017/gracebound",
+        CLERK_PUBLISHABLE_KEY: "pk_test_publishable",
+        CLERK_SECRET_KEY: "sk_test_secret",
       }),
     ).toThrow("Invalid environment configuration: CORS_ORIGIN");
+  });
+
+  it("requires both Clerk keys", () => {
+    expect(() =>
+      parseEnvironment({
+        MONGODB_URL: "mongodb://127.0.0.1:27017/gracebound",
+      }),
+    ).toThrow(
+      "Invalid environment configuration: CLERK_PUBLISHABLE_KEY, CLERK_SECRET_KEY",
+    );
   });
 });

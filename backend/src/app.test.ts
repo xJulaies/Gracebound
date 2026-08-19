@@ -1,6 +1,16 @@
 import request from "supertest";
 import { describe, expect, it } from "vitest";
-import { app } from "./app";
+import { type RequestHandler } from "express";
+import { createApp } from "./app";
+
+const passThroughAuthentication: RequestHandler = (_req, _res, next) => {
+  next();
+};
+
+const app = createApp({
+  authenticationMiddleware: passThroughAuthentication,
+  getAuthenticatedUserId: () => null,
+});
 
 describe("GET /api/health", () => {
   it("returns a successful health response", async () => {

@@ -1,8 +1,10 @@
-import { app } from "./app";
+import { createApp } from "./app";
 import { settings } from "./config/settings";
 import { connectMongoDB } from "./db";
+import { createClerkAuthentication } from "./infrastructure/auth/authentication";
 
 const port = settings.PORT;
+const app = createApp(createClerkAuthentication());
 
 async function startServer() {
   try {
