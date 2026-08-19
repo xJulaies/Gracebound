@@ -2,7 +2,7 @@ import { app } from "./app";
 import { settings } from "./config/settings";
 import { connectMongoDB } from "./db";
 
-const port = Number(settings.PORT ?? 3000);
+const port = settings.PORT;
 
 async function startServer() {
   try {

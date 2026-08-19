@@ -1,9 +1,9 @@
-import { TStatusCode } from "../../types/error.types";
+import type { TStatusCode } from "../errors/error.types";
 
-export const createAnswer = (
+export function createAnswer(
   status: TStatusCode,
   message: string,
   data: unknown[],
-) => {
+) {
   return { status, message, data };
-};
+}
