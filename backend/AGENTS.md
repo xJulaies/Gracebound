@@ -43,7 +43,22 @@ Do not create layers purely for theoretical purity.
 
 Simple features do not need every possible abstraction.
 
-## 3. Feature-based modular architecture
+## 3. KISS and YAGNI
+
+KISS (Keep It Simple, Stupid) and YAGNI (You Aren't Gonna Need It) must be followed in every implementation and architectural decision.
+
+Prefer the simplest solution that clearly satisfies the current verified requirements.
+
+Do not introduce:
+- speculative abstractions
+- unused extension points
+- premature generalization
+- infrastructure for hypothetical future features
+- additional layers without an immediate testability or clarity benefit
+
+Add complexity only when a concrete requirement or demonstrated limitation makes it necessary.
+
+## 4. Feature-based modular architecture
 
 The backend uses feature-based organization.
 
