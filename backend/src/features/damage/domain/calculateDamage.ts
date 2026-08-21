@@ -1,7 +1,5 @@
-import type {
-  CalculateDamageInput,
-  DamageTypes,
-} from "../schemas/damage.schema";
+import type { ManualDamageInput } from "../schemas/damage.schema";
+import type { DamageTypes } from "./damage.types";
 
 const DAMAGE_TYPES = [
   "physical",
@@ -51,7 +49,7 @@ export function calculateDamageAfterAbsorption(
   return damage * (1 - absorption / 100);
 }
 
-export function calculateHitDamage(input: CalculateDamageInput) {
+export function calculateHitDamage(input: ManualDamageInput) {
   const motionMultiplier = input.motionValue / 100;
   const damage = {} as DamageTypes;
 
@@ -90,4 +88,3 @@ export function calculateHitDamage(input: CalculateDamageInput) {
 function sumDamageTypes(damage: DamageTypes): number {
   return DAMAGE_TYPES.reduce((total, type) => total + damage[type], 0);
 }
-

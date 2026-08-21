@@ -72,4 +72,84 @@ describe("POST /api/damage/calculate", () => {
 
     expect(response.status).toBe(400);
   });
+
+  it("calculates attack rating from a versioned weapon fixture", async () => {
+    const response = await request(app)
+      .post("/api/damage/calculate")
+      .send({
+        weaponId: "moonveil",
+        upgradeLevel: 10,
+        stats: {
+          strength: 12,
+          dexterity: 30,
+          intelligence: 70,
+          faith: 8,
+          arcane: 8,
+        },
+        target: {
+          defense: 100,
+          absorption: {
+            physical: 20,
+            magic: 40,
+            fire: 0,
+            lightning: 0,
+            holy: 0,
+          },
+        },
+      });
+
+    expect(response.status).toBe(200);
+    expect(response.body.data[0]).toMatchObject({
+      weapon: {
+        id: "moonveil",
+        name: "Moonveil",
+        gameVersion: "1.10.0",
+        upgradeLevel: 10,
+      },
+      attackRating: {
+        physical: 251,
+        magic: 420,
+        total: 671,
+      },
+    });
+  });
+
+  it("returns not found for a weapon outside the fixture dataset", async () => {
+    const response = await request(app)
+      .post("/api/damage/calculate")
+      .send({
+        weaponId: "unknown-weapon",
+        upgradeLevel: 0,
+        stats: {
+          strength: 10,
+          dexterity: 10,
+          intelligence: 10,
+          faith: 10,
+          arcane: 10,
+        },
+        target: createDamageRequest().target,
+      });
+
+    expect(response.status).toBe(404);
+    expect(response.body.data).toEqual([]);
+  });
+
+  it("rejects an upgrade level unsupported by the selected weapon", async () => {
+    const response = await request(app)
+      .post("/api/damage/calculate")
+      .send({
+        weaponId: "moonveil",
+        upgradeLevel: 25,
+        stats: {
+          strength: 12,
+          dexterity: 30,
+          intelligence: 70,
+          faith: 8,
+          arcane: 8,
+        },
+        target: createDamageRequest().target,
+      });
+
+    expect(response.status).toBe(400);
+  });
 });

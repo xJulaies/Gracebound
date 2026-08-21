@@ -1,8 +1,9 @@
 # Damage calculation MVP
 
-`POST /api/damage/calculate` currently accepts attack rating and target values
-directly. Weapon selection and ERDB-derived attack-rating calculation will be
-added behind the game-data import boundary later.
+`POST /api/damage/calculate` accepts either attack rating directly or a weapon
+ID, upgrade level, and character stats. The weapon path currently uses a small
+ERDB 1.10.0 reference dataset containing Moonveil and the Grafted Blade
+Greatsword.
 
 Calculation order for each damage type:
 
@@ -20,9 +21,8 @@ attack-to-defense ratio formula. Results are therefore returned with
 
 Current limitations:
 
-- no weapon or ERDB lookup
+- only two versioned weapon fixtures; no complete ERDB import yet
 - no built-in boss records
 - no buffs or status-effect damage
 - no special attack mechanics
 - one shared target-defense value for all damage types
-
