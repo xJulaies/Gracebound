@@ -78,26 +78,43 @@ Avoid:
 src/components/BuildCard.tsx
 ```
 
-## 4. Atomic Design is optional and local
+## 4. Feature-based architecture with local Atomic Design
 
-Atomic Design may be used inside a feature when it improves clarity.
+Feature-based architecture is mandatory and defines the primary organization of the application.
 
-Example:
+Atomic Design is applied locally inside features when a feature contains enough UI complexity to benefit from component composition.
+
+Preferred structure for a sufficiently complex feature:
 
 ```text
-features/builds/components/
-  atoms/
-  molecules/
-  organisms/
+src/
+  features/
+    builds/
+      components/
+        atoms/
+        molecules/
+        organisms/
+      api/
+      hooks/
+      schemas/
+      types/
 ```
 
-Do not force every component into an atomic category.
+Atomic categories must not be created as empty architectural boilerplate.
 
-Application-wide reusable primitives belong in:
+A small feature may keep its components directly inside `components/` until meaningful atom, molecule, or organism boundaries emerge.
+
+Business-specific components must remain inside their responsible feature.
+
+Application-wide reusable UI primitives belong in:
 
 ```text
 src/shared/ui/
+  atoms/
+  molecules/
 ```
+
+Move a component into `shared/ui` only when it is genuinely reusable across multiple features.
 
 ---
 
