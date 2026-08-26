@@ -11,6 +11,10 @@ const environmentSchema = z.object({
     .regex(/^mongodb(?:\+srv)?:\/\//, "Must be a MongoDB connection URL"),
   CLERK_PUBLISHABLE_KEY: z.string().startsWith("pk_").min(1),
   CLERK_SECRET_KEY: z.string().startsWith("sk_").min(1),
+  SUPPORTED_GAME_VERSION: z
+    .string()
+    .regex(/^\d+\.\d+\.\d+$/)
+    .default("1.10.0"),
 });
 
 export type Environment = z.infer<typeof environmentSchema>;

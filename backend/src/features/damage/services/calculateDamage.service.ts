@@ -1,13 +1,14 @@
 import { createError } from "../../../shared/errors/createError";
-import { weaponFixtures } from "../../weapons/data/weapon.fixtures";
+import { settings } from "../../../config/settings";
 import { calculateAttackRating } from "../../weapons/domain/calculateAttackRating";
+import { findWeaponCalculationData } from "../../weapons/repositories/weapon.repository";
 import { calculateHitDamage } from "../domain/calculateDamage";
 import type {
   CalculateDamageInput,
   WeaponDamageInput,
 } from "../schemas/damage.schema";
 
-export function calculateDamageFromInput(input: CalculateDamageInput) {
+export async function calculateDamageFromInput(input: CalculateDamageInput) {
   if ("attackRating" in input) {
     return calculateHitDamage(input);
   }
@@ -15,12 +16,17 @@ export function calculateDamageFromInput(input: CalculateDamageInput) {
   return calculateWeaponDamage(input);
 }
 
-function calculateWeaponDamage(input: WeaponDamageInput) {
-  const weapon = weaponFixtures.weapons[input.weaponId];
+async function calculateWeaponDamage(input: WeaponDamageInput) {
+  const calculationData = await findWeaponCalculationData(
+    input.weaponId,
+    settings.SUPPORTED_GAME_VERSION,
+  );
 
-  if (!weapon) {
+  if (!calculationData) {
     throw createError(404, "Weapon not found");
   }
+
+  const { weapon, dataSet } = calculationData;
 
   if (input.upgradeLevel > weapon.maxUpgradeLevel) {
     throw createError(400, "Invalid weapon upgrade level");
@@ -30,7 +36,7 @@ function calculateWeaponDamage(input: WeaponDamageInput) {
     weapon,
     input.upgradeLevel,
     input.stats,
-    weaponFixtures,
+    dataSet,
   );
   const calculation = calculateHitDamage({
     attackRating,
@@ -53,4 +59,3 @@ function calculateWeaponDamage(input: WeaponDamageInput) {
     ),
   };
 }
-

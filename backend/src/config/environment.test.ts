@@ -10,6 +10,7 @@ describe("parseEnvironment", () => {
       MONGODB_URL: "mongodb://127.0.0.1:27017/gracebound",
       CLERK_PUBLISHABLE_KEY: "pk_test_publishable",
       CLERK_SECRET_KEY: "sk_test_secret",
+      SUPPORTED_GAME_VERSION: "1.10.0",
     });
 
     expect(result).toEqual({
@@ -19,6 +20,7 @@ describe("parseEnvironment", () => {
       MONGODB_URL: "mongodb://127.0.0.1:27017/gracebound",
       CLERK_PUBLISHABLE_KEY: "pk_test_publishable",
       CLERK_SECRET_KEY: "sk_test_secret",
+      SUPPORTED_GAME_VERSION: "1.10.0",
     });
   });
 
@@ -32,6 +34,7 @@ describe("parseEnvironment", () => {
     expect(result.NODE_ENV).toBe("development");
     expect(result.PORT).toBe(3000);
     expect(result.CORS_ORIGIN).toBe("http://localhost:5173");
+    expect(result.SUPPORTED_GAME_VERSION).toBe("1.10.0");
   });
 
   it.each(["not-a-number", "0", "65536"])(
@@ -77,6 +80,17 @@ describe("parseEnvironment", () => {
         CLERK_SECRET_KEY: "sk_test_secret",
       }),
     ).toThrow("Invalid environment configuration: CORS_ORIGIN");
+  });
+
+  it("rejects an invalid supported game version", () => {
+    expect(() =>
+      parseEnvironment({
+        MONGODB_URL: "mongodb://127.0.0.1:27017/gracebound",
+        CLERK_PUBLISHABLE_KEY: "pk_test_publishable",
+        CLERK_SECRET_KEY: "sk_test_secret",
+        SUPPORTED_GAME_VERSION: "latest",
+      }),
+    ).toThrow("Invalid environment configuration: SUPPORTED_GAME_VERSION");
   });
 
   it("requires both Clerk keys", () => {

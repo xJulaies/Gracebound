@@ -1,12 +1,17 @@
 import mongoose from "mongoose";
-import { MongoMemoryServer } from "mongodb-memory-server";
+import {
+  MongoMemoryReplSet,
+  MongoMemoryServer,
+} from "mongodb-memory-server";
 import { afterAll, afterEach, beforeAll } from "vitest";
 
-export function useMongoMemoryServer() {
-  let mongoServer: MongoMemoryServer;
+export function useMongoMemoryServer(options?: { replicaSet?: boolean }) {
+  let mongoServer: MongoMemoryServer | MongoMemoryReplSet;
 
   beforeAll(async () => {
-    mongoServer = await MongoMemoryServer.create();
+    mongoServer = options?.replicaSet
+      ? await MongoMemoryReplSet.create({ replSet: { count: 1 } })
+      : await MongoMemoryServer.create();
     await mongoose.connect(mongoServer.getUri("gracebound_test"));
   }, 60_000);
 
