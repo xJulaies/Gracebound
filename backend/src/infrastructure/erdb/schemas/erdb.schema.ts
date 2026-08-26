@@ -58,7 +58,7 @@ export const erdbArmamentSchema = z.object({
 export const erdbArmamentsSchema = z.record(
   z.string().min(1),
   erdbArmamentSchema,
-);
+).refine((records) => Object.keys(records).length > 0, "Must not be empty");
 
 const reinforcementLevelSchema = z.object({
   level: z.number().int().min(0).max(25),
@@ -69,7 +69,7 @@ const reinforcementLevelSchema = z.object({
 export const erdbReinforcementsSchema = z.record(
   z.string().regex(/^\d+$/),
   z.array(reinforcementLevelSchema).min(1).max(26),
-);
+).refine((records) => Object.keys(records).length > 0, "Must not be empty");
 
 const attributeCorrectionsSchema = z.object({
   strength: z.boolean(),
@@ -128,12 +128,12 @@ const correctionAttackSchema = z.object({
 export const erdbCorrectionAttacksSchema = z.record(
   z.string().regex(/^\d+$/),
   correctionAttackSchema,
-);
+).refine((records) => Object.keys(records).length > 0, "Must not be empty");
 
 export const erdbCorrectionGraphsSchema = z.record(
   z.string().regex(/^\d+$/),
   z.array(z.number().finite().nonnegative()).length(151),
-);
+).refine((records) => Object.keys(records).length > 0, "Must not be empty");
 
 export const erdbWeaponImportSchema = z.object({
   gameVersion: z.string().regex(/^\d+\.\d+\.\d+$/),

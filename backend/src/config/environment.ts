@@ -15,6 +15,7 @@ const environmentSchema = z.object({
     .string()
     .regex(/^\d+\.\d+\.\d+$/)
     .default("1.10.0"),
+  ERDB_BASE_URL: z.url().default("http://127.0.0.1:8107/v1"),
 });
 
 export type Environment = z.infer<typeof environmentSchema>;

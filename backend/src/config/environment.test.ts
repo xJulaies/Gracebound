@@ -11,6 +11,7 @@ describe("parseEnvironment", () => {
       CLERK_PUBLISHABLE_KEY: "pk_test_publishable",
       CLERK_SECRET_KEY: "sk_test_secret",
       SUPPORTED_GAME_VERSION: "1.10.0",
+      ERDB_BASE_URL: "http://127.0.0.1:8107/v1",
     });
 
     expect(result).toEqual({
@@ -21,6 +22,7 @@ describe("parseEnvironment", () => {
       CLERK_PUBLISHABLE_KEY: "pk_test_publishable",
       CLERK_SECRET_KEY: "sk_test_secret",
       SUPPORTED_GAME_VERSION: "1.10.0",
+      ERDB_BASE_URL: "http://127.0.0.1:8107/v1",
     });
   });
 
@@ -35,6 +37,7 @@ describe("parseEnvironment", () => {
     expect(result.PORT).toBe(3000);
     expect(result.CORS_ORIGIN).toBe("http://localhost:5173");
     expect(result.SUPPORTED_GAME_VERSION).toBe("1.10.0");
+    expect(result.ERDB_BASE_URL).toBe("http://127.0.0.1:8107/v1");
   });
 
   it.each(["not-a-number", "0", "65536"])(

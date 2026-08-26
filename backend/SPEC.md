@@ -1,6 +1,6 @@
 # Elden Ring Companion — Backend Specification
 
-Version: 0.2
+Version: 0.3
 
 ---
 
@@ -124,13 +124,21 @@ Only introduce layers where they improve clarity or testability.
 
 # Game Data Source
 
-ERDB is the single primary source of Elden Ring game data.
+ERDB is the primary source of technical item and calculation data.
 
 No secondary fan API should be used as part of the normal application architecture unless the project specification is deliberately changed.
 
 ERDB is used as a game-data ingestion and normalization source.
 
 The frontend never communicates directly with ERDB.
+
+ERDB currently provides no boss table and its bundled source archive does not
+include the complete NPC and encounter data required to derive the MVP boss
+model. The deliberate exception is a curated, versioned dataset for ten boss
+encounters based on Eldenpedia on wiki.gg. This source is limited to boss data
+that ERDB cannot provide and must include attribution and source URLs.
+
+Fextralife must not be scraped or used as an automated project data source.
 
 ---
 
@@ -168,6 +176,25 @@ Requirements:
 - no need for live ERDB access on every request
 
 Game data is treated as read-only during normal application usage.
+
+The implemented weapon import uses the official local ERDB API container:
+
+```text
+ghcr.io/eldenringdatabase/erdb-api:0.4.0
+```
+
+For the configured game version, the backend loads and validates:
+
+```text
+armaments
+reinforcements
+correction-attack
+correction-graph
+```
+
+The raw responses are validated with Zod, mapped to the Gracebound weapon
+domain, and persisted only after successful validation and mapping. The normal
+application does not call ERDB during user requests.
 
 ---
 
@@ -265,8 +292,24 @@ Potential fields:
 - fire absorption
 - lightning absorption
 - holy absorption
+- encounter or phase identifier
+- supported game version
+- source URL
+- accuracy classification where required
 
-Exact implementation depends on validated ERDB-derived data.
+The MVP contains ten curated boss encounters. The exact ten bosses and their
+raw values remain a pending product decision. Different locations or phases
+must be separate records when their combat values differ.
+
+Boss raw data follows the same boundary as ERDB data:
+
+```text
+versioned curated source
+  -> Zod validation
+  -> mapping
+  -> normalized boss storage
+  -> REST API
+```
 
 ---
 
@@ -694,6 +737,15 @@ Internal stack traces must not be exposed to clients.
 
 # Database
 
+The development database is MongoDB Atlas and uses the database name
+`gracebound`. It may share an Atlas cluster with another project, but it must
+not share that project's database namespace.
+
+The game-data import updates multiple collections in a MongoDB transaction.
+Consequently, the configured deployment must support transactions. Atlas Free
+clusters use replica sets and satisfy this requirement; standalone local
+MongoDB instances do not.
+
 MongoDB stores:
 
 Application-owned data:
@@ -802,17 +854,13 @@ Not required:
 
 # Open Technical Decisions
 
-The following implementation details remain to be validated during ERDB integration:
+The following implementation details remain open:
 
-1. exact ERDB export/import path
-2. final normalized weapon model
-3. final boss defensive model
-4. exact reinforcement data mapping
-5. exact scaling-curve mapping
-6. final damage formula implementation
-7. attack or motion-value handling for MVP
-8. game-version metadata strategy
-9. exact deployment platform
+1. exact selection and verified raw values of the ten MVP boss encounters
+2. final boss defensive model after reviewing the curated source data
+3. final damage formula implementation
+4. attack or motion-value handling for MVP
+5. exact deployment platform
 
 These decisions should be resolved explicitly and documented rather than guessed during implementation.
 

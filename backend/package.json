@@ -12,12 +12,14 @@
     "typecheck": "tsc --noEmit",
     "lint": "eslint src",
     "lint:fix": "eslint src --fix",
+    "data:import": "tsx src/scripts/importWeaponData.ts",
     "test": "vitest run",
     "test:watch": "vitest"
   },
   "dependencies": {
     "@clerk/express": "^2.1.59",
     "cors": "^2.8.6",
+    "csv-parse": "^7.0.2",
     "dotenv": "^17.4.2",
     "express": "^5.2.1",
     "mongoose": "^9.9.3",

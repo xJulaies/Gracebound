@@ -8,7 +8,7 @@ The backend provides:
 - the application's REST API
 - user-owned build data
 - authentication and authorization
-- ERDB-derived game data
+- regulation-derived game data
 - damage-calculation domain logic
 
 The project should demonstrate clean backend development without unnecessary enterprise complexity.
@@ -26,7 +26,7 @@ Separate:
 - authorization
 - business logic
 - persistence
-- ERDB data ingestion
+- game-data ingestion
 - domain calculations
 
 Controllers should remain thin.
@@ -78,6 +78,7 @@ src/
     database/
     auth/
     erdb/
+    regulation/
 
   shared/
     errors/
@@ -133,7 +134,7 @@ Avoid `any`.
 
 Use explicit domain types.
 
-Do not trust external ERDB-derived data blindly.
+Do not trust imported game data blindly.
 
 Imported data must be validated and mapped before becoming application domain data.
 
@@ -161,7 +162,7 @@ Use Zod for:
 - request bodies
 - route parameters
 - query parameters
-- relevant imported ERDB-derived data
+- relevant imported game data
 - environment configuration where useful
 
 Never trust frontend validation.
@@ -264,6 +265,14 @@ MongoDB is the primary application database.
 
 Use Mongoose.
 
+The development database is hosted in MongoDB Atlas. The configured database
+name is `gracebound`; unrelated projects must use separate database names even
+when they share the same Atlas cluster.
+
+Game-data imports write multiple collections transactionally. The target
+MongoDB deployment must therefore support transactions, as Atlas replica sets
+do. A standalone local MongoDB server is not sufficient for this import path.
+
 Application-owned data includes at minimum:
 
 ```text
@@ -281,27 +290,38 @@ A custom user collection should only be introduced if application-specific profi
 
 ---
 
-# ERDB
+# Regulation Data
 
-ERDB is the single primary source of Elden Ring game data.
+Validated exports from the locally installed Elden Ring `regulation.bin` are
+the intended primary source for technical weapon, NPC, boss, and calculation
+data. Smithbox is currently used to export the required parameter tables as
+CSV files.
 
-Do not introduce a second fan API or unrelated game-data source without an explicit architectural decision.
-
-ERDB-derived structures must not be exposed directly throughout the application.
+Raw game files and generated CSV exports are local input artifacts. Do not
+commit or redistribute `regulation.bin` or its full raw exports.
 
 Preferred flow:
 
 ```text
-ERDB-derived data
-  -> Import
+Local regulation.bin
+  -> Smithbox CSV export
   -> Validation
-  -> Mapping
+  -> Mapping and calculation
   -> Application domain models
-  -> Services
+  -> Application game-data storage
   -> REST API
 ```
 
-The application should depend on its own domain models, not ERDB schema details.
+The application must depend on its own domain models, not Smithbox column names
+or raw regulation structures.
+
+Each imported dataset should record the game version and source-file hash where
+practical. Preserve encounter, location, and phase distinctions where their
+combat values differ. Do not silently present uncertain mappings as exact.
+
+ERDB remains an existing comparison and fallback source during migration. Do
+not remove the ERDB importer until regulation-derived weapon results have been
+tested against known reference weapons and all required mappings are covered.
 
 ---
 
@@ -309,12 +329,13 @@ The application should depend on its own domain models, not ERDB schema details.
 
 Game data should be imported or transformed through a repeatable process.
 
-The application should not depend on live ERDB network availability for every request.
+The application must not read Smithbox exports or call ERDB during normal user
+requests.
 
 The import pipeline should conceptually follow:
 
 ```text
-ERDB
+Local regulation export
   -> import
   -> validate
   -> normalize
@@ -324,6 +345,18 @@ ERDB
 Imported game data is treated as read-only application data.
 
 The imported dataset should record the supported Elden Ring game version where practical.
+
+The existing weapon import uses the official ERDB API container
+`ghcr.io/eldenringdatabase/erdb-api:0.4.0` locally. The importer requests only
+`armaments`, `reinforcements`, `correction-attack`, and `correction-graph` for
+the configured game version. It must validate all four raw responses before
+mapping or connecting to MongoDB.
+
+It remains available during the controlled migration to regulation-derived
+weapon data. The container performs a precache step before serving HTTP. Import commands
+must not run until its logs report that Uvicorn is running on port `8107`.
+Operational commands and configuration belong in
+`src/infrastructure/erdb/README.md`.
 
 ---
 
@@ -343,9 +376,10 @@ reinforcementData
 attackData
 ```
 
-The exact schema depends on the finalized ERDB import mapping.
+The exact schema depends on the finalized regulation mapping.
 
-Do not store raw ERDB records if normalized application models are more appropriate.
+Do not store raw regulation or ERDB records if normalized application models
+are more appropriate.
 
 ---
 
@@ -367,7 +401,8 @@ interface Weapon {
 }
 ```
 
-ERDB identifiers may be preserved internally when required for mapping but should not dictate the whole application model.
+Source identifiers may be preserved internally when required for mapping but
+should not dictate the whole application model.
 
 ---
 
@@ -666,7 +701,7 @@ Before modifying the backend:
 5. Treat user-owned endpoints as protected by default.
 6. Enforce ownership server-side.
 7. Never accept client-controlled ownership as authoritative.
-8. Keep ERDB behind the import and mapping boundary.
+8. Keep regulation and ERDB structures behind the import and mapping boundary.
 9. Add or update tests for business-critical logic.
 10. Avoid modifying unrelated features.
 
