@@ -10,7 +10,12 @@ const damageTypesSchema: z.ZodType<DamageTypes> = z.strictObject({
 });
 
 const absorptionSchema = z.strictObject({
-  physical: z.number().finite().min(-100).max(100),
+  physical: z.strictObject({
+    standard: z.number().finite().min(-100).max(100),
+    slash: z.number().finite().min(-100).max(100),
+    strike: z.number().finite().min(-100).max(100),
+    pierce: z.number().finite().min(-100).max(100),
+  }),
   magic: z.number().finite().min(-100).max(100),
   fire: z.number().finite().min(-100).max(100),
   lightning: z.number().finite().min(-100).max(100),
@@ -18,15 +23,20 @@ const absorptionSchema = z.strictObject({
 });
 
 const targetSchema = z.strictObject({
-  defense: z.number().finite().nonnegative(),
+  defense: damageTypesSchema,
   absorption: absorptionSchema,
 });
+
+const physicalAttackTypeSchema = z
+  .enum(["standard", "slash", "strike", "pierce"])
+  .default("standard");
 
 const motionValueSchema = z.number().finite().positive().max(1000).default(100);
 
 export const manualDamageSchema = z.strictObject({
   attackRating: damageTypesSchema,
   motionValue: motionValueSchema,
+  physicalAttackType: physicalAttackTypeSchema,
   target: targetSchema,
 });
 
@@ -41,6 +51,7 @@ export const weaponDamageSchema = z.strictObject({
     arcane: z.number().int().min(1).max(99),
   }),
   motionValue: motionValueSchema,
+  physicalAttackType: physicalAttackTypeSchema,
   target: targetSchema,
 });
 

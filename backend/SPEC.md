@@ -1,6 +1,6 @@
 # Elden Ring Companion — Backend Specification
 
-Version: 0.3
+Version: 0.4
 
 ---
 
@@ -14,9 +14,10 @@ Primary responsibilities:
 - manage user-owned builds
 - integrate Clerk authentication
 - enforce authorization and ownership
-- import and normalize ERDB-derived data
+- import and normalize regulation-derived game data
 - calculate attack rating
-- calculate estimated damage per hit
+- calculate boss-independent offensive output
+- calculate estimated damage against a selected boss
 - persist application data in MongoDB
 
 ---
@@ -68,11 +69,36 @@ The backend owns:
 3. authorization
 4. user-owned build persistence
 5. game-data abstraction
-6. ERDB-derived data import
+6. regulation-derived game-data import
 7. domain models
 8. damage-calculation logic
 
 The frontend must never be treated as a security boundary.
+
+---
+
+# Product Contract
+
+The application is a build planner and damage calculator. A user can compose a
+build from character level and attributes, weapons and upgrade levels, Ashes of
+War, talismans, armor, and other supported equipment.
+
+The backend provides two distinct calculation results:
+
+1. **Boss-independent offensive output**
+   - attack rating per damage type and total attack rating
+   - attack output after motion values where an attack is selected
+   - separate components for multi-hit or projectile skills
+   - no target defense or absorption is applied
+   - this result must not be presented as exact dealt damage
+2. **Boss-specific estimated damage**
+   - starts from the same normalized build and selected attack
+   - applies the selected boss's defense per damage type
+   - applies the matching physical attack type and elemental absorption
+   - returns each damage component and the combined estimated damage
+
+Both calculations use backend domain logic. The frontend visualizes the results
+but does not reproduce or replace the formulas.
 
 ---
 
@@ -124,19 +150,19 @@ Only introduce layers where they improve clarity or testability.
 
 # Game Data Source
 
-ERDB is the primary source of technical item and calculation data.
+Validated exports from the locally installed Elden Ring `regulation.bin` are
+the primary source of technical item, attack, NPC, boss, and calculation data.
 
 No secondary fan API should be used as part of the normal application architecture unless the project specification is deliberately changed.
 
-ERDB is used as a game-data ingestion and normalization source.
+ERDB remains a comparison and fallback source while regulation-derived weapon
+coverage is being verified.
 
 The frontend never communicates directly with ERDB.
 
-ERDB currently provides no boss table and its bundled source archive does not
-include the complete NPC and encounter data required to derive the MVP boss
-model. The deliberate exception is a curated, versioned dataset for ten boss
-encounters based on Eldenpedia on wiki.gg. This source is limited to boss data
-that ERDB cannot provide and must include attribution and source URLs.
+Boss combat values are derived from validated `NpcParam` and `SpEffectParam`
+exports. Weapon attacks and selected Ashes of War additionally use the relevant
+weapon, behavior, attack, bullet, skill, and final-damage parameter tables.
 
 Fextralife must not be scraped or used as an automated project data source.
 
@@ -147,7 +173,7 @@ Fextralife must not be scraped or used as an automated project data source.
 Preferred pipeline:
 
 ```text
-ERDB-derived data
+Local regulation exports
   -> Import
   -> Validation
   -> Transformation
@@ -156,9 +182,10 @@ ERDB-derived data
   -> REST API
 ```
 
-The backend should not expose ERDB response structures directly.
+The backend must not expose Smithbox or ERDB response structures directly.
 
-The application should remain independent from ERDB schema details.
+The application remains independent from source-specific schema details through
+validated mapping into its own domain models.
 
 ---
 
@@ -173,7 +200,7 @@ Requirements:
 - explicit mapping
 - stable application identifiers where possible
 - documented supported game version
-- no need for live ERDB access on every request
+- no access to regulation files or ERDB during normal application requests
 
 Game data is treated as read-only during normal application usage.
 
@@ -401,10 +428,16 @@ Initial build equipment includes:
 
 - primary weapon
 - weapon upgrade level
+- selected Ash of War where the weapon supports one
 - armor
 - talismans
 
 Additional slots may be introduced if required.
+
+Selecting equipment and applying its calculation effects are separate concerns.
+A talisman or armor item may be stored in a build before every special effect is
+supported by the calculator. Unsupported effects must be identified explicitly
+and must not be silently approximated.
 
 Equipment references should use stable application game-data identifiers.
 
@@ -494,13 +527,18 @@ ownerId = authenticatedUserId
 
 ---
 
-# Damage API
+# Offensive Output and Damage API
 
 Initial endpoint:
 
 ```text
 POST /api/damage/calculate
 ```
+
+The calculation contract supports a request without a boss and a request with a
+selected boss. Omitting the boss produces boss-independent offensive output.
+Selecting a boss additionally produces estimated damage after defense and
+absorption. These outcomes must remain distinguishable in the response.
 
 The endpoint may remain publicly usable.
 
@@ -523,11 +561,14 @@ Conceptual example:
     "faith": 8,
     "arcane": 8
   },
-  "targetId": "malenia"
+  "attackId": "transient-moonlight-heavy",
+  "bossId": "malenia"
 }
 ```
 
-Additional attack information may be added if required by the finalized hit-damage model.
+`bossId` is optional. The selected attack identifies a normal weapon attack or
+a supported Ash-of-War variant. Multi-component attacks retain their individual
+weapon-hit and projectile results.
 
 ---
 
@@ -556,7 +597,9 @@ Conceptual example:
 }
 ```
 
-The final response contract may evolve as calculation research is validated.
+Without a boss, `damage` is omitted and the response represents offensive
+output. With a boss, `damage` contains per-component and combined estimates.
+The final field structure may evolve as calculation research is validated.
 
 ---
 
@@ -572,9 +615,10 @@ Weapon Data
   -> Attribute Scaling
   -> Attack Rating per Damage Type
   -> Attack / Motion Modifier where required
-  -> Target Defense
-  -> Target Absorption
-  -> Estimated Damage Per Hit
+  -> Boss-independent offensive output
+  -> Optional target defense
+  -> Optional target absorption
+  -> Optional estimated boss damage
 ```
 
 Initial damage types:
@@ -641,6 +685,8 @@ Included:
 - fire damage
 - lightning damage
 - holy damage
+- selected regulation-verified Ash of War damage
+- multi-component skill attacks such as a weapon hit plus projectile
 
 ---
 
@@ -657,7 +703,7 @@ Not required:
 - full buff system
 - PvP-specific calculations
 - spell damage
-- Ash of War damage
+- complete Ash of War coverage
 - complete talisman damage modifiers
 
 ---
@@ -856,10 +902,10 @@ Not required:
 
 The following implementation details remain open:
 
-1. exact selection and verified raw values of the ten MVP boss encounters
-2. final boss defensive model after reviewing the curated source data
-3. final damage formula implementation
-4. attack or motion-value handling for MVP
+1. final response field structure for boss-independent and boss-specific results
+2. verified calculation order for added skill damage and final-damage rates
+3. user-facing labels for regulation behavior and attack identifiers
+4. which talisman and equipment effects are supported by the MVP calculator
 5. exact deployment platform
 
 These decisions should be resolved explicitly and documented rather than guessed during implementation.
@@ -877,6 +923,8 @@ The final backend should:
 - enforce build ownership
 - prevent private build exposure
 - expose normalized game-data endpoints
+- expose boss-independent offensive output
+- expose estimated damage against a selected boss
 - provide build CRUD
 - provide a working damage-per-hit endpoint
 - contain deterministic domain tests

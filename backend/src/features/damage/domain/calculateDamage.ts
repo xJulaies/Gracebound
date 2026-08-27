@@ -57,10 +57,13 @@ export function calculateHitDamage(input: ManualDamageInput) {
     const incomingDamage = input.attackRating[damageType] * motionMultiplier;
     const afterDefense =
       incomingDamage *
-      calculateDefenseMultiplier(incomingDamage, input.target.defense);
+      calculateDefenseMultiplier(incomingDamage, input.target.defense[damageType]);
+    const absorption = damageType === "physical"
+      ? input.target.absorption.physical[input.physicalAttackType]
+      : input.target.absorption[damageType];
     const afterAbsorption = calculateDamageAfterAbsorption(
       afterDefense,
-      input.target.absorption[damageType],
+      absorption,
     );
 
     damage[damageType] = Math.floor(afterAbsorption);
@@ -72,6 +75,7 @@ export function calculateHitDamage(input: ManualDamageInput) {
       total: sumDamageTypes(input.attackRating),
     },
     motionValue: input.motionValue,
+    physicalAttackType: input.physicalAttackType,
     target: input.target,
     damage: {
       ...damage,

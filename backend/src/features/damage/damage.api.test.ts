@@ -22,9 +22,9 @@ function createDamageRequest() {
       holy: 0,
     },
     target: {
-      defense: 100,
+      defense: { physical: 100, magic: 100, fire: 100, lightning: 100, holy: 100 },
       absorption: {
-        physical: 20,
+        physical: { standard: 20, slash: 20, strike: 20, pierce: 20 },
         magic: 40,
         fire: 0,
         lightning: 0,
@@ -55,7 +55,7 @@ describe("POST /api/damage/calculate", () => {
     const input = createDamageRequest();
     const response = await request(app)
       .post("/api/damage/calculate")
-      .send({ ...input, target: { defense: 100 } });
+      .send({ ...input, target: { defense: input.target.defense } });
 
     expect(response.status).toBe(400);
     expect(response.body).toEqual({

@@ -41,6 +41,7 @@ async function calculateWeaponDamage(input: WeaponDamageInput) {
   const calculation = calculateHitDamage({
     attackRating,
     motionValue: input.motionValue,
+    physicalAttackType: input.physicalAttackType,
     target: input.target,
   });
 

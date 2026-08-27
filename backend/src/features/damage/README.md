@@ -25,4 +25,22 @@ Current limitations:
 - no built-in boss records
 - no buffs or status-effect damage
 - no special attack mechanics
-- one shared target-defense value for all damage types
+- attack motion values are still supplied by the client; exact move data from
+  `AtkParam_Pc` and its behavior links is not imported yet
+
+Target defense is calculated separately for every damage type. Physical damage
+also selects `standard`, `slash`, `strike`, or `pierce` absorption. This mirrors
+the normalized Regulation boss model and avoids applying one generic resistance
+to every component of a split-damage weapon.
+
+Selected normal weapon attacks can be mapped locally through
+`BehaviorParam_PC.refId -> AtkParam_Pc.ID`. The normalized attack profile keeps
+one motion value per damage type and resolves inherited physical attack
+attributes through the weapon row. Projectile behaviors and Ashes of War remain
+separate from normal attack profiles.
+
+Selected Ashes of War are represented as multi-component skill attacks. For
+example, Transient Moonlight contains a projectile with added magic damage and
+a separate weapon hit with weapon-AR motion values. Each component preserves
+its own final damage rates. Complete Ash-of-War coverage is not part of the MVP;
+unsupported skill mechanics must still be rejected instead of approximated.

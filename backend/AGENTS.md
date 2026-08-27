@@ -507,7 +507,10 @@ Initial damage types:
 
 # Damage Scope
 
-MVP supports direct weapon hit damage.
+MVP supports direct weapon hit damage and selected, regulation-verified Ashes
+of War. A skill may contain multiple damage components such as a weapon hit and
+a projectile. Each component must retain its own motion values, added damage,
+physical attack type, and final damage rates.
 
 Not required for MVP:
 
@@ -519,7 +522,7 @@ Not required for MVP:
 - frost proc damage
 - full buff systems
 - spell damage
-- Ash of War damage
+- a complete Ash of War catalog
 - PvP-specific calculations
 - complete talisman modifier support
 

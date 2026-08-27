@@ -36,9 +36,9 @@ function createWeaponDamageRequest(weaponId = "moonveil", upgradeLevel = 10) {
       arcane: 8,
     },
     target: {
-      defense: 100,
+      defense: { physical: 100, magic: 100, fire: 100, lightning: 100, holy: 100 },
       absorption: {
-        physical: 20,
+        physical: { standard: 20, slash: 20, strike: 20, pierce: 20 },
         magic: 40,
         fire: 0,
         lightning: 0,
