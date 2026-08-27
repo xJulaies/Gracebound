@@ -6,6 +6,12 @@ const integerFromCsv = z.coerce.number().int();
 export const weaponParamRowSchema = z.object({
   ID: integerFromCsv.nonnegative(),
   Name: z.string(),
+  weaponCategory: integerFromCsv.nonnegative(),
+  wepType: integerFromCsv.nonnegative(),
+  originEquipWep: integerFromCsv,
+  weight: numberFromCsv.nonnegative(),
+  iconId: integerFromCsv.nonnegative(),
+  swordArtsParamId: integerFromCsv,
   attackBasePhysics: numberFromCsv.nonnegative(),
   attackBaseMagic: numberFromCsv.nonnegative(),
   attackBaseFire: numberFromCsv.nonnegative(),

@@ -323,6 +323,12 @@ ERDB remains an existing comparison and fallback source during migration. Do
 not remove the ERDB importer until regulation-derived weapon results have been
 tested against known reference weapons and all required mappings are covered.
 
+The regulation weapon catalog treats a canonical player armament separately
+from its calculation variants. Standard, Heavy, Keen, Quality, Fire, Flame Art,
+Lightning, Sacred, Magic, Cold, Poison, Blood, and Occult rows are affinities of
+one weapon rather than independent catalog entries. Internal, NPC, test, and
+non-armament rows must be excluded structurally and reported by the importer.
+
 ---
 
 # Game Data Import

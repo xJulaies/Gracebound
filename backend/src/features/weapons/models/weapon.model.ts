@@ -43,7 +43,8 @@ const correctionsSchema = new Schema<WeaponCorrections>(
 );
 
 export type WeaponRecord = WeaponCalculationData & {
-  source: "ERDB";
+  source: "ERDB" | "REGULATION";
+  sourceHash?: string;
   importedAt: Date;
 };
 
@@ -61,11 +62,14 @@ const weaponSchema = new Schema<WeaponRecord>(
     ...sourceFields,
   },
   {
-    collection: "weapons",
+    collection: "weaponVariants",
     versionKey: false,
   },
 );
 
 weaponSchema.index({ gameVersion: 1, id: 1 }, { unique: true });
 
-export const WeaponModel = model<WeaponRecord>("Weapon", weaponSchema);
+export const WeaponVariantModel = model<WeaponRecord>(
+  "WeaponVariant",
+  weaponSchema,
+);

@@ -1,7 +1,7 @@
 import mongoose from "mongoose";
 import { ReinforcementModel } from "../../../features/weapons/models/reinforcement.model";
 import { ScalingCurveModel } from "../../../features/weapons/models/scalingCurve.model";
-import { WeaponModel } from "../../../features/weapons/models/weapon.model";
+import { WeaponVariantModel } from "../../../features/weapons/models/weapon.model";
 import type { WeaponDataSet } from "../../../features/weapons/domain/weapon.types";
 
 export interface WeaponImportSummary {
@@ -55,7 +55,7 @@ export async function saveWeaponDataSet(
   }));
 
   await Promise.all([
-    ...weaponRecords.map((record) => new WeaponModel(record).validate()),
+    ...weaponRecords.map((record) => new WeaponVariantModel(record).validate()),
     ...reinforcementRecords.map((record) =>
       new ReinforcementModel(record).validate(),
     ),
@@ -65,7 +65,7 @@ export async function saveWeaponDataSet(
   ]);
 
   await Promise.all([
-    WeaponModel.init(),
+    WeaponVariantModel.init(),
     ReinforcementModel.init(),
     ScalingCurveModel.init(),
   ]);
@@ -74,7 +74,7 @@ export async function saveWeaponDataSet(
 
   try {
     await session.withTransaction(async () => {
-      await WeaponModel.bulkWrite(
+      await WeaponVariantModel.bulkWrite(
         weaponRecords.map((weapon) => ({
           updateOne: {
             filter: { gameVersion, id: weapon.id },

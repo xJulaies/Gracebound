@@ -1,9 +1,10 @@
 # Damage calculation MVP
 
 `POST /api/damage/calculate` accepts either attack rating directly or a weapon
-ID, upgrade level, and character stats. The weapon path currently uses a small
-ERDB 1.10.0 reference dataset containing Moonveil and the Grafted Blade
-Greatsword.
+ID, upgrade level, and character stats. At runtime, the weapon path reads the
+normalized Regulation dataset for the configured game version from MongoDB.
+Database integration tests use a small normalized Regulation fixture in a
+MongoDB Memory Server; Atlas is never required for automated tests.
 
 Calculation order for each damage type:
 
@@ -21,7 +22,7 @@ attack-to-defense ratio formula. Results are therefore returned with
 
 Current limitations:
 
-- only two versioned weapon fixtures; no complete ERDB import yet
+- the complete Regulation weapon catalog must be imported before runtime use
 - no built-in boss records
 - no buffs or status-effect damage
 - no special attack mechanics

@@ -2,7 +2,7 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import { weaponFixtures } from "../../../features/weapons/data/weapon.fixtures";
 import { ReinforcementModel } from "../../../features/weapons/models/reinforcement.model";
 import { ScalingCurveModel } from "../../../features/weapons/models/scalingCurve.model";
-import { WeaponModel } from "../../../features/weapons/models/weapon.model";
+import { WeaponVariantModel } from "../../../features/weapons/models/weapon.model";
 import { useMongoMemoryServer } from "../../../test/useMongoMemoryServer";
 import { saveWeaponDataSet } from "./saveWeaponDataSet";
 
@@ -26,11 +26,11 @@ describe("saveWeaponDataSet", () => {
       reinforcements: 1,
       scalingCurves: 2,
     });
-    expect(await WeaponModel.countDocuments()).toBe(2);
+    expect(await WeaponVariantModel.countDocuments()).toBe(2);
     expect(await ReinforcementModel.countDocuments()).toBe(1);
     expect(await ScalingCurveModel.countDocuments()).toBe(2);
 
-    const moonveil = await WeaponModel.findOne({
+    const moonveil = await WeaponVariantModel.findOne({
       gameVersion: "1.10.0",
       id: "moonveil",
     }).lean();
@@ -57,8 +57,8 @@ describe("saveWeaponDataSet", () => {
     moonveil.name = "Moonveil Updated";
     await saveWeaponDataSet(changedDataSet);
 
-    expect(await WeaponModel.countDocuments()).toBe(2);
-    const updatedMoonveil = await WeaponModel.findOne({
+    expect(await WeaponVariantModel.countDocuments()).toBe(2);
+    const updatedMoonveil = await WeaponVariantModel.findOne({
       id: "moonveil",
     }).lean();
     expect(updatedMoonveil?.name).toBe("Moonveil Updated");
@@ -76,7 +76,7 @@ describe("saveWeaponDataSet", () => {
 
     await saveWeaponDataSet(olderDataSet);
 
-    expect(await WeaponModel.countDocuments()).toBe(4);
+    expect(await WeaponVariantModel.countDocuments()).toBe(4);
     expect(await ReinforcementModel.countDocuments()).toBe(2);
     expect(await ScalingCurveModel.countDocuments()).toBe(4);
   });
@@ -90,7 +90,7 @@ describe("saveWeaponDataSet", () => {
       "Simulated scaling curve failure",
     );
 
-    expect(await WeaponModel.countDocuments()).toBe(0);
+    expect(await WeaponVariantModel.countDocuments()).toBe(0);
     expect(await ReinforcementModel.countDocuments()).toBe(0);
     expect(await ScalingCurveModel.countDocuments()).toBe(0);
   });
@@ -118,7 +118,7 @@ describe("saveWeaponDataSet", () => {
     await expect(saveWeaponDataSet(invalidDataSet)).rejects.toThrow(
       "Scaling curve must contain 151 finite values",
     );
-    expect(await WeaponModel.countDocuments()).toBe(0);
+    expect(await WeaponVariantModel.countDocuments()).toBe(0);
     expect(await ReinforcementModel.countDocuments()).toBe(0);
     expect(await ScalingCurveModel.countDocuments()).toBe(0);
   });

@@ -2,12 +2,17 @@ import type { RequestHandler } from "express";
 import request from "supertest";
 import { beforeEach, describe, expect, it } from "vitest";
 import { createApp } from "../../app";
-import { saveWeaponDataSet } from "../../infrastructure/erdb/services/saveWeaponDataSet";
+import { saveWeaponCatalog } from "../../infrastructure/regulation/services/saveWeaponCatalog";
+import {
+  createRegulationWeaponCatalogFixture,
+  REGULATION_TEST_GAME_VERSION,
+  REGULATION_TEST_SOURCE_HASH,
+} from "../../test/fixtures/regulationWeaponCatalog.fixture";
 import { useMongoMemoryServer } from "../../test/useMongoMemoryServer";
-import { weaponFixtures } from "../weapons/data/weapon.fixtures";
 import { ReinforcementModel } from "../weapons/models/reinforcement.model";
 import { ScalingCurveModel } from "../weapons/models/scalingCurve.model";
-import { WeaponModel } from "../weapons/models/weapon.model";
+import { WeaponVariantModel } from "../weapons/models/weapon.model";
+import { WeaponCatalogModel } from "../weapons/models/weaponCatalog.model";
 
 const passThroughAuthentication: RequestHandler = (_req, _res, next) => {
   next();
@@ -21,7 +26,10 @@ const app = createApp({
 useMongoMemoryServer({ replicaSet: true });
 
 beforeEach(async () => {
-  await saveWeaponDataSet(structuredClone(weaponFixtures));
+  await saveWeaponCatalog(createRegulationWeaponCatalogFixture(), {
+    gameVersion: REGULATION_TEST_GAME_VERSION,
+    sourceHash: REGULATION_TEST_SOURCE_HASH,
+  });
 });
 
 function createWeaponDamageRequest(weaponId = "moonveil", upgradeLevel = 10) {
@@ -59,7 +67,7 @@ describe("POST /api/damage/calculate with MongoDB weapon data", () => {
       weapon: {
         id: "moonveil",
         name: "Moonveil",
-        gameVersion: "1.10.0",
+        gameVersion: REGULATION_TEST_GAME_VERSION,
         upgradeLevel: 10,
       },
       attackRating: {
@@ -81,16 +89,20 @@ describe("POST /api/damage/calculate with MongoDB weapon data", () => {
 
   it("does not use weapon data from another game version", async () => {
     await Promise.all([
-      WeaponModel.deleteMany({}),
+      WeaponCatalogModel.deleteMany({}),
+      WeaponVariantModel.deleteMany({}),
       ReinforcementModel.deleteMany({}),
       ScalingCurveModel.deleteMany({}),
     ]);
 
-    const olderDataSet = structuredClone(weaponFixtures);
-    Object.values(olderDataSet.weapons).forEach((weapon) => {
-      weapon.gameVersion = "1.09.0";
+    const olderDataSet = createRegulationWeaponCatalogFixture();
+    Object.values(olderDataSet.calculationData.weapons).forEach((weapon) => {
+      weapon.gameVersion = "1.15.0";
     });
-    await saveWeaponDataSet(olderDataSet);
+    await saveWeaponCatalog(olderDataSet, {
+      gameVersion: "1.15.0",
+      sourceHash: REGULATION_TEST_SOURCE_HASH,
+    });
 
     const response = await request(app)
       .post("/api/damage/calculate")

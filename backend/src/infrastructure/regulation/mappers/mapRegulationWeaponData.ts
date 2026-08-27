@@ -36,11 +36,17 @@ export function mapRegulationWeapon(
   );
   const reinforcementRows = tables.reinforcements
     .filter((row) => row.ID >= weapon.reinforceTypeId && row.ID <= weapon.reinforceTypeId + 25)
-    .filter((row) => row.Name.startsWith(`${reinforcementNamePrefix(tables.reinforcements, weapon.reinforceTypeId)} +`));
+    .sort((left, right) => left.ID - right.ID);
 
   if (reinforcementRows.length === 0) {
     throw new Error(`Unknown ReinforceParamWeapon ${weapon.reinforceTypeId}`);
   }
+
+  reinforcementRows.forEach((row, level) => {
+    if (row.ID !== weapon.reinforceTypeId + level) {
+      throw new Error(`Non-contiguous reinforcement ${weapon.reinforceTypeId}`);
+    }
+  });
 
   const scalingCurves: Record<string, ScalingCurve> = {};
   const corrections = {} as WeaponDataSet["weapons"][string]["corrections"];
@@ -132,10 +138,6 @@ function numberField(row: Record<string, number | string>, key: string): number 
   const value = row[key];
   if (typeof value !== "number") throw new Error(`Missing numeric field ${key}`);
   return value;
-}
-
-function reinforcementNamePrefix(rows: ReinforceWeaponRow[], id: number): string {
-  return findById(rows, id, "ReinforceParamWeapon").Name.replace(/ \+0$/, "");
 }
 
 function mapAttributes(row: WeaponParamRow, prefix: "proper" | "correct", multiplier: number): Attributes {

@@ -269,6 +269,12 @@ Potential fields:
 - reinforcement information
 - ERDB mapping identifiers where internally required
 
+The regulation-derived catalog currently normalizes 460 canonical player
+armaments and 3,112 calculation variants from game version 1.16.1. Affinity
+variants are grouped under their canonical weapon. The import validates every
+variant by calculating its maximum-level attack rating with valid attributes
+before the dataset is eligible for persistence.
+
 ---
 
 # Armor

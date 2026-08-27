@@ -1,6 +1,9 @@
 import { ReinforcementModel } from "../models/reinforcement.model";
 import { ScalingCurveModel } from "../models/scalingCurve.model";
-import { WeaponModel, type WeaponRecord } from "../models/weapon.model";
+import {
+  WeaponVariantModel,
+  type WeaponRecord,
+} from "../models/weapon.model";
 import type {
   AttributeCorrection,
   ReinforcementLevel,
@@ -18,7 +21,7 @@ export async function findWeaponCalculationData(
   weaponId: string,
   gameVersion: string,
 ): Promise<WeaponCalculationDataSet | null> {
-  const weaponRecord = await WeaponModel.findOne({
+  const weaponRecord = await WeaponVariantModel.findOne({
     id: weaponId,
     gameVersion,
   })

@@ -12,7 +12,8 @@
     "typecheck": "tsc --noEmit",
     "lint": "eslint src",
     "lint:fix": "eslint src --fix",
-    "data:import": "tsx src/scripts/importWeaponData.ts",
+    "data:import:erdb": "tsx src/scripts/importWeaponData.ts",
+    "data:import:regulation": "tsx src/scripts/importRegulationWeaponData.ts",
     "test": "vitest run",
     "test:watch": "vitest"
   },

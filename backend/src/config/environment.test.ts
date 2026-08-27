@@ -36,7 +36,7 @@ describe("parseEnvironment", () => {
     expect(result.NODE_ENV).toBe("development");
     expect(result.PORT).toBe(3000);
     expect(result.CORS_ORIGIN).toBe("http://localhost:5173");
-    expect(result.SUPPORTED_GAME_VERSION).toBe("1.10.0");
+    expect(result.SUPPORTED_GAME_VERSION).toBe("1.16.1");
     expect(result.ERDB_BASE_URL).toBe("http://127.0.0.1:8107/v1");
   });
 
