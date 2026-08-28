@@ -29,10 +29,57 @@ button:focus-visible {
   outline-offset: 2px;
 }
 
-main {
+.app-shell {
   width: min(960px, calc(100% - 2rem));
   margin: 0 auto;
+}
+
+main {
   padding: 2rem 0 4rem;
+}
+
+.app-shell > header {
+  padding-top: 2rem;
+}
+
+.brand {
+  color: inherit;
+  text-decoration: none;
+}
+
+.brand span {
+  display: block;
+}
+
+.brand-name {
+  font-size: 2rem;
+  font-weight: 700;
+}
+
+nav {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem 1rem;
+  margin-top: 1.5rem;
+  border-bottom: 1px solid #3b463d;
+  padding-bottom: 0.75rem;
+}
+
+nav a {
+  color: #d8d3c7;
+  text-decoration: none;
+}
+
+nav a:hover,
+nav a.active {
+  color: #d4bd7f;
+}
+
+nav a:focus-visible,
+.brand:focus-visible {
+  border-radius: 0.2rem;
+  outline: 3px solid #d4bd7f;
+  outline-offset: 3px;
 }
 
 header,
@@ -81,6 +128,11 @@ p {
 
 @media (max-width: 600px) {
   header {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  nav {
     align-items: flex-start;
     flex-direction: column;
   }
