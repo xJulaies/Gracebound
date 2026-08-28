@@ -1,6 +1,6 @@
 # Elden Ring Companion — Backend Specification
 
-Version: 0.4
+Version: 0.5
 
 ---
 
@@ -345,9 +345,12 @@ Potential fields:
 - source URL
 - accuracy classification where required
 
-The MVP contains ten curated main-story boss encounters mapped from Regulation
-game version 1.17.0. Different locations or phases must be separate records
-when their combat values differ.
+The Regulation 1.17.0 import contains 177 verified base-game boss combat
+profiles. Names and `NpcParam` mappings were cross-checked through local game
+events, map entities, and English game text. Identical repeated encounters are
+deduplicated, while different regional combat rows and named phases remain
+separate records. Shadow of the Erdtree bosses are excluded because the
+required DLC map files are not installed locally; no DLC mappings are guessed.
 
 Implemented public boss endpoints:
 
@@ -359,10 +362,10 @@ GET /api/bosses/:bossId
 They return only records for the configured game version and omit internal
 MongoDB and Regulation source metadata.
 
-Boss raw data follows the same boundary as ERDB data:
+Boss raw data follows the same source boundary:
 
 ```text
-versioned curated source
+versioned local Regulation, event, map, and text sources
   -> Zod validation
   -> mapping
   -> normalized boss storage

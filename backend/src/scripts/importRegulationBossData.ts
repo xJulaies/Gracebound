@@ -4,11 +4,12 @@ import { readFile } from "node:fs/promises";
 import path from "node:path";
 import { settings } from "../config/settings";
 import { connectMongoDB, disconnectMongoDB } from "../db";
-import { mvpBossDefinitions } from "../infrastructure/regulation/data/mvpBossDefinitions";
+import { baseGameBossDefinitions } from "../infrastructure/regulation/data/baseGameBossDefinitions";
 import { mapRegulationBosses } from "../infrastructure/regulation/mappers/mapRegulationBoss";
 import { parseNpcParamCsv } from "../infrastructure/regulation/parsers/parseNpcParamCsv";
 import { parseSpEffectParamCsv } from "../infrastructure/regulation/parsers/parseSpEffectParamCsv";
 import { saveBossDataSet } from "../infrastructure/regulation/services/saveBossDataSet";
+import { validateBossCatalogVersion } from "../infrastructure/regulation/services/validateBossCatalogVersion";
 
 const REQUIRED_EXPORTS = {
   npcs: "NpcParam.csv",
@@ -24,12 +25,13 @@ async function importRegulationBossData() {
     sha256(regulationFile),
   ]);
   const bosses = mapRegulationBosses(
-    mvpBossDefinitions,
+    baseGameBossDefinitions,
     parseNpcParamCsv(npcCsv),
     parseSpEffectParamCsv(effectCsv),
   );
+  validateBossCatalogVersion(bosses, settings.SUPPORTED_GAME_VERSION);
 
-  console.log(`Validated ${bosses.length} Regulation bosses`);
+  console.log(`Validated ${bosses.length} base-game Regulation boss profiles`);
 
   if (process.argv.includes("--dry-run")) {
     console.log("Dry run complete; MongoDB was not changed");

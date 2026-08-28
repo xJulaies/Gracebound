@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { mvpBossDefinitions } from "../data/mvpBossDefinitions";
+import { baseGameBossDefinitions } from "../data/baseGameBossDefinitions";
 import type { NpcParamRow } from "../schemas/npcParam.schema";
 import type { SpEffectParamRow } from "../schemas/spEffectParam.schema";
 import { mapRegulationBosses } from "./mapRegulationBoss";
@@ -16,6 +16,29 @@ const referenceRows = [
   [21900078, 1893, 7170, 7.047, 13339, 1.217, 121, [35, 35, 10, 35, 20, 0, 20, 80]],
   [22000078, 3140, 7170, 7.047, 22127, 1.217, 121, [10, 10, 10, 10, 40, 40, 40, 80]],
 ] as const;
+
+const referenceIds = [
+  "margit-the-fell-omen",
+  "godrick-the-grafted",
+  "rennala-queen-of-the-full-moon-20310024",
+  "starscourge-radahn",
+  "morgott-the-omen-king",
+  "fire-giant",
+  "maliketh-the-black-blade",
+  "hoarah-loux-warrior",
+  "radagon-of-the-golden-order",
+  "elden-beast",
+] as const;
+
+const referenceDefinitions = referenceIds.map((id) => {
+  const definition = baseGameBossDefinitions.find((boss) => boss.id === id);
+
+  if (!definition) {
+    throw new Error(`Missing reference boss definition ${id}`);
+  }
+
+  return definition;
+});
 
 function createNpcRow(
   npcParamId: number,
@@ -57,7 +80,7 @@ function createNpcRow(
 }
 
 describe("mapRegulationBosses", () => {
-  it("maps every unambiguous MVP boss to its reference health", () => {
+  it("maps known base-game bosses to their reference combat values", () => {
     const npcRows = referenceRows.map(([
       npcId,
       health,
@@ -84,7 +107,7 @@ describe("mapRegulationBosses", () => {
     );
 
     const bosses = mapRegulationBosses(
-      mvpBossDefinitions,
+      referenceDefinitions,
       npcRows,
       effectRows,
     );
@@ -96,7 +119,7 @@ describe("mapRegulationBosses", () => {
       defense,
       absorption,
     }))).toEqual(
-      mvpBossDefinitions.map((definition, index) => ({
+      referenceDefinitions.map((definition, index) => ({
         id: definition.id,
         health: referenceRows[index]?.[4],
         defense: {
@@ -135,7 +158,7 @@ describe("mapRegulationBosses", () => {
       thunderDiffenceRate: 1,
       darkDiffenceRate: 1,
     };
-    const fireGiantDefinition = mvpBossDefinitions.find(
+    const fireGiantDefinition = baseGameBossDefinitions.find(
       ({ id }) => id === "fire-giant",
     );
 

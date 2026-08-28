@@ -323,6 +323,15 @@ Each imported dataset should record the game version and source-file hash where
 practical. Preserve encounter, location, and phase distinctions where their
 combat values differ. Do not silently present uncertain mappings as exact.
 
+The verified Elden Ring 1.17.0 base-game boss catalog contains 177 distinct
+combat profiles. Boss names and `NpcParam` mappings were cross-checked against
+local EMEVD health-bar events, MSB map entities, and English `NpcName.fmg`
+entries. Repeated encounters with the same display name and `NpcParam` row are
+stored once; differing regional rows and named phases remain distinct.
+Shadow of the Erdtree map files are not available in the current local source
+installation, so DLC bosses must not be included or guessed until those source
+files can be validated.
+
 Before importing a new Regulation version, compare it with the previous local
 exports and run both importers with `--dry-run`. Version-specific catalog-count
 guards must block incomplete datasets before MongoDB is opened. Missing source

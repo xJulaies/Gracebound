@@ -28,16 +28,20 @@ All records store the game version, SHA-256 hash of `regulation.bin`, import
 timestamp, and `REGULATION` source marker. A failed write rolls back every
 collection.
 
-Import the ten MVP bosses from `NpcParam.csv` and `SpEffectParam.csv` with:
+Import the verified base-game boss catalog from `NpcParam.csv` and
+`SpEffectParam.csv` with:
 
 ```powershell
 $env:SUPPORTED_GAME_VERSION = "1.17.0"
 npm run data:import:bosses -- --exports "C:\path\to\exports\raw" --regulation "C:\path\to\regulation.bin"
 ```
 
-The boss import validates and maps all ten configured encounters before it
-connects to MongoDB. Its transaction replaces only the selected game version
-in the `bosses` collection.
+For game version 1.17.0, the boss import validates and maps exactly 177 combat
+profiles before it connects to MongoDB. The catalog was derived by resolving
+boss health-bar events through map entities to `NpcParam` rows and English game
+text. Its transaction replaces only the selected game version in the `bosses`
+collection. DLC bosses remain excluded until their local map files are
+available and verified.
 
 Append `--dry-run` to either import command to validate and map the complete
 dataset without connecting to or changing MongoDB.
