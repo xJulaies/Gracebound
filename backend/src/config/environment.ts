@@ -14,7 +14,7 @@ const environmentSchema = z.object({
   SUPPORTED_GAME_VERSION: z
     .string()
     .regex(/^\d+\.\d+\.\d+$/)
-    .default("1.16.1"),
+    .default("1.17.0"),
   ERDB_BASE_URL: z.url().default("http://127.0.0.1:8107/v1"),
 });
 

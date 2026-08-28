@@ -33,10 +33,10 @@ The importer requests only the raw tables required for weapon attack rating:
 - `correction-graph`
 
 It validates and maps all responses before opening the MongoDB connection.
-`ERDB_BASE_URL` defaults to `http://127.0.0.1:8107/v1` and
-The ERDB comparison import must explicitly use its available game version, for
-example `SUPPORTED_GAME_VERSION=1.10.0`. The application itself currently uses
-Regulation data for version `1.16.1`.
+`ERDB_BASE_URL` defaults to `http://127.0.0.1:8107/v1`. The ERDB comparison
+import must explicitly use its available game version, for example
+`SUPPORTED_GAME_VERSION=1.10.0`. The application currently uses the fully
+imported Regulation dataset for version `1.17.0`.
 
 `MONGODB_URL` must select the `gracebound` database explicitly:
 

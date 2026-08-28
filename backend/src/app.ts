@@ -2,7 +2,9 @@ import cors from "cors";
 import express, { type Request, type Response } from "express";
 import { settings } from "./config/settings";
 import { createBuildRouter } from "./features/builds/routes/build.routes";
+import { createBossRouter } from "./features/bosses/routes/boss.routes";
 import { createDamageRouter } from "./features/damage/routes/damage.routes";
+import { createWeaponRouter } from "./features/weapons/routes/weapon.routes";
 import type { Authentication } from "./shared/auth/authentication.types";
 import { createAnswer } from "./shared/http/createAnswer";
 import { errorHandler } from "./shared/middleware/errorHandler";
@@ -15,6 +17,7 @@ export function createApp(authentication: Authentication) {
   app.use(
     cors({
       origin: settings.CORS_ORIGIN,
+      exposedHeaders: ["X-Total-Count"],
     }),
   );
   app.use(express.json());
@@ -24,7 +27,9 @@ export function createApp(authentication: Authentication) {
   });
 
   app.use("/api", createBuildRouter(authentication.getAuthenticatedUserId));
+  app.use("/api", createBossRouter());
   app.use("/api", createDamageRouter());
+  app.use("/api", createWeaponRouter());
   app.use(notFoundHandler);
   app.use(errorHandler);
 

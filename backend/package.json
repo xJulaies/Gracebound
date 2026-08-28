@@ -13,7 +13,9 @@
     "lint": "eslint src",
     "lint:fix": "eslint src --fix",
     "data:import:erdb": "tsx src/scripts/importWeaponData.ts",
+    "data:import:bosses": "tsx src/scripts/importRegulationBossData.ts",
     "data:import:regulation": "tsx src/scripts/importRegulationWeaponData.ts",
+    "data:compare:regulation": "tsx src/scripts/compareRegulationExports.ts",
     "test": "vitest run",
     "test:watch": "vitest"
   },

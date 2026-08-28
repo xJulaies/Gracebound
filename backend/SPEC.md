@@ -269,11 +269,26 @@ Potential fields:
 - reinforcement information
 - ERDB mapping identifiers where internally required
 
-The regulation-derived catalog currently normalizes 460 canonical player
-armaments and 3,112 calculation variants from game version 1.16.1. Affinity
+The active application game version is `1.17.0`. Its Regulation export
+normalizes 468 player armaments and 3,192 calculation variants. Eight new
+English weapon names are resolved from the
+matching local `WeaponName.fmg`; two additional unnamed Param rows have no
+player-facing text entry and remain excluded as internal data. Affinity
 variants are grouped under their canonical weapon. The import validates every
-variant by calculating its maximum-level attack rating with valid attributes
-before the dataset is eligible for persistence.
+mapped variant by calculating its maximum-level attack rating with valid
+attributes before the dataset is eligible for persistence.
+
+Implemented public weapon endpoints:
+
+```text
+GET /api/weapons
+GET /api/weapons/:weaponId
+```
+
+The list supports `page`, `limit`, `search`, and `affinity`. It returns at most
+100 records per request and exposes the matching record count through the
+`X-Total-Count` response header. Both endpoints return normalized application
+data and omit internal MongoDB and import metadata.
 
 ---
 
@@ -330,9 +345,19 @@ Potential fields:
 - source URL
 - accuracy classification where required
 
-The MVP contains ten curated boss encounters. The exact ten bosses and their
-raw values remain a pending product decision. Different locations or phases
-must be separate records when their combat values differ.
+The MVP contains ten curated main-story boss encounters mapped from Regulation
+game version 1.17.0. Different locations or phases must be separate records
+when their combat values differ.
+
+Implemented public boss endpoints:
+
+```text
+GET /api/bosses
+GET /api/bosses/:bossId
+```
+
+They return only records for the configured game version and omit internal
+MongoDB and Regulation source metadata.
 
 Boss raw data follows the same boundary as ERDB data:
 

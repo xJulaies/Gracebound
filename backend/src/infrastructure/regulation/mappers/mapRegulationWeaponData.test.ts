@@ -19,7 +19,7 @@ describe("mapScalingCurve", () => {
 
 describe("mapRegulationWeapon", () => {
   it("matches the established Moonveil +10 ERDB attack rating", () => {
-    const dataSet = mapRegulationWeapon(9060000, "1.16.1", moonveilTables());
+    const dataSet = mapRegulationWeapon(9060000, "1.17.0", moonveilTables());
     const weapon = dataSet.weapons.moonveil;
 
     expect(weapon?.baseScaling).toEqual({ strength: 0.12, dexterity: 0.5, intelligence: 0.6, faith: 0, arcane: 0 });

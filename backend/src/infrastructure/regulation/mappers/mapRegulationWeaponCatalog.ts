@@ -8,6 +8,7 @@ import type { WeaponDataSet } from "../../../features/weapons/domain/weapon.type
 import type { RegulationWeaponTables } from "./mapRegulationWeaponData";
 import { mapRegulationWeapon } from "./mapRegulationWeaponData";
 import type { WeaponParamRow } from "../schemas/weaponParam.schema";
+import { addRegulationWeaponNames } from "../data/regulationWeaponNames";
 
 const PLAYER_WEAPON_CATEGORIES = new Set([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]);
 
@@ -15,6 +16,10 @@ export function mapRegulationWeaponCatalog(
   gameVersion: string,
   tables: RegulationWeaponTables,
 ): WeaponCatalogDataSet {
+  const namedTables = {
+    ...tables,
+    weapons: addRegulationWeaponNames(gameVersion, tables.weapons),
+  };
   const calculationData: WeaponDataSet = {
     weapons: {},
     reinforcements: {},
@@ -24,7 +29,7 @@ export function mapRegulationWeaponCatalog(
   const affinityCounts = Object.fromEntries(
     WEAPON_AFFINITIES.map((affinity) => [affinity, 0]),
   ) as Record<WeaponAffinity, number>;
-  const canonicalRows = tables.weapons.filter(
+  const canonicalRows = namedTables.weapons.filter(
     isCanonicalPlayerWeapon,
   );
 
@@ -35,7 +40,7 @@ export function mapRegulationWeaponCatalog(
       throw new Error(`Duplicate canonical weapon ID ${id}`);
     }
 
-    const variantRows = tables.weapons
+    const variantRows = namedTables.weapons
       .filter(
         (row) =>
           row.originEquipWep === canonicalRow.ID &&
@@ -49,7 +54,7 @@ export function mapRegulationWeaponCatalog(
       const affinity = getWeaponAffinity(canonicalRow.ID, variantRow);
       affinityCounts[affinity] += 1;
 
-      const mapped = mapRegulationWeapon(variantRow.ID, gameVersion, tables);
+      const mapped = mapRegulationWeapon(variantRow.ID, gameVersion, namedTables);
       mergeUnique(calculationData.weapons, mapped.weapons, "weapon");
       mergeShared(calculationData.reinforcements, mapped.reinforcements, "reinforcement");
       mergeShared(calculationData.scalingCurves, mapped.scalingCurves, "scaling curve");

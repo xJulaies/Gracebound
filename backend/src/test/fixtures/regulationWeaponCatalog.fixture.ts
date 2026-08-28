@@ -1,7 +1,7 @@
 import { weaponFixtures } from "../../features/weapons/data/weapon.fixtures";
 import type { WeaponCatalogDataSet } from "../../features/weapons/domain/weaponCatalog.types";
 
-export const REGULATION_TEST_GAME_VERSION = "1.16.1";
+export const REGULATION_TEST_GAME_VERSION = "1.17.0";
 export const REGULATION_TEST_SOURCE_HASH = "a".repeat(64);
 
 export function createRegulationWeaponCatalogFixture(): WeaponCatalogDataSet {

@@ -297,6 +297,10 @@ the intended primary source for technical weapon, NPC, boss, and calculation
 data. Smithbox is currently used to export the required parameter tables as
 CSV files.
 
+The active application dataset is Elden Ring `1.17.0`. Runtime defaults, test
+fixtures, imports, and API queries must use this version unless a test is
+explicitly verifying version isolation or historical import compatibility.
+
 Raw game files and generated CSV exports are local input artifacts. Do not
 commit or redistribute `regulation.bin` or its full raw exports.
 
@@ -318,6 +322,17 @@ or raw regulation structures.
 Each imported dataset should record the game version and source-file hash where
 practical. Preserve encounter, location, and phase distinctions where their
 combat values differ. Do not silently present uncertain mappings as exact.
+
+Before importing a new Regulation version, compare it with the previous local
+exports and run both importers with `--dry-run`. Version-specific catalog-count
+guards must block incomplete datasets before MongoDB is opened. Missing source
+names must be resolved explicitly; unnamed new equipment must not be silently
+excluded from a production import.
+
+When Smithbox Param row names lag behind the game text, resolve player-facing
+names from the matching English `WeaponName.fmg` and keep the smallest possible
+version-specific mapping in code. Unnamed rows that also have no player-facing
+FMG entry remain excluded as internal data.
 
 ERDB remains an existing comparison and fallback source during migration. Do
 not remove the ERDB importer until regulation-derived weapon results have been

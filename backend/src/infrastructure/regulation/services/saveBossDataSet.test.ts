@@ -53,17 +53,17 @@ const bosses: BossData[] = [
 describe("saveBossDataSet", () => {
   it("persists normalized bosses with their source metadata", async () => {
     const summary = await saveBossDataSet(bosses, {
-      gameVersion: "1.16.1",
+      gameVersion: "1.17.0",
       sourceHash,
     });
 
-    expect(summary).toEqual({ gameVersion: "1.16.1", bosses: 2 });
+    expect(summary).toEqual({ gameVersion: "1.17.0", bosses: 2 });
     expect(await BossModel.countDocuments()).toBe(2);
 
     const fireGiant = await BossModel.findOne({ id: "fire-giant" }).lean();
     expect(fireGiant).toMatchObject({
       source: "REGULATION",
-      gameVersion: "1.16.1",
+      gameVersion: "1.17.0",
       sourceHash,
       health: 43263,
       sourceNpcId: 47601050,
@@ -73,7 +73,7 @@ describe("saveBossDataSet", () => {
 
   it("replaces only the imported game version", async () => {
     await saveBossDataSet(bosses, {
-      gameVersion: "1.16.1",
+      gameVersion: "1.17.0",
       sourceHash,
     });
     await saveBossDataSet([bosses[0]!], {
@@ -83,15 +83,15 @@ describe("saveBossDataSet", () => {
 
     const updatedMargit = { ...bosses[0]!, health: 5000 };
     await saveBossDataSet([updatedMargit], {
-      gameVersion: "1.16.1",
+      gameVersion: "1.17.0",
       sourceHash,
     });
 
-    expect(await BossModel.countDocuments({ gameVersion: "1.16.1" })).toBe(1);
+    expect(await BossModel.countDocuments({ gameVersion: "1.17.0" })).toBe(1);
     expect(await BossModel.countDocuments({ gameVersion: "1.15.0" })).toBe(1);
     expect(
       await BossModel.findOne({
-        gameVersion: "1.16.1",
+        gameVersion: "1.17.0",
         id: "margit-the-fell-omen",
       })
         .select("health")
@@ -101,7 +101,7 @@ describe("saveBossDataSet", () => {
 
   it("rolls back the replacement when inserting fails", async () => {
     await saveBossDataSet(bosses, {
-      gameVersion: "1.16.1",
+      gameVersion: "1.17.0",
       sourceHash,
     });
     vi.spyOn(BossModel, "insertMany").mockRejectedValueOnce(
@@ -110,18 +110,18 @@ describe("saveBossDataSet", () => {
 
     await expect(
       saveBossDataSet([bosses[0]!], {
-        gameVersion: "1.16.1",
+        gameVersion: "1.17.0",
         sourceHash,
       }),
     ).rejects.toThrow("Simulated boss insert failure");
 
-    expect(await BossModel.countDocuments({ gameVersion: "1.16.1" })).toBe(2);
+    expect(await BossModel.countDocuments({ gameVersion: "1.17.0" })).toBe(2);
   });
 
   it("rejects invalid records before opening a transaction", async () => {
     await expect(
       saveBossDataSet([{ ...bosses[0]!, health: 0 }], {
-        gameVersion: "1.16.1",
+        gameVersion: "1.17.0",
         sourceHash: "invalid",
       }),
     ).rejects.toThrow();
@@ -132,7 +132,7 @@ describe("saveBossDataSet", () => {
   it("rejects duplicate application IDs", async () => {
     await expect(
       saveBossDataSet([bosses[0]!, bosses[0]!], {
-        gameVersion: "1.16.1",
+        gameVersion: "1.17.0",
         sourceHash,
       }),
     ).rejects.toThrow("Boss dataset contains duplicate IDs");

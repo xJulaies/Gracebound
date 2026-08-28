@@ -11,6 +11,56 @@ import type {
   WeaponCalculationData,
   WeaponDataSet,
 } from "../domain/weapon.types";
+import type { WeaponAffinity } from "../domain/weaponCatalog.types";
+import {
+  WeaponCatalogModel,
+  type WeaponCatalogRecord,
+} from "../models/weaponCatalog.model";
+
+export interface WeaponCatalogQuery {
+  gameVersion: string;
+  page: number;
+  limit: number;
+  search?: string;
+  affinity?: WeaponAffinity;
+}
+
+export interface WeaponCatalogPage {
+  weapons: WeaponCatalogRecord[];
+  total: number;
+}
+
+export async function findWeaponCatalogPage({
+  gameVersion,
+  page,
+  limit,
+  search,
+  affinity,
+}: WeaponCatalogQuery): Promise<WeaponCatalogPage> {
+  const filter = {
+    gameVersion,
+    ...(search && {
+      name: { $regex: escapeRegex(search), $options: "i" },
+    }),
+    ...(affinity && { "variants.affinity": affinity }),
+  };
+
+  const [weapons, total] = await Promise.all([
+    WeaponCatalogModel.find(filter)
+      .sort({ name: 1, id: 1 })
+      .skip((page - 1) * limit)
+      .limit(limit)
+      .lean()
+      .exec(),
+    WeaponCatalogModel.countDocuments(filter).exec(),
+  ]);
+
+  return { weapons, total };
+}
+
+export function findWeaponCatalogById(weaponId: string, gameVersion: string) {
+  return WeaponCatalogModel.findOne({ id: weaponId, gameVersion }).lean().exec();
+}
 
 export interface WeaponCalculationDataSet {
   weapon: WeaponCalculationData;
@@ -121,4 +171,8 @@ function toCorrections(
       entries.map((entry) => ({ ...entry })),
     ]),
   ) as Record<keyof WeaponCalculationData["corrections"], AttributeCorrection[]>;
+}
+
+function escapeRegex(value: string): string {
+  return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 }

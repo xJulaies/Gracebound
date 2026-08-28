@@ -12,6 +12,7 @@ import {
   parseWeaponParamCsv,
 } from "../infrastructure/regulation/parsers/parseWeaponCsv";
 import { saveWeaponCatalog } from "../infrastructure/regulation/services/saveWeaponCatalog";
+import { validateWeaponCatalogVersion } from "../infrastructure/regulation/services/validateWeaponCatalogVersion";
 
 const REQUIRED_EXPORTS = {
   weapons: "EquipParamWeapon.csv",
@@ -39,9 +40,16 @@ async function importRegulationWeaponData() {
     graphs: parseCalcCorrectGraphCsv(graphs),
   });
 
+  validateWeaponCatalogVersion(settings.SUPPORTED_GAME_VERSION, catalog.report);
+
   console.log(
     `Validated ${catalog.report.canonicalWeapons} weapons and ${catalog.report.validatedCalculations} calculation variants`,
   );
+
+  if (process.argv.includes("--dry-run")) {
+    console.log("Dry run complete; MongoDB was not changed");
+    return;
+  }
 
   try {
     await connectMongoDB();
