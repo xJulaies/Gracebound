@@ -26,13 +26,14 @@ describe("saveWeaponCatalog", () => {
 
     expect(summary).toEqual({
       gameVersion: REGULATION_TEST_GAME_VERSION,
-      weapons: 2,
-      variants: 2,
+      weapons: 4,
+      variants: 4,
       reinforcements: 1,
       scalingCurves: 2,
+      attacks: 3,
     });
-    expect(await WeaponCatalogModel.countDocuments()).toBe(2);
-    expect(await WeaponVariantModel.countDocuments()).toBe(2);
+    expect(await WeaponCatalogModel.countDocuments()).toBe(4);
+    expect(await WeaponVariantModel.countDocuments()).toBe(4);
     expect(await ReinforcementModel.countDocuments()).toBe(1);
     expect(await ScalingCurveModel.countDocuments()).toBe(2);
 
@@ -41,6 +42,12 @@ describe("saveWeaponCatalog", () => {
       source: "REGULATION",
       sourceHash: REGULATION_TEST_SOURCE_HASH,
       variants: [{ id: "moonveil", affinity: "standard" }],
+      attacks: [
+        expect.objectContaining({
+          id: "katana-1h-heavy-1",
+          sourceAttackId: 900100,
+        }),
+      ],
     });
   });
 
@@ -52,17 +59,17 @@ describe("saveWeaponCatalog", () => {
     const reduced = createRegulationWeaponCatalogFixture();
     delete reduced.catalog["grafted-blade-greatsword"];
     delete reduced.calculationData.weapons["grafted-blade-greatsword"];
-    reduced.report.canonicalWeapons = 1;
-    reduced.report.calculationVariants = 1;
-    reduced.report.validatedCalculations = 1;
+    reduced.report.canonicalWeapons = 3;
+    reduced.report.calculationVariants = 3;
+    reduced.report.validatedCalculations = 3;
 
     await saveWeaponCatalog(reduced, {
       gameVersion: REGULATION_TEST_GAME_VERSION,
       sourceHash: REGULATION_TEST_SOURCE_HASH,
     });
 
-    expect(await WeaponCatalogModel.countDocuments()).toBe(1);
-    expect(await WeaponVariantModel.countDocuments()).toBe(1);
+    expect(await WeaponCatalogModel.countDocuments()).toBe(3);
+    expect(await WeaponVariantModel.countDocuments()).toBe(3);
   });
 
   it("rolls back all collections when a later write fails", async () => {

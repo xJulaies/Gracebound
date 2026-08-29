@@ -1,5 +1,6 @@
 import { weaponFixtures } from "../../features/weapons/data/weapon.fixtures";
 import type { WeaponCatalogDataSet } from "../../features/weapons/domain/weaponCatalog.types";
+import type { WeaponAttackProfile } from "../../features/weapons/domain/weaponAttack.types";
 
 export const REGULATION_TEST_GAME_VERSION = "1.17.0";
 export const REGULATION_TEST_SOURCE_HASH = "a".repeat(64);
@@ -29,9 +30,30 @@ export function createRegulationWeaponCatalogFixture(): WeaponCatalogDataSet {
       });
   });
 
+  const moonveil = calculationData.weapons.moonveil!;
+  calculationData.weapons.longsword = {
+    ...structuredClone(moonveil),
+    id: "longsword",
+    sourceId: 1000000,
+    name: "Longsword",
+  };
+  calculationData.weapons["serpentbone-blade"] = {
+    ...structuredClone(moonveil),
+    id: "serpentbone-blade",
+    sourceId: 9080000,
+    name: "Serpentbone Blade",
+  };
+
   return {
     catalog: {
-      moonveil: catalogWeapon("moonveil", 9060000, "Moonveil"),
+      moonveil: catalogWeapon("moonveil", 9060000, "Moonveil", moonveilAttack),
+      longsword: catalogWeapon("longsword", 1000000, "Longsword", longswordAttack),
+      "serpentbone-blade": catalogWeapon(
+        "serpentbone-blade",
+        9080000,
+        "Serpentbone Blade",
+        serpentboneAttack,
+      ),
       "grafted-blade-greatsword": catalogWeapon(
         "grafted-blade-greatsword",
         4100000,
@@ -40,13 +62,13 @@ export function createRegulationWeaponCatalogFixture(): WeaponCatalogDataSet {
     },
     calculationData,
     report: {
-      sourceRows: 2,
-      canonicalWeapons: 2,
-      calculationVariants: 2,
-      validatedCalculations: 2,
+      sourceRows: 4,
+      canonicalWeapons: 4,
+      calculationVariants: 4,
+      validatedCalculations: 4,
       excludedRows: 0,
       affinityCounts: {
-        standard: 2,
+        standard: 4,
         heavy: 0,
         keen: 0,
         quality: 0,
@@ -77,7 +99,12 @@ function renameKeys<T>(
   );
 }
 
-function catalogWeapon(id: string, sourceId: number, name: string) {
+function catalogWeapon(
+  id: string,
+  sourceId: number,
+  name: string,
+  attack?: WeaponAttackProfile,
+) {
   return {
     id,
     sourceId,
@@ -89,5 +116,54 @@ function catalogWeapon(id: string, sourceId: number, name: string) {
     swordArtId: 1178,
     canChangeAffinity: false,
     variants: [{ id, sourceId, affinity: "standard" as const }],
+    attacks: attack ? [attack] : [],
   };
 }
+
+const moonveilAttack: WeaponAttackProfile = {
+  id: "katana-1h-heavy-1",
+  name: "One-handed heavy attack 1",
+  behaviorVariationId: 900,
+  behaviorJudgeId: 100,
+  sourceBehaviorId: 100900100,
+  sourceAttackId: 900100,
+  motionValues: {
+    physical: 125,
+    magic: 125,
+    fire: 125,
+    lightning: 125,
+    holy: 125,
+  },
+  physicalAttackType: "slash",
+};
+
+const longswordAttack: WeaponAttackProfile = {
+  ...moonveilAttack,
+  id: "straight-sword-1h-light-1",
+  name: "One-handed light attack 1",
+  behaviorVariationId: 200,
+  behaviorJudgeId: 0,
+  sourceBehaviorId: 100200000,
+  sourceAttackId: 200000,
+  motionValues: {
+    physical: 100,
+    magic: 100,
+    fire: 100,
+    lightning: 100,
+    holy: 100,
+  },
+};
+
+const serpentboneAttack: WeaponAttackProfile = {
+  ...moonveilAttack,
+  behaviorVariationId: 901,
+  sourceBehaviorId: 100901100,
+  sourceAttackId: 901100,
+  motionValues: {
+    physical: 50,
+    magic: 50,
+    fire: 50,
+    lightning: 50,
+    holy: 50,
+  },
+};

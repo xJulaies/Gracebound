@@ -481,6 +481,23 @@ POST /api/damage/calculate
 
 The damage endpoint may remain public for manual calculations.
 
+When `bossId` is present, the backend must load the matching boss combat values
+for the configured game version. Clients must not supply authoritative boss
+defense or absorption values. Omitting `bossId` returns boss-independent
+offensive output without a final damage claim.
+
+Normal weapon calculations use a validated `attackId`. The backend resolves
+motion values and physical attack type from imported Regulation attack data;
+normal weapon requests must not accept those technical values as authoritative
+client input. User-facing attack labels require a verified mapping between the
+player animation and its Regulation behavior. Verified core movesets are shared
+by imported weapons through their motion category; ambiguous jump, critical,
+mounted, and special behaviors stay excluded until separately verified.
+When a weapon-specific `behaviorVariationId` contains a direct override for a
+verified attack, that override takes precedence over the class-level fallback.
+Projectile, spell, perfume, and other non-direct attacks require their own
+component mapper and must not be forced through the direct melee pipeline.
+
 ---
 
 # Damage Domain Logic
@@ -660,6 +677,11 @@ Testing priority:
 6. important public API endpoints
 
 Damage calculations should be deterministic and tested against known reference values where possible.
+
+Database-backed API tests must verify that an `attackId` belongs to the selected
+weapon, weapon-specific behavior overrides are used, boss-independent and
+boss-specific responses remain distinct, and unsupported weapons expose an
+empty `attacks` array.
 
 ---
 

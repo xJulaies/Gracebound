@@ -1,4 +1,4 @@
-import type { ManualDamageInput } from "../schemas/damage.schema";
+import type { BossAbsorption } from "../../bosses/domain/boss.types";
 import type { DamageTypes } from "./damage.types";
 
 const DAMAGE_TYPES = [
@@ -49,8 +49,43 @@ export function calculateDamageAfterAbsorption(
   return damage * (1 - absorption / 100);
 }
 
-export function calculateHitDamage(input: ManualDamageInput) {
+export interface HitDamageTarget {
+  id: string;
+  name: string;
+  defense: DamageTypes;
+  absorption: BossAbsorption;
+}
+
+export interface HitDamageInput {
+  attackRating: DamageTypes;
+  motionValue: number;
+  physicalAttackType: "standard" | "slash" | "strike" | "pierce";
+  target?: HitDamageTarget;
+}
+
+export function calculateHitDamage(input: HitDamageInput) {
   const motionMultiplier = input.motionValue / 100;
+  const offensiveOutput = mapDamageTypes(
+    input.attackRating,
+    (attackRating) => Math.floor(attackRating * motionMultiplier),
+  );
+
+  const commonResult = {
+    attackRating: withTotal(input.attackRating),
+    motionValue: input.motionValue,
+    physicalAttackType: input.physicalAttackType,
+    offensiveOutput: withTotal(offensiveOutput),
+    accuracy: "estimated" as const,
+    limitations: [
+      "Attack rating must currently be supplied by the client.",
+      "Buffs, status effects, and special mechanics are not included.",
+    ],
+  };
+
+  if (!input.target) {
+    return commonResult;
+  }
+
   const damage = {} as DamageTypes;
 
   for (const damageType of DAMAGE_TYPES) {
@@ -70,23 +105,30 @@ export function calculateHitDamage(input: ManualDamageInput) {
   }
 
   return {
-    attackRating: {
-      ...input.attackRating,
-      total: sumDamageTypes(input.attackRating),
-    },
-    motionValue: input.motionValue,
-    physicalAttackType: input.physicalAttackType,
-    target: input.target,
+    ...commonResult,
+    target: { id: input.target.id, name: input.target.name },
     damage: {
       ...damage,
       total: sumDamageTypes(damage),
     },
-    accuracy: "estimated" as const,
-    limitations: [
-      "Attack rating must currently be supplied by the client.",
-      "Weapon attacks, buffs, status effects, and special mechanics are not included.",
-    ],
   };
+}
+
+function mapDamageTypes(
+  damage: DamageTypes,
+  mapValue: (value: number) => number,
+): DamageTypes {
+  return {
+    physical: mapValue(damage.physical),
+    magic: mapValue(damage.magic),
+    fire: mapValue(damage.fire),
+    lightning: mapValue(damage.lightning),
+    holy: mapValue(damage.holy),
+  };
+}
+
+function withTotal(damage: DamageTypes) {
+  return { ...damage, total: sumDamageTypes(damage) };
 }
 
 function sumDamageTypes(damage: DamageTypes): number {

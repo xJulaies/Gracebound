@@ -9,39 +9,26 @@ const damageTypesSchema: z.ZodType<DamageTypes> = z.strictObject({
   holy: z.number().finite().nonnegative(),
 });
 
-const absorptionSchema = z.strictObject({
-  physical: z.strictObject({
-    standard: z.number().finite().min(-100).max(100),
-    slash: z.number().finite().min(-100).max(100),
-    strike: z.number().finite().min(-100).max(100),
-    pierce: z.number().finite().min(-100).max(100),
-  }),
-  magic: z.number().finite().min(-100).max(100),
-  fire: z.number().finite().min(-100).max(100),
-  lightning: z.number().finite().min(-100).max(100),
-  holy: z.number().finite().min(-100).max(100),
-});
-
-const targetSchema = z.strictObject({
-  defense: damageTypesSchema,
-  absorption: absorptionSchema,
-});
-
 const physicalAttackTypeSchema = z
   .enum(["standard", "slash", "strike", "pierce"])
   .default("standard");
 
 const motionValueSchema = z.number().finite().positive().max(1000).default(100);
+const bossIdSchema = z
+  .string()
+  .regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/)
+  .optional();
 
 export const manualDamageSchema = z.strictObject({
   attackRating: damageTypesSchema,
   motionValue: motionValueSchema,
   physicalAttackType: physicalAttackTypeSchema,
-  target: targetSchema,
+  bossId: bossIdSchema,
 });
 
 export const weaponDamageSchema = z.strictObject({
   weaponId: z.string().trim().min(1).max(100),
+  attackId: z.string().regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/),
   upgradeLevel: z.number().int().min(0).max(25),
   stats: z.strictObject({
     strength: z.number().int().min(1).max(99),
@@ -50,9 +37,7 @@ export const weaponDamageSchema = z.strictObject({
     faith: z.number().int().min(1).max(99),
     arcane: z.number().int().min(1).max(99),
   }),
-  motionValue: motionValueSchema,
-  physicalAttackType: physicalAttackTypeSchema,
-  target: targetSchema,
+  bossId: bossIdSchema,
 });
 
 export const calculateDamageSchema = z.union([

@@ -1,5 +1,8 @@
 import { describe, expect, it } from "vitest";
-import { moonveilAttackDefinitions } from "../data/moonveilAttackDefinitions";
+import {
+  createMeleeAttackDefinitions,
+  meleeWeaponClassDefinitions,
+} from "../data/meleeWeaponClassDefinitions";
 import type { WeaponParamRow } from "../schemas/weaponParam.schema";
 import type {
   AttackParamRow,
@@ -11,29 +14,17 @@ describe("mapRegulationWeaponAttacks", () => {
   it("maps verified Moonveil katana behaviors to their motion values", () => {
     const profiles = mapRegulationWeaponAttacks(
       moonveil,
-      moonveilAttackDefinitions,
+      katanaAttackDefinitions.slice(5, 6),
       behaviors,
       attacks,
     );
 
     expect(profiles).toEqual([
       expect.objectContaining({
-        id: "katana-attack-100",
+        id: "katana-1h-heavy-1",
         sourceAttackId: 900100,
         motionValues: allMotionValues(125),
         physicalAttackType: "slash",
-      }),
-      expect.objectContaining({
-        id: "katana-attack-110",
-        sourceAttackId: 900110,
-        motionValues: allMotionValues(125),
-        physicalAttackType: "standard",
-      }),
-      expect.objectContaining({
-        id: "katana-attack-300",
-        sourceAttackId: 900300,
-        motionValues: allMotionValues(130),
-        physicalAttackType: "standard",
       }),
     ]);
   });
@@ -42,22 +33,22 @@ describe("mapRegulationWeaponAttacks", () => {
     expect(() =>
       mapRegulationWeaponAttacks(
         moonveil,
-        [{ id: "skill", name: "Skill", behaviorVariationId: 905, behaviorJudgeId: 900 }],
+        [{ id: "skill", name: "Skill", sourceBehaviorId: 300905900, behaviorVariationId: 905, behaviorJudgeId: 900 }],
         [{ ID: 300905900, Name: "Transient Moonlight", variationId: 905, behaviorJudgeId: 900, refType: 1, refId: 2950 }],
         attacks,
       ),
-    ).toThrow("Expected one direct attack behavior 905:900, found 0");
+    ).toThrow("Expected direct attack behavior 300905900, found 0");
   });
 
   it("rejects ambiguous behavior mappings", () => {
     expect(() =>
       mapRegulationWeaponAttacks(
         moonveil,
-        [moonveilAttackDefinitions[0]],
-        [behaviors[0]!, { ...behaviors[0]!, ID: 999 }],
+        [katanaAttackDefinitions[5]!],
+        [behaviors[0]!, { ...behaviors[0]! }],
         attacks,
       ),
-    ).toThrow("Expected one direct attack behavior 900:100, found 2");
+    ).toThrow("Expected direct attack behavior 100900100, found 2");
   });
 });
 
@@ -66,18 +57,20 @@ const moonveil = {
   Name: "Moonveil",
   atkAttribute: 0,
   atkAttribute2: 2,
+  behaviorVariationId: 905,
+  wepmotionCategory: 29,
 } as WeaponParamRow;
+
+const katanaAttackDefinitions = createMeleeAttackDefinitions(
+  meleeWeaponClassDefinitions.find(({ slug }) => slug === "katana")!,
+);
 
 const behaviors: BehaviorParamRow[] = [
   behavior(100, 900100),
-  behavior(110, 900110),
-  behavior(300, 900300),
 ];
 
 const attacks: AttackParamRow[] = [
   attack(900100, 125, 252),
-  attack(900110, 125, 253),
-  attack(900300, 130, 253),
 ];
 
 function behavior(judgeId: number, attackId: number): BehaviorParamRow {

@@ -21,21 +21,11 @@ function createDamageRequest() {
       lightning: 0,
       holy: 0,
     },
-    target: {
-      defense: { physical: 100, magic: 100, fire: 100, lightning: 100, holy: 100 },
-      absorption: {
-        physical: { standard: 20, slash: 20, strike: 20, pierce: 20 },
-        magic: 40,
-        fire: 0,
-        lightning: 0,
-        holy: 0,
-      },
-    },
   };
 }
 
 describe("POST /api/damage/calculate", () => {
-  it("calculates damage publicly and defaults the motion value", async () => {
+  it("returns boss-independent offensive output and defaults the motion value", async () => {
     const response = await request(app)
       .post("/api/damage/calculate")
       .send(createDamageRequest());
@@ -47,15 +37,16 @@ describe("POST /api/damage/calculate", () => {
       motionValue: 100,
       accuracy: "estimated",
       attackRating: { total: 300 },
-      damage: { physical: 106, magic: 24, total: 130 },
+      offensiveOutput: { physical: 200, magic: 100, total: 300 },
     });
+    expect(response.body.data[0]).not.toHaveProperty("target");
+    expect(response.body.data[0]).not.toHaveProperty("damage");
   });
 
-  it("rejects incomplete target values", async () => {
-    const input = createDamageRequest();
+  it("rejects client-supplied target values", async () => {
     const response = await request(app)
       .post("/api/damage/calculate")
-      .send({ ...input, target: { defense: input.target.defense } });
+      .send({ ...createDamageRequest(), target: {} });
 
     expect(response.status).toBe(400);
     expect(response.body).toEqual({
@@ -68,9 +59,17 @@ describe("POST /api/damage/calculate", () => {
   it("rejects unknown fields instead of silently accepting them", async () => {
     const response = await request(app)
       .post("/api/damage/calculate")
-      .send({ ...createDamageRequest(), bossId: "margit" });
+      .send({ ...createDamageRequest(), unexpected: true });
 
     expect(response.status).toBe(400);
   });
 
+  it("rejects an invalid boss ID", async () => {
+    const response = await request(app)
+      .post("/api/damage/calculate")
+      .send({ ...createDamageRequest(), bossId: "invalid_id" });
+
+    expect(response.status).toBe(400);
+    expect(response.body.data).toEqual([]);
+  });
 });

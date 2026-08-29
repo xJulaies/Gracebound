@@ -16,6 +16,7 @@ export interface WeaponCatalogImportSummary {
   variants: number;
   reinforcements: number;
   scalingCurves: number;
+  attacks: number;
 }
 
 export async function saveWeaponCatalog(
@@ -113,5 +114,9 @@ export async function saveWeaponCatalog(
     variants: variants.length,
     reinforcements: reinforcements.length,
     scalingCurves: scalingCurves.length,
+    attacks: weapons.reduce(
+      (total, weapon) => total + weapon.attacks.length,
+      0,
+    ),
   };
 }

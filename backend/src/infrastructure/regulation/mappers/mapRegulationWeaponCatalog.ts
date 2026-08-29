@@ -81,6 +81,7 @@ export function mapRegulationWeaponCatalog(
           : canonicalRow.swordArtsParamId,
       canChangeAffinity: variants.length > 1,
       variants,
+      attacks: [],
     };
   }
 

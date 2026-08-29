@@ -5,12 +5,17 @@ import path from "node:path";
 import { settings } from "../config/settings";
 import { connectMongoDB, disconnectMongoDB } from "../db";
 import { mapRegulationWeaponCatalog } from "../infrastructure/regulation/mappers/mapRegulationWeaponCatalog";
+import { addVerifiedWeaponAttacks } from "../infrastructure/regulation/mappers/addVerifiedWeaponAttacks";
 import {
   parseAttackElementCorrectCsv,
   parseCalcCorrectGraphCsv,
   parseReinforceWeaponCsv,
   parseWeaponParamCsv,
 } from "../infrastructure/regulation/parsers/parseWeaponCsv";
+import {
+  parseAttackParamCsv,
+  parseBehaviorParamCsv,
+} from "../infrastructure/regulation/parsers/parseWeaponAttackCsv";
 import { saveWeaponCatalog } from "../infrastructure/regulation/services/saveWeaponCatalog";
 import { validateWeaponCatalogVersion } from "../infrastructure/regulation/services/validateWeaponCatalogVersion";
 
@@ -19,31 +24,49 @@ const REQUIRED_EXPORTS = {
   reinforcements: "ReinforceParamWeapon.csv",
   corrections: "AttackElementCorrectParam.csv",
   graphs: "CalcCorrectGraph.csv",
+  behaviors: "BehaviorParam_PC.csv",
+  attacks: "AtkParam_Pc.csv",
 } as const;
 
 async function importRegulationWeaponData() {
   const exportDirectory = requiredArgument("--exports");
   const regulationFile = requiredArgument("--regulation");
-  const [weapons, reinforcements, corrections, graphs, sourceHash] =
+  const [weapons, reinforcements, corrections, graphs, behaviors, attacks, sourceHash] =
     await Promise.all([
       readExport(exportDirectory, REQUIRED_EXPORTS.weapons),
       readExport(exportDirectory, REQUIRED_EXPORTS.reinforcements),
       readExport(exportDirectory, REQUIRED_EXPORTS.corrections),
       readExport(exportDirectory, REQUIRED_EXPORTS.graphs),
+      readExport(exportDirectory, REQUIRED_EXPORTS.behaviors),
+      readExport(exportDirectory, REQUIRED_EXPORTS.attacks),
       sha256(regulationFile),
     ]);
 
-  const catalog = mapRegulationWeaponCatalog(settings.SUPPORTED_GAME_VERSION, {
-    weapons: parseWeaponParamCsv(weapons),
+  const weaponRows = parseWeaponParamCsv(weapons);
+  const catalog = addVerifiedWeaponAttacks(
+    mapRegulationWeaponCatalog(settings.SUPPORTED_GAME_VERSION, {
+    weapons: weaponRows,
     reinforcements: parseReinforceWeaponCsv(reinforcements),
     corrections: parseAttackElementCorrectCsv(corrections),
     graphs: parseCalcCorrectGraphCsv(graphs),
-  });
+    }),
+    weaponRows,
+    parseBehaviorParamCsv(behaviors),
+    parseAttackParamCsv(attacks),
+  );
 
   validateWeaponCatalogVersion(settings.SUPPORTED_GAME_VERSION, catalog.report);
 
+  const weaponsWithAttacks = Object.values(catalog.catalog).filter(
+    ({ attacks }) => attacks.length > 0,
+  );
+  const attackProfiles = weaponsWithAttacks.reduce(
+    (total, { attacks }) => total + attacks.length,
+    0,
+  );
+
   console.log(
-    `Validated ${catalog.report.canonicalWeapons} weapons and ${catalog.report.validatedCalculations} calculation variants`,
+    `Validated ${catalog.report.canonicalWeapons} weapons, ${catalog.report.validatedCalculations} calculation variants, and ${attackProfiles} attack profiles for ${weaponsWithAttacks.length} melee weapons`,
   );
 
   if (process.argv.includes("--dry-run")) {
@@ -59,7 +82,7 @@ async function importRegulationWeaponData() {
     });
 
     console.log(
-      `Imported game version ${summary.gameVersion}: ${summary.weapons} weapons, ${summary.variants} variants, ${summary.reinforcements} reinforcement datasets, ${summary.scalingCurves} scaling curves`,
+      `Imported game version ${summary.gameVersion}: ${summary.weapons} weapons, ${summary.variants} variants, ${summary.attacks} verified attacks, ${summary.reinforcements} reinforcement datasets, ${summary.scalingCurves} scaling curves`,
     );
   } finally {
     await disconnectMongoDB();

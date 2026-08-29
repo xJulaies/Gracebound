@@ -4,6 +4,8 @@ import {
   type WeaponCatalogEntry,
   type WeaponVariantReference,
 } from "../domain/weaponCatalog.types";
+import type { WeaponAttackProfile } from "../domain/weaponAttack.types";
+import { damageTypesSchema } from "./gameData.schemas";
 
 export type WeaponCatalogRecord = WeaponCatalogEntry & {
   source: "REGULATION";
@@ -20,6 +22,24 @@ const variantReferenceSchema = new Schema<WeaponVariantReference>(
       type: String,
       required: true,
       enum: WEAPON_AFFINITIES,
+    },
+  },
+  { _id: false },
+);
+
+const weaponAttackSchema = new Schema<WeaponAttackProfile>(
+  {
+    id: { type: String, required: true },
+    name: { type: String, required: true },
+    behaviorVariationId: { type: Number, required: true, min: 0 },
+    behaviorJudgeId: { type: Number, required: true, min: 0 },
+    sourceBehaviorId: { type: Number, required: true, min: 0 },
+    sourceAttackId: { type: Number, required: true, min: 0 },
+    motionValues: { type: damageTypesSchema, required: true },
+    physicalAttackType: {
+      type: String,
+      required: true,
+      enum: ["standard", "strike", "slash", "pierce"],
     },
   },
   { _id: false },
@@ -45,6 +65,16 @@ const weaponCatalogSchema = new Schema<WeaponCatalogRecord>(
           new Set(variants.map(({ affinity }) => affinity)).size ===
             variants.length,
         message: "Weapon variants must contain unique affinities",
+      },
+    },
+    attacks: {
+      type: [weaponAttackSchema],
+      required: true,
+      default: [],
+      validate: {
+        validator: (attacks: WeaponAttackProfile[]) =>
+          new Set(attacks.map(({ id }) => id)).size === attacks.length,
+        message: "Weapon attacks must contain unique IDs",
       },
     },
     source: { type: String, required: true, enum: ["REGULATION"] },

@@ -604,6 +604,22 @@ Conceptual example:
 a supported Ash-of-War variant. Multi-component attacks retain their individual
 weapon-hit and projectile results.
 
+When `bossId` is provided, the backend resolves the boss for the configured
+game version and uses its stored defense and absorption. The request must not
+provide authoritative target combat values. Without `bossId`, the endpoint
+returns offensive output without a boss-specific damage result.
+
+For normal weapon attacks, `attackId` resolves an imported Regulation attack
+profile. Motion values and physical attack type are server-owned values and are
+not accepted from normal weapon requests. The verified direct-melee slice covers
+29 motion categories with their available one- and two-handed light chains,
+heavy and charged-heavy attacks, running, rolling and backstep attacks, guard
+counters, and offhand light chains. Regulation 1.17.0 maps 9,810 attack profiles
+to 318 melee weapons. Ambiguous jump, critical, mounted, projectile, spell, and
+special behaviors remain excluded until separately verified.
+Weapon-specific direct behaviors override the motion-category fallback when the
+weapon's `behaviorVariationId` defines the same verified attack.
+
 ---
 
 # Damage Response
@@ -892,6 +908,10 @@ Priority:
 6. public API behavior
 
 Reference-based damage tests should be added where reliable known values are available.
+
+MongoDB integration tests cover class-level attacks, weapon-specific behavior
+overrides, attacks selected for the wrong weapon, optional boss resolution, and
+the empty `attacks` array for unsupported weapon categories.
 
 ---
 

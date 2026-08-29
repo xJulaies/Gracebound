@@ -4,6 +4,14 @@ Raw Smithbox CSV exports and `regulation.bin` remain local and must not be
 committed. The weapon importer validates and maps the complete catalog before
 opening a MongoDB connection.
 
+The weapon import also reads `BehaviorParam_PC.csv` and `AtkParam_Pc.csv` for
+the explicitly verified direct-melee slice. Version 1.17.0 maps 9,810 attack
+profiles to 318 weapons across 29 motion categories. Jump, critical, mounted,
+projectile, spell, and special behaviors remain excluded until their animation
+mappings and calculation rules are separately verified.
+Weapon-specific direct behaviors, such as altered heavy attacks, replace the
+class fallback when the weapon's `behaviorVariationId` supplies one.
+
 Compare two local export versions before importing an update:
 
 ```powershell

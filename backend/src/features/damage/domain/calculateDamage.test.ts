@@ -48,6 +48,8 @@ describe("calculateHitDamage", () => {
       motionValue: 100,
       physicalAttackType: "standard",
       target: {
+        id: "test-boss",
+        name: "Test Boss",
         defense: { physical: 100, magic: 100, fire: 100, lightning: 100, holy: 100 },
         absorption: {
           physical: { standard: 20, slash: 10, strike: 0, pierce: -10 },
@@ -58,6 +60,10 @@ describe("calculateHitDamage", () => {
         },
       },
     });
+
+    if (!("damage" in result)) {
+      throw new Error("Expected boss-specific damage");
+    }
 
     expect(result.damage).toEqual({
       physical: 32,
@@ -76,6 +82,8 @@ describe("calculateHitDamage", () => {
       motionValue: 100,
       physicalAttackType: "pierce",
       target: {
+        id: "test-boss",
+        name: "Test Boss",
         defense: { physical: 100, magic: 800, fire: 0, lightning: 0, holy: 0 },
         absorption: {
           physical: { standard: 20, slash: 10, strike: 0, pierce: -10 },
@@ -83,6 +91,10 @@ describe("calculateHitDamage", () => {
         },
       },
     });
+
+    if (!("damage" in result)) {
+      throw new Error("Expected boss-specific damage");
+    }
 
     expect(result.damage).toMatchObject({ physical: 44, magic: 10, total: 54 });
   });

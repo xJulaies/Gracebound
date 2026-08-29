@@ -62,6 +62,23 @@ export function findWeaponCatalogById(weaponId: string, gameVersion: string) {
   return WeaponCatalogModel.findOne({ id: weaponId, gameVersion }).lean().exec();
 }
 
+export async function findWeaponAttackProfile(
+  weaponId: string,
+  attackId: string,
+  gameVersion: string,
+) {
+  const weapon = await WeaponCatalogModel.findOne({
+    id: weaponId,
+    gameVersion,
+    "attacks.id": attackId,
+  })
+    .select("attacks")
+    .lean()
+    .exec();
+
+  return weapon?.attacks.find(({ id }) => id === attackId) ?? null;
+}
+
 export interface WeaponCalculationDataSet {
   weapon: WeaponCalculationData;
   dataSet: WeaponDataSet;

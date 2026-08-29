@@ -33,7 +33,7 @@ describe("public weapon API", () => {
     const response = await request(app).get("/api/weapons?limit=1");
 
     expect(response.status).toBe(200);
-    expect(response.headers["x-total-count"]).toBe("2");
+    expect(response.headers["x-total-count"]).toBe("4");
     expect(response.body.data).toHaveLength(1);
     expect(response.body.data[0]).toMatchObject({
       id: "grafted-blade-greatsword",
@@ -74,7 +74,30 @@ describe("public weapon API", () => {
       id: "moonveil",
       name: "Moonveil",
       gameVersion: REGULATION_TEST_GAME_VERSION,
+      attacks: [{ id: "katana-1h-heavy-1", name: "One-handed heavy attack 1" }],
     });
+    expect(response.body.data[0].attacks[0]).not.toHaveProperty(
+      "sourceAttackId",
+    );
+  });
+
+  it("returns class attacks, weapon overrides, and empty attack arrays", async () => {
+    const [longsword, serpentbone, unsupported] = await Promise.all([
+      request(app).get("/api/weapons/longsword"),
+      request(app).get("/api/weapons/serpentbone-blade"),
+      request(app).get("/api/weapons/grafted-blade-greatsword"),
+    ]);
+
+    expect(longsword.status).toBe(200);
+    expect(longsword.body.data[0].attacks).toEqual([
+      { id: "straight-sword-1h-light-1", name: "One-handed light attack 1" },
+    ]);
+    expect(serpentbone.status).toBe(200);
+    expect(serpentbone.body.data[0].attacks).toEqual([
+      { id: "katana-1h-heavy-1", name: "One-handed heavy attack 1" },
+    ]);
+    expect(unsupported.status).toBe(200);
+    expect(unsupported.body.data[0].attacks).toEqual([]);
   });
 
   it("returns not found for an unknown valid weapon ID", async () => {

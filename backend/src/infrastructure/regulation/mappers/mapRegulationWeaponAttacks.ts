@@ -11,6 +11,7 @@ import type {
 export interface RegulationWeaponAttackDefinition {
   id: string;
   name: string;
+  sourceBehaviorId: number;
   behaviorVariationId: number;
   behaviorJudgeId: number;
 }
@@ -22,19 +23,35 @@ export function mapRegulationWeaponAttacks(
   attackRows: AttackParamRow[],
 ): WeaponAttackProfile[] {
   return definitions.map((definition) => {
-    const matchingBehaviors = behaviorRows.filter(
+    const fallbackBehaviors = behaviorRows.filter(
       (row) =>
+        row.ID === definition.sourceBehaviorId &&
         row.variationId === definition.behaviorVariationId &&
         row.behaviorJudgeId === definition.behaviorJudgeId &&
         row.refType === 0,
     );
 
-    if (matchingBehaviors.length !== 1) {
+    if (fallbackBehaviors.length !== 1) {
       throw new Error(
-        `Expected one direct attack behavior ${definition.behaviorVariationId}:${definition.behaviorJudgeId}, found ${matchingBehaviors.length}`,
+        `Expected direct attack behavior ${definition.sourceBehaviorId}, found ${fallbackBehaviors.length}`,
       );
     }
-    const behavior = matchingBehaviors[0]!;
+
+    const overrides = weapon.behaviorVariationId === definition.behaviorVariationId
+      ? []
+      : behaviorRows.filter(
+        (row) =>
+          row.variationId === weapon.behaviorVariationId &&
+          row.behaviorJudgeId === definition.behaviorJudgeId &&
+          row.refType === 0,
+      );
+
+    if (overrides.length > 1) {
+      throw new Error(
+        `Expected at most one attack override ${weapon.behaviorVariationId}:${definition.behaviorJudgeId}, found ${overrides.length}`,
+      );
+    }
+    const behavior = overrides[0] ?? fallbackBehaviors[0]!;
 
     const matchingAttacks = attackRows.filter((row) => row.ID === behavior.refId);
 
@@ -51,6 +68,7 @@ export function mapRegulationWeaponAttacks(
 
     return {
       ...definition,
+      behaviorVariationId: behavior.variationId,
       sourceBehaviorId: behavior.ID,
       sourceAttackId: attack.ID,
       motionValues: {
