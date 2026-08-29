@@ -79,6 +79,25 @@ export async function findWeaponAttackProfile(
   return weapon?.attacks.find(({ id }) => id === attackId) ?? null;
 }
 
+export async function findWeaponSkillAttack(
+  weaponId: string,
+  skillAttackId: string,
+  gameVersion: string,
+) {
+  const weapon = await WeaponCatalogModel.findOne({
+    id: weaponId,
+    gameVersion,
+    "skills.attacks.id": skillAttackId,
+  })
+    .select("skills")
+    .lean()
+    .exec();
+
+  return weapon?.skills
+    .flatMap(({ attacks }) => attacks)
+    .find(({ id }) => id === skillAttackId) ?? null;
+}
+
 export interface WeaponCalculationDataSet {
   weapon: WeaponCalculationData;
   dataSet: WeaponDataSet;

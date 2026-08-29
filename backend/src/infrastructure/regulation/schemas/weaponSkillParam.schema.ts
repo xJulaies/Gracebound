@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { ASH_OF_WAR_COMPATIBILITY_FIELDS } from "../data/ashOfWarCompatibility";
 
 const numberFromCsv = z.coerce.number().finite();
 const integerFromCsv = z.coerce.number().int();
@@ -13,13 +14,16 @@ export const bulletParamRowSchema = z.object({
 export const swordArtsParamRowSchema = z.object({
   ID: integerFromCsv.nonnegative(),
   Name: z.string(),
+  useMagicPoint_L1: integerFromCsv,
+  useMagicPoint_L2: integerFromCsv,
   useMagicPoint_R1: integerFromCsv,
   useMagicPoint_R2: integerFromCsv,
 });
 
-export const equipParamGemRowSchema = z.object({
+const equipParamGemShape: Record<string, z.ZodType> = {
   ID: integerFromCsv.nonnegative(),
   Name: z.string(),
+  iconId: integerFromCsv.nonnegative(),
   swordArtsParamId: integerFromCsv,
   spEffectId0: integerFromCsv,
   spEffectId1: integerFromCsv,
@@ -27,7 +31,23 @@ export const equipParamGemRowSchema = z.object({
   spEffectId_forAtk0: integerFromCsv,
   spEffectId_forAtk1: integerFromCsv,
   spEffectId_forAtk2: integerFromCsv,
-});
+};
+
+for (const field of Object.keys(ASH_OF_WAR_COMPATIBILITY_FIELDS)) {
+  equipParamGemShape[field] = z.coerce.number().int().min(0).max(1);
+}
+
+export interface EquipParamGemRow {
+  ID: number;
+  Name: string;
+  iconId: number;
+  swordArtsParamId: number;
+  [key: string]: number | string;
+}
+
+export const equipParamGemRowSchema = z.object(
+  equipParamGemShape,
+) as unknown as z.ZodType<EquipParamGemRow>;
 
 export const finalDamageRateRowSchema = z.object({
   ID: integerFromCsv.nonnegative(),
@@ -41,5 +61,4 @@ export const finalDamageRateRowSchema = z.object({
 
 export type BulletParamRow = z.infer<typeof bulletParamRowSchema>;
 export type SwordArtsParamRow = z.infer<typeof swordArtsParamRowSchema>;
-export type EquipParamGemRow = z.infer<typeof equipParamGemRowSchema>;
 export type FinalDamageRateRow = z.infer<typeof finalDamageRateRowSchema>;

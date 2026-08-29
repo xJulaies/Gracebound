@@ -6,6 +6,7 @@ import { settings } from "../config/settings";
 import { connectMongoDB, disconnectMongoDB } from "../db";
 import { mapRegulationWeaponCatalog } from "../infrastructure/regulation/mappers/mapRegulationWeaponCatalog";
 import { addVerifiedWeaponAttacks } from "../infrastructure/regulation/mappers/addVerifiedWeaponAttacks";
+import { addVerifiedWeaponSkills } from "../infrastructure/regulation/mappers/addVerifiedWeaponSkills";
 import {
   parseAttackElementCorrectCsv,
   parseCalcCorrectGraphCsv,
@@ -16,7 +17,15 @@ import {
   parseAttackParamCsv,
   parseBehaviorParamCsv,
 } from "../infrastructure/regulation/parsers/parseWeaponAttackCsv";
+import {
+  parseBulletParamCsv,
+  parseFinalDamageRateCsv,
+  parseSwordArtsParamCsv,
+} from "../infrastructure/regulation/parsers/parseWeaponSkillCsv";
 import { saveWeaponCatalog } from "../infrastructure/regulation/services/saveWeaponCatalog";
+import { saveAshOfWarCatalog } from "../infrastructure/regulation/services/saveAshOfWarCatalog";
+import { mapVerifiedAshesOfWar } from "../infrastructure/regulation/mappers/mapVerifiedAshesOfWar";
+import { parseEquipParamGemCsv } from "../infrastructure/regulation/parsers/parseWeaponSkillCsv";
 import { validateWeaponCatalogVersion } from "../infrastructure/regulation/services/validateWeaponCatalogVersion";
 
 const REQUIRED_EXPORTS = {
@@ -26,12 +35,28 @@ const REQUIRED_EXPORTS = {
   graphs: "CalcCorrectGraph.csv",
   behaviors: "BehaviorParam_PC.csv",
   attacks: "AtkParam_Pc.csv",
+  bullets: "Bullet.csv",
+  swordArts: "SwordArtsParam.csv",
+  finalDamageRates: "FinalDamageRateParam.csv",
+  gems: "EquipParamGem.csv",
 } as const;
 
 async function importRegulationWeaponData() {
   const exportDirectory = requiredArgument("--exports");
   const regulationFile = requiredArgument("--regulation");
-  const [weapons, reinforcements, corrections, graphs, behaviors, attacks, sourceHash] =
+  const [
+    weapons,
+    reinforcements,
+    corrections,
+    graphs,
+    behaviors,
+    attacks,
+    bullets,
+    swordArts,
+    finalDamageRates,
+    gems,
+    sourceHash,
+  ] =
     await Promise.all([
       readExport(exportDirectory, REQUIRED_EXPORTS.weapons),
       readExport(exportDirectory, REQUIRED_EXPORTS.reinforcements),
@@ -39,11 +64,17 @@ async function importRegulationWeaponData() {
       readExport(exportDirectory, REQUIRED_EXPORTS.graphs),
       readExport(exportDirectory, REQUIRED_EXPORTS.behaviors),
       readExport(exportDirectory, REQUIRED_EXPORTS.attacks),
+      readExport(exportDirectory, REQUIRED_EXPORTS.bullets),
+      readExport(exportDirectory, REQUIRED_EXPORTS.swordArts),
+      readExport(exportDirectory, REQUIRED_EXPORTS.finalDamageRates),
+      readExport(exportDirectory, REQUIRED_EXPORTS.gems),
       sha256(regulationFile),
     ]);
 
   const weaponRows = parseWeaponParamCsv(weapons);
-  const catalog = addVerifiedWeaponAttacks(
+  const behaviorRows = parseBehaviorParamCsv(behaviors);
+  const attackRows = parseAttackParamCsv(attacks);
+  const catalogWithAttacks = addVerifiedWeaponAttacks(
     mapRegulationWeaponCatalog(settings.SUPPORTED_GAME_VERSION, {
     weapons: weaponRows,
     reinforcements: parseReinforceWeaponCsv(reinforcements),
@@ -51,8 +82,21 @@ async function importRegulationWeaponData() {
     graphs: parseCalcCorrectGraphCsv(graphs),
     }),
     weaponRows,
-    parseBehaviorParamCsv(behaviors),
-    parseAttackParamCsv(attacks),
+    behaviorRows,
+    attackRows,
+  );
+  const skillTables = {
+    behaviors: behaviorRows,
+    attacks: attackRows,
+    bullets: parseBulletParamCsv(bullets),
+    swordArts: parseSwordArtsParamCsv(swordArts),
+    finalDamageRates: parseFinalDamageRateCsv(finalDamageRates),
+  };
+  const catalog = addVerifiedWeaponSkills(catalogWithAttacks, weaponRows, skillTables);
+  const ashesOfWar = mapVerifiedAshesOfWar(
+    parseEquipParamGemCsv(gems),
+    weaponRows,
+    skillTables,
   );
 
   validateWeaponCatalogVersion(settings.SUPPORTED_GAME_VERSION, catalog.report);
@@ -64,9 +108,18 @@ async function importRegulationWeaponData() {
     (total, { attacks }) => total + attacks.length,
     0,
   );
+  const skillProfiles = Object.values(catalog.catalog).reduce(
+    (total, { skills }) => total + skills.length,
+    0,
+  );
+  const skillAttacks = Object.values(catalog.catalog).reduce(
+    (total, { skills }) =>
+      total + skills.reduce((subtotal, skill) => subtotal + skill.attacks.length, 0),
+    0,
+  );
 
   console.log(
-    `Validated ${catalog.report.canonicalWeapons} weapons, ${catalog.report.validatedCalculations} calculation variants, and ${attackProfiles} attack profiles for ${weaponsWithAttacks.length} melee weapons`,
+    `Validated ${catalog.report.canonicalWeapons} weapons, ${catalog.report.validatedCalculations} calculation variants, ${attackProfiles} direct attack profiles for ${weaponsWithAttacks.length} melee weapons, ${skillAttacks} attacks across ${skillProfiles} fixed skills, and ${ashesOfWar.length} Ashes of War`,
   );
 
   if (process.argv.includes("--dry-run")) {
@@ -80,10 +133,15 @@ async function importRegulationWeaponData() {
       gameVersion: settings.SUPPORTED_GAME_VERSION,
       sourceHash,
     });
+    const ashSummary = await saveAshOfWarCatalog(ashesOfWar, {
+      gameVersion: settings.SUPPORTED_GAME_VERSION,
+      sourceHash,
+    });
 
     console.log(
       `Imported game version ${summary.gameVersion}: ${summary.weapons} weapons, ${summary.variants} variants, ${summary.attacks} verified attacks, ${summary.reinforcements} reinforcement datasets, ${summary.scalingCurves} scaling curves`,
     );
+    console.log(`Imported ${ashSummary.ashesOfWar} verified Ashes of War`);
   } finally {
     await disconnectMongoDB();
   }

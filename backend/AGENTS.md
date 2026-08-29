@@ -498,6 +498,22 @@ verified attack, that override takes precedence over the class-level fallback.
 Projectile, spell, perfume, and other non-direct attacks require their own
 component mapper and must not be forced through the direct melee pipeline.
 
+Verified weapon skills are stored with their individual weapon-hit and
+projectile components. Public weapon responses expose skill and attack IDs,
+names, and FP costs, but not internal Regulation source IDs. Weapon damage
+requests must contain exactly one of `attackId` or `skillAttackId`; the backend
+resolves the selected attack only within the selected weapon.
+
+Skill definitions declare their components explicitly. The mapper must support
+pure weapon-hit, pure projectile, and mixed attacks without inserting empty
+placeholder components. Square Off and Flame of the Redmanes are the reference
+cases for the first two forms; Transient Moonlight covers the mixed form.
+
+The public Ash-of-War catalog uses `EquipParamGem` playable rows, not their
+broad template rows. Compatibility comes from verified `canMountWep_*` flags.
+`GET /api/ashes-of-war` always returns an array and may filter by `weaponType`;
+`GET /api/ashes-of-war/:ashOfWarId` returns one-element or empty data arrays.
+
 ---
 
 # Damage Domain Logic

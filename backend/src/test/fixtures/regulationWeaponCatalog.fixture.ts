@@ -1,6 +1,7 @@
 import { weaponFixtures } from "../../features/weapons/data/weapon.fixtures";
 import type { WeaponCatalogDataSet } from "../../features/weapons/domain/weaponCatalog.types";
 import type { WeaponAttackProfile } from "../../features/weapons/domain/weaponAttack.types";
+import type { WeaponSkillProfile } from "../../features/weapons/domain/weaponSkill.types";
 
 export const REGULATION_TEST_GAME_VERSION = "1.17.0";
 export const REGULATION_TEST_SOURCE_HASH = "a".repeat(64);
@@ -117,6 +118,7 @@ function catalogWeapon(
     canChangeAffinity: false,
     variants: [{ id, sourceId, affinity: "standard" as const }],
     attacks: attack ? [attack] : [],
+    skills: id === "moonveil" ? [moonveilSkill] : [],
   };
 }
 
@@ -167,3 +169,47 @@ const serpentboneAttack: WeaponAttackProfile = {
     holy: 50,
   },
 };
+
+const moonveilSkill: WeaponSkillProfile = {
+  id: "transient-moonlight",
+  name: "Transient Moonlight",
+  sourceSwordArtId: 1178,
+  attacks: [
+    {
+      id: "transient-moonlight-light",
+      name: "Transient Moonlight (Light)",
+      fpCost: 15,
+      components: [
+        {
+          kind: "projectile",
+          sourceBehaviorId: 300905900,
+          sourceBulletId: 2950,
+          sourceAttackId: 303400100,
+          physicalAttackType: "pierce",
+          motionValues: damageTypes(0),
+          addedDamage: { ...damageTypes(0), magic: 140 },
+          finalDamageRates: damageTypes(0.65),
+        },
+        {
+          kind: "weapon-hit",
+          sourceBehaviorId: 300905901,
+          sourceAttackId: 303400101,
+          physicalAttackType: "slash",
+          motionValues: damageTypes(50),
+          addedDamage: damageTypes(0),
+          finalDamageRates: damageTypes(0.8),
+        },
+      ],
+    },
+  ],
+};
+
+function damageTypes(value: number) {
+  return {
+    physical: value,
+    magic: value,
+    fire: value,
+    lightning: value,
+    holy: value,
+  };
+}

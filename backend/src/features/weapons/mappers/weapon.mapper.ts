@@ -12,6 +12,15 @@ export function mapWeaponResponse(record: WeaponCatalogRecord) {
     canChangeAffinity: record.canChangeAffinity,
     variants: record.variants.map(({ id, affinity }) => ({ id, affinity })),
     attacks: record.attacks.map(({ id, name }) => ({ id, name })),
+    skills: record.skills.map(({ id, name, attacks }) => ({
+      id,
+      name,
+      attacks: attacks.map(({ id: attackId, name: attackName, fpCost }) => ({
+        id: attackId,
+        name: attackName,
+        fpCost,
+      })),
+    })),
     gameVersion: record.gameVersion,
   };
 }

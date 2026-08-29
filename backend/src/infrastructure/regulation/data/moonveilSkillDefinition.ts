@@ -7,15 +7,19 @@ export const moonveilSkillDefinition = {
       id: "transient-moonlight-light",
       name: "Transient Moonlight (Light)",
       fpCostField: "useMagicPoint_R1",
-      projectileBehaviorJudgeId: 900,
-      weaponHitBehaviorJudgeId: 901,
+      components: [
+        { kind: "projectile", sourceBehaviorId: 300905900, behaviorJudgeId: 900 },
+        { kind: "weapon-hit", sourceBehaviorId: 300905901, behaviorJudgeId: 901 },
+      ],
     },
     {
       id: "transient-moonlight-heavy",
       name: "Transient Moonlight (Heavy)",
       fpCostField: "useMagicPoint_R2",
-      projectileBehaviorJudgeId: 905,
-      weaponHitBehaviorJudgeId: 906,
+      components: [
+        { kind: "projectile", sourceBehaviorId: 300905905, behaviorJudgeId: 905 },
+        { kind: "weapon-hit", sourceBehaviorId: 300905906, behaviorJudgeId: 906 },
+      ],
     },
   ],
 } as const;

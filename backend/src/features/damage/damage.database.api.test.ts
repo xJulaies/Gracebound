@@ -78,6 +78,26 @@ function createWeaponDamageRequest(
   };
 }
 
+function createWeaponSkillDamageRequest(
+  weaponId = "moonveil",
+  skillAttackId = "transient-moonlight-light",
+  bossId?: string,
+) {
+  return {
+    weaponId,
+    upgradeLevel: 10,
+    skillAttackId,
+    stats: {
+      strength: 12,
+      dexterity: 30,
+      intelligence: 70,
+      faith: 8,
+      arcane: 8,
+    },
+    ...(bossId ? { bossId } : {}),
+  };
+}
+
 describe("POST /api/damage/calculate with MongoDB weapon data", () => {
   it("calculates attack rating from the active game version", async () => {
     const response = await request(app)
@@ -119,6 +139,46 @@ describe("POST /api/damage/calculate with MongoDB weapon data", () => {
     expect(response.body.data[0]).toMatchObject({
       target: { id: "test-boss", name: "Test Boss" },
       damage: { physical: 186, magic: 267, total: 453 },
+    });
+  });
+
+  it("calculates a stored multi-component skill attack", async () => {
+    const response = await request(app)
+      .post("/api/damage/calculate")
+      .send(createWeaponSkillDamageRequest());
+
+    expect(response.status).toBe(200);
+    expect(response.body.data[0]).toMatchObject({
+      weapon: { id: "moonveil", name: "Moonveil" },
+      attack: {
+        id: "transient-moonlight-light",
+        name: "Transient Moonlight (Light)",
+        fpCost: 15,
+      },
+      components: [
+        {
+          kind: "projectile",
+          offensiveOutput: { physical: 0, magic: 91, total: 91 },
+        },
+        {
+          kind: "weapon-hit",
+          offensiveOutput: { physical: 100, magic: 168, total: 268 },
+        },
+      ],
+      offensiveOutput: { physical: 100, magic: 259, total: 359 },
+    });
+    expect(response.body.data[0]).not.toHaveProperty("damage");
+  });
+
+  it("calculates a stored skill attack against a selected boss", async () => {
+    const response = await request(app)
+      .post("/api/damage/calculate")
+      .send(createWeaponSkillDamageRequest("moonveil", "transient-moonlight-light", "test-boss"));
+
+    expect(response.status).toBe(200);
+    expect(response.body.data[0]).toMatchObject({
+      target: { id: "test-boss", name: "Test Boss" },
+      damage: expect.objectContaining({ total: expect.any(Number) }),
     });
   });
 
@@ -190,6 +250,27 @@ describe("POST /api/damage/calculate with MongoDB weapon data", () => {
       );
 
     expect(response.status).toBe(404);
+    expect(response.body.data).toEqual([]);
+  });
+
+  it("rejects a skill attack that does not belong to the selected weapon", async () => {
+    const response = await request(app)
+      .post("/api/damage/calculate")
+      .send(createWeaponSkillDamageRequest("longsword"));
+
+    expect(response.status).toBe(404);
+    expect(response.body.data).toEqual([]);
+  });
+
+  it("rejects requests containing both normal and skill attack IDs", async () => {
+    const response = await request(app)
+      .post("/api/damage/calculate")
+      .send({
+        ...createWeaponDamageRequest(),
+        skillAttackId: "transient-moonlight-light",
+      });
+
+    expect(response.status).toBe(400);
     expect(response.body.data).toEqual([]);
   });
 

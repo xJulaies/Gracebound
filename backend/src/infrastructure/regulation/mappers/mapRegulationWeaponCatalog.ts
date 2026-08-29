@@ -82,6 +82,7 @@ export function mapRegulationWeaponCatalog(
       canChangeAffinity: variants.length > 1,
       variants,
       attacks: [],
+      skills: [],
     };
   }
 

@@ -55,5 +55,7 @@ separate from normal attack profiles.
 Selected Ashes of War are represented as multi-component skill attacks. For
 example, Transient Moonlight contains a projectile with added magic damage and
 a separate weapon hit with weapon-AR motion values. Each component preserves
-its own final damage rates. Complete Ash-of-War coverage is not part of the MVP;
-unsupported skill mechanics must still be rejected instead of approximated.
+its own final damage rates. A weapon request selects exactly one normal
+`attackId` or one `skillAttackId`; both are resolved only within that weapon.
+Complete Ash-of-War coverage is not part of the MVP; unsupported skill mechanics
+must still be rejected instead of approximated.

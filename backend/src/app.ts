@@ -2,6 +2,7 @@ import cors from "cors";
 import express, { type Request, type Response } from "express";
 import { settings } from "./config/settings";
 import { createBuildRouter } from "./features/builds/routes/build.routes";
+import { createAshOfWarRouter } from "./features/ashesOfWar/routes/ashOfWar.routes";
 import { createBossRouter } from "./features/bosses/routes/boss.routes";
 import { createDamageRouter } from "./features/damage/routes/damage.routes";
 import { createWeaponRouter } from "./features/weapons/routes/weapon.routes";
@@ -27,6 +28,7 @@ export function createApp(authentication: Authentication) {
   });
 
   app.use("/api", createBuildRouter(authentication.getAuthenticatedUserId));
+  app.use("/api", createAshOfWarRouter());
   app.use("/api", createBossRouter());
   app.use("/api", createDamageRouter());
   app.use("/api", createWeaponRouter());

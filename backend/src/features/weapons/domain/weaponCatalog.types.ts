@@ -1,5 +1,6 @@
 import type { WeaponDataSet } from "./weapon.types";
 import type { WeaponAttackProfile } from "./weaponAttack.types";
+import type { WeaponSkillProfile } from "./weaponSkill.types";
 
 export const WEAPON_AFFINITIES = [
   "standard",
@@ -37,6 +38,7 @@ export interface WeaponCatalogEntry {
   canChangeAffinity: boolean;
   variants: WeaponVariantReference[];
   attacks: WeaponAttackProfile[];
+  skills: WeaponSkillProfile[];
 }
 
 export interface WeaponImportReport {

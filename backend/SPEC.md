@@ -620,6 +620,31 @@ special behaviors remain excluded until separately verified.
 Weapon-specific direct behaviors override the motion-category fallback when the
 weapon's `behaviorVariationId` defines the same verified attack.
 
+The first persisted weapon-skill slice is Transient Moonlight with its light
+and heavy variants. Each retains separate projectile and weapon-hit components,
+their FP cost, motion values, added damage, and final damage rates. The public
+weapon API exposes only the skill selection data. Damage requests select either
+a normal `attackId` or a `skillAttackId`, never both. Skill components are
+loaded server-side and calculated separately before their results are summed.
+
+The Regulation skill mapper has three verified reference shapes: Square Off as
+a pure weapon-hit skill, Flame of the Redmanes as a pure projectile skill, and
+Transient Moonlight as a mixed skill. Only Transient Moonlight is persisted and
+selectable directly on its fixed weapon; interchangeable skills are selected
+through the standalone Ash-of-War catalog.
+
+The standalone Ash-of-War catalog is introduced with Square Off and Flame of
+the Redmanes. It stores playable `EquipParamGem` source rows, compatible weapon
+types, and normalized skill attacks. Public routes are:
+
+```text
+GET /api/ashes-of-war
+GET /api/ashes-of-war?weaponType=straight-sword
+GET /api/ashes-of-war/:ashOfWarId
+```
+
+Regulation source IDs and damage components remain server-owned.
+
 ---
 
 # Damage Response

@@ -26,9 +26,8 @@ export const manualDamageSchema = z.strictObject({
   bossId: bossIdSchema,
 });
 
-export const weaponDamageSchema = z.strictObject({
+const weaponDamageFields = {
   weaponId: z.string().trim().min(1).max(100),
-  attackId: z.string().regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/),
   upgradeLevel: z.number().int().min(0).max(25),
   stats: z.strictObject({
     strength: z.number().int().min(1).max(99),
@@ -38,7 +37,14 @@ export const weaponDamageSchema = z.strictObject({
     arcane: z.number().int().min(1).max(99),
   }),
   bossId: bossIdSchema,
-});
+};
+
+const attackIdSchema = z.string().regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/);
+
+export const weaponDamageSchema = z.union([
+  z.strictObject({ ...weaponDamageFields, attackId: attackIdSchema }),
+  z.strictObject({ ...weaponDamageFields, skillAttackId: attackIdSchema }),
+]);
 
 export const calculateDamageSchema = z.union([
   manualDamageSchema,

@@ -12,6 +12,15 @@ mappings and calculation rules are separately verified.
 Weapon-specific direct behaviors, such as altered heavy attacks, replace the
 class fallback when the weapon's `behaviorVariationId` supplies one.
 
+The importer also reads `SwordArtsParam.csv`, `Bullet.csv`, and
+`FinalDamageRateParam.csv`. The first persisted skill slice maps both Transient
+Moonlight attacks into separate projectile and weapon-hit components.
+
+The generic mapper is additionally verified against pure weapon-hit (Square
+Off) and pure projectile (Flame of the Redmanes) definitions. These become
+standalone MongoDB catalog entries using the playable `EquipParamGem` rows and
+their weapon compatibility flags.
+
 Compare two local export versions before importing an update:
 
 ```powershell

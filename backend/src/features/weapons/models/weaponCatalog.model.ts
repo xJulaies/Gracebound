@@ -5,6 +5,10 @@ import {
   type WeaponVariantReference,
 } from "../domain/weaponCatalog.types";
 import type { WeaponAttackProfile } from "../domain/weaponAttack.types";
+import type {
+  WeaponSkillAttack,
+  WeaponSkillProfile,
+} from "../domain/weaponSkill.types";
 import { damageTypesSchema } from "./gameData.schemas";
 
 export type WeaponCatalogRecord = WeaponCatalogEntry & {
@@ -45,6 +49,44 @@ const weaponAttackSchema = new Schema<WeaponAttackProfile>(
   { _id: false },
 );
 
+const weaponSkillComponentSchema = new Schema(
+  {
+    kind: { type: String, required: true, enum: ["weapon-hit", "projectile"] },
+    sourceBehaviorId: { type: Number, required: true, min: 0 },
+    sourceAttackId: { type: Number, required: true, min: 0 },
+    sourceBulletId: { type: Number, min: 0 },
+    physicalAttackType: {
+      type: String,
+      required: true,
+      enum: ["standard", "strike", "slash", "pierce"],
+    },
+    motionValues: { type: damageTypesSchema, required: true },
+    addedDamage: { type: damageTypesSchema, required: true },
+    finalDamageRates: { type: damageTypesSchema, required: true },
+  },
+  { _id: false },
+);
+
+const weaponSkillAttackSchema = new Schema<WeaponSkillAttack>(
+  {
+    id: { type: String, required: true },
+    name: { type: String, required: true },
+    fpCost: { type: Number, required: true, min: 0 },
+    components: { type: [weaponSkillComponentSchema], required: true },
+  },
+  { _id: false },
+);
+
+export const weaponSkillSchema = new Schema<WeaponSkillProfile>(
+  {
+    id: { type: String, required: true },
+    name: { type: String, required: true },
+    sourceSwordArtId: { type: Number, required: true, min: 0 },
+    attacks: { type: [weaponSkillAttackSchema], required: true },
+  },
+  { _id: false },
+);
+
 const weaponCatalogSchema = new Schema<WeaponCatalogRecord>(
   {
     id: { type: String, required: true },
@@ -75,6 +117,16 @@ const weaponCatalogSchema = new Schema<WeaponCatalogRecord>(
         validator: (attacks: WeaponAttackProfile[]) =>
           new Set(attacks.map(({ id }) => id)).size === attacks.length,
         message: "Weapon attacks must contain unique IDs",
+      },
+    },
+    skills: {
+      type: [weaponSkillSchema],
+      required: true,
+      default: [],
+      validate: {
+        validator: (skills: WeaponSkillProfile[]) =>
+          new Set(skills.map(({ id }) => id)).size === skills.length,
+        message: "Weapon skills must contain unique IDs",
       },
     },
     source: { type: String, required: true, enum: ["REGULATION"] },

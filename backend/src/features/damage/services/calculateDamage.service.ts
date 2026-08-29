@@ -5,7 +5,9 @@ import { calculateAttackRating } from "../../weapons/domain/calculateAttackRatin
 import {
   findWeaponAttackProfile,
   findWeaponCalculationData,
+  findWeaponSkillAttack,
 } from "../../weapons/repositories/weapon.repository";
+import type { WeaponSkillAttack } from "../../weapons/domain/weaponSkill.types";
 import { calculateAttackOutput } from "../domain/calculateAttackOutput";
 import { calculateHitDamage } from "../domain/calculateDamage";
 import type {
@@ -39,11 +41,7 @@ async function calculateWeaponDamage(
       input.weaponId,
       settings.SUPPORTED_GAME_VERSION,
     ),
-    findWeaponAttackProfile(
-      input.weaponId,
-      input.attackId,
-      settings.SUPPORTED_GAME_VERSION,
-    ),
+    findSelectedAttack(input),
   ]);
 
   if (!calculationData) {
@@ -66,26 +64,7 @@ async function calculateWeaponDamage(
     input.stats,
     dataSet,
   );
-  const calculation = calculateAttackOutput(
-    attackRating,
-    {
-      id: attack.id,
-      name: attack.name,
-      fpCost: 0,
-      components: [
-        {
-          kind: "weapon-hit",
-          sourceBehaviorId: attack.sourceBehaviorId,
-          sourceAttackId: attack.sourceAttackId,
-          physicalAttackType: attack.physicalAttackType,
-          motionValues: attack.motionValues,
-          addedDamage: emptyDamageTypes(),
-          finalDamageRates: unitDamageTypes(),
-        },
-      ],
-    },
-    target,
-  );
+  const calculation = calculateAttackOutput(attackRating, attack, target);
 
   return {
     weapon: {
@@ -98,6 +77,43 @@ async function calculateWeaponDamage(
     ...calculation,
     limitations: [
       "Buffs, status effects, and special mechanics are not included.",
+    ],
+  };
+}
+
+async function findSelectedAttack(
+  input: WeaponDamageInput,
+): Promise<WeaponSkillAttack | null> {
+  if ("skillAttackId" in input) {
+    return findWeaponSkillAttack(
+      input.weaponId,
+      input.skillAttackId,
+      settings.SUPPORTED_GAME_VERSION,
+    );
+  }
+
+  const attack = await findWeaponAttackProfile(
+    input.weaponId,
+    input.attackId,
+    settings.SUPPORTED_GAME_VERSION,
+  );
+
+  if (!attack) return null;
+
+  return {
+    id: attack.id,
+    name: attack.name,
+    fpCost: 0,
+    components: [
+      {
+        kind: "weapon-hit",
+        sourceBehaviorId: attack.sourceBehaviorId,
+        sourceAttackId: attack.sourceAttackId,
+        physicalAttackType: attack.physicalAttackType,
+        motionValues: attack.motionValues,
+        addedDamage: emptyDamageTypes(),
+        finalDamageRates: unitDamageTypes(),
+      },
     ],
   };
 }

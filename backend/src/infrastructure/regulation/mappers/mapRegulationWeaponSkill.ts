@@ -15,9 +15,18 @@ import { resolvePhysicalAttackType } from "./mapRegulationWeaponAttacks";
 interface SkillAttackDefinition {
   id: string;
   name: string;
-  fpCostField: "useMagicPoint_R1" | "useMagicPoint_R2";
-  projectileBehaviorJudgeId: number;
-  weaponHitBehaviorJudgeId: number;
+  fpCostField:
+    | "useMagicPoint_L1"
+    | "useMagicPoint_L2"
+    | "useMagicPoint_R1"
+    | "useMagicPoint_R2";
+  components: readonly SkillComponentDefinition[];
+}
+
+interface SkillComponentDefinition {
+  kind: "projectile" | "weapon-hit";
+  sourceBehaviorId: number;
+  behaviorJudgeId: number;
 }
 
 export interface RegulationWeaponSkillDefinition {
@@ -50,21 +59,35 @@ export function mapRegulationWeaponSkill(
       id: attackDefinition.id,
       name: attackDefinition.name,
       fpCost: swordArt[attackDefinition.fpCostField],
-      components: [
-        mapProjectileComponent(weapon, definition.behaviorVariationId, attackDefinition.projectileBehaviorJudgeId, tables),
-        mapWeaponHitComponent(weapon, definition.behaviorVariationId, attackDefinition.weaponHitBehaviorJudgeId, tables),
-      ],
+      components: attackDefinition.components.map((component) =>
+        component.kind === "projectile"
+          ? mapProjectileComponent(
+            weapon,
+            component.sourceBehaviorId,
+            definition.behaviorVariationId,
+            component.behaviorJudgeId,
+            tables,
+          )
+          : mapWeaponHitComponent(
+            weapon,
+            component.sourceBehaviorId,
+            definition.behaviorVariationId,
+            component.behaviorJudgeId,
+            tables,
+          ),
+      ),
     })),
   };
 }
 
 function mapProjectileComponent(
   weapon: WeaponParamRow,
+  sourceBehaviorId: number,
   variationId: number,
   judgeId: number,
   tables: WeaponSkillTables,
 ) {
-  const behavior = findBehavior(tables.behaviors, variationId, judgeId, 1);
+  const behavior = findBehavior(tables.behaviors, sourceBehaviorId, variationId, judgeId, 1);
   const bullet = findOne(tables.bullets, behavior.refId, "Bullet");
   const attack = findOne(tables.attacks, bullet.atkId_Bullet, "AtkParam_Pc");
 
@@ -82,11 +105,12 @@ function mapProjectileComponent(
 
 function mapWeaponHitComponent(
   weapon: WeaponParamRow,
+  sourceBehaviorId: number,
   variationId: number,
   judgeId: number,
   tables: WeaponSkillTables,
 ) {
-  const behavior = findBehavior(tables.behaviors, variationId, judgeId, 0);
+  const behavior = findBehavior(tables.behaviors, sourceBehaviorId, variationId, judgeId, 0);
   const attack = findOne(tables.attacks, behavior.refId, "AtkParam_Pc");
 
   if (attack.isAddBaseAtk !== 0) {
@@ -131,9 +155,9 @@ function damageTypes(attack: AttackParamRow, suffix: "" | "Correction"): DamageT
   };
 }
 
-function findBehavior(rows: BehaviorParamRow[], variationId: number, judgeId: number, refType: number) {
-  const matches = rows.filter((row) => row.variationId === variationId && row.behaviorJudgeId === judgeId && row.refType === refType);
-  if (matches.length !== 1) throw new Error(`Expected one behavior ${variationId}:${judgeId}:${refType}, found ${matches.length}`);
+function findBehavior(rows: BehaviorParamRow[], sourceBehaviorId: number, variationId: number, judgeId: number, refType: number) {
+  const matches = rows.filter((row) => row.ID === sourceBehaviorId && row.variationId === variationId && row.behaviorJudgeId === judgeId && row.refType === refType);
+  if (matches.length !== 1) throw new Error(`Expected one behavior ${sourceBehaviorId}, found ${matches.length}`);
   return matches[0]!;
 }
 

@@ -75,9 +75,25 @@ describe("public weapon API", () => {
       name: "Moonveil",
       gameVersion: REGULATION_TEST_GAME_VERSION,
       attacks: [{ id: "katana-1h-heavy-1", name: "One-handed heavy attack 1" }],
+      skills: [
+        {
+          id: "transient-moonlight",
+          name: "Transient Moonlight",
+          attacks: [
+            {
+              id: "transient-moonlight-light",
+              name: "Transient Moonlight (Light)",
+              fpCost: 15,
+            },
+          ],
+        },
+      ],
     });
     expect(response.body.data[0].attacks[0]).not.toHaveProperty(
       "sourceAttackId",
+    );
+    expect(response.body.data[0].skills[0]).not.toHaveProperty(
+      "sourceSwordArtId",
     );
   });
 
