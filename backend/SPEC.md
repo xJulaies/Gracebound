@@ -326,6 +326,9 @@ server-owned. Public responses do not expose raw Regulation IDs. Routes are:
 ```text
 GET /api/talismans
 GET /api/talismans/:talismanId
+POST /api/builds/calculate-stats
+
+GET /api/character-classes
 ```
 
 List routes return arrays; detail routes return a one-element array or an empty
@@ -440,6 +443,36 @@ Crucible Scale exposes critical-damage reduction. Crucible Feather exposes its
 `1.3` incoming-damage penalty and linked dodge-effect refresh/duration. Crucible
 Knot exposes headshot-impact reduction, and Concealing Veil exposes conditional
 crouched-at-distance concealment.
+
+`GET /api/character-classes` returns the ten Regulation-derived starting
+classes with their starting level and all eight starting attributes.
+
+`POST /api/builds/calculate-stats` accepts a character-class ID, all eight base
+attributes, and up to four unique supported talisman IDs. Character level is
+the selected class's starting level plus all attribute points invested above
+its starting values. Attributes below a class starting value are invalid. The
+endpoint returns unchanged submitted stats, effective attributes capped at 99,
+combined resource multipliers, summed status resistance points, multiplied
+incoming-damage modifiers, Regulation-derived base and modified HP/FP/stamina/
+equip-load values, selected class/level, and selected talisman metadata.
+Unknown classes and unknown or `catalog-only` talismans return `400`.
+
+Resource curves come from `CalcCorrectGraph` IDs 100, 101, 104, and 220 for the
+active game version. Attribute bonuses are applied before resolving a curve;
+percentage resource modifiers are applied afterwards. The API never reads CSV
+exports at request time.
+
+Flat defense uses `CalcCorrectGraph` 102 for the level component and rows 130,
+132, 133, and 135 for physical, magic, fire, and holy attribute components;
+lightning has no attribute component. Status resistance uses rows 110-116 for
+the level components and 120-126 for the matching attribute components. Level
+curves are evaluated at `characterLevel + 79`. Preserve fractional components
+until they are combined, floor the result, and only then add flat equipment or
+talisman resistance points.
+
+Item Discovery uses `CalcCorrectGraph` 140 at effective Arcane. Convert its
+factor to displayed points by multiplying by 100 and flooring, then add flat
+equipment bonuses such as Silver Scarab's 75 points.
 
 Talisman modifiers are not required to affect the initial damage-calculation MVP.
 
@@ -578,6 +611,10 @@ Build character stats include:
 
 Values must be validated with Zod.
 
+The selected starting class is required to derive the character level. Class
+data comes from `BaseChrSelectMenuParam` joined to `CharaInitParam`; it is not a
+client-authored rules table.
+
 ---
 
 # Equipment
@@ -598,6 +635,28 @@ supported by the calculator. Unsupported effects must be identified explicitly
 and must not be silently approximated.
 
 Equipment references should use stable application game-data identifiers.
+
+## Armor catalog
+
+`GET /api/armor` and `GET /api/armor/:armorId` expose 587 Regulation-derived
+base-game armor pieces. Each entry includes slot, weight, poise, eight physical
+or elemental damage-negation values, seven status-resistance values, and
+whether an unresolved passive effect exists. Raw protector and SpEffect IDs
+remain internal. DLC rows at ID 5000000 and above are excluded until handled as
+a complete versioned dataset.
+
+`POST /api/builds/calculate-stats` accepts up to four unique armor IDs and
+rejects duplicate slots. It returns selected armor metadata, total armor
+weight, total poise, multiplicatively combined damage negation, and status
+resistances including armor and talisman points. `hasUnresolvedPassiveEffects`
+is true whenever a selected piece references an unsupported resident effect;
+such effects are never silently approximated.
+
+The endpoint also accepts up to six unique canonical weapon IDs. Total
+equipment load includes armor, supported talismans, and weapons. Load category
+uses the final modified maximum equip load: `<30%` light, `<70%` medium, `<100%`
+heavy, otherwise overloaded. The response includes current load, maximum load,
+ratio, percentage, category, and selected weapon metadata.
 
 ---
 

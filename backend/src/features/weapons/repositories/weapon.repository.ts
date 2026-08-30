@@ -62,6 +62,10 @@ export function findWeaponCatalogById(weaponId: string, gameVersion: string) {
   return WeaponCatalogModel.findOne({ id: weaponId, gameVersion }).lean().exec();
 }
 
+export function findWeaponCatalogByIds(weaponIds: string[], gameVersion: string) {
+  return WeaponCatalogModel.find({ id: { $in: weaponIds }, gameVersion }).lean().exec();
+}
+
 export async function findWeaponAttackProfile(
   weaponId: string,
   attackId: string,

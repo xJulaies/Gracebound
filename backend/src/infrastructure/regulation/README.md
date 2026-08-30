@@ -41,6 +41,24 @@ npm run data:import:talismans -- --exports "C:\path\to\exports" --regulation "C:
 Raw accessory and effect IDs remain internal. Effect calculations are added in
 separate verified slices.
 
+Import the ten starting classes and the resource, defense, and status-resistance curves
+from `BaseChrSelectMenuParam.csv`, `CharaInitParam.csv`, and
+`CalcCorrectGraph.csv` with:
+
+```powershell
+npm run data:import:classes -- --exports "C:\path\to\exports" --regulation "C:\path\to\regulation.bin"
+```
+
+Append `--dry-run` to validate the complete input without changing MongoDB.
+
+Import the normalized base-game armor catalog from `EquipParamProtector.csv`:
+
+```powershell
+npm run data:import:armor -- --exports "C:\path\to\exports" --regulation "C:\path\to\regulation.bin"
+```
+
+Regulation 1.17.0 must produce exactly 587 wearable base-game armor pieces.
+
 Compare two local export versions before importing an update:
 
 ```powershell

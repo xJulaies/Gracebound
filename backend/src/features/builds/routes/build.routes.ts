@@ -15,12 +15,15 @@ import {
   validateCreateBuild,
   validateUpdateBuild,
 } from "../middleware/validateBuildRequest";
+import { calculateSelectedBuildStats } from "../controllers/buildStats.controller";
+import { validateBuildStatsRequest } from "../middleware/validateBuildStatsRequest";
 
 export function createBuildRouter(
   getAuthenticatedUserId: GetAuthenticatedUserId,
 ) {
   const router = Router();
 
+  router.post("/builds/calculate-stats", validateBuildStatsRequest, calculateSelectedBuildStats);
   router.get("/builds", listPublicBuilds);
   router.get("/builds/:buildId", validateBuildId, getPublicBuild);
 

@@ -9,7 +9,7 @@ const nullableEquipmentIdSchema = z
   .max(100)
   .nullable();
 
-const statsSchema = z.strictObject({
+export const statsSchema = z.strictObject({
   vigor: z.number().int().min(1).max(99),
   mind: z.number().int().min(1).max(99),
   endurance: z.number().int().min(1).max(99),

@@ -11,6 +11,7 @@ import {
 import type { WeaponSkillAttack } from "../../weapons/domain/weaponSkill.types";
 import { findCompatibleAshOfWarAttack } from "../../ashesOfWar/repositories/ashOfWar.repository";
 import { findTalismansByIds } from "../../talismans/repositories/talisman.repository";
+import { applyAttributeBonuses } from "../../builds/domain/calculateBuildStats";
 import { calculateAttackOutput } from "../domain/calculateAttackOutput";
 import { calculateHitDamage } from "../domain/calculateDamage";
 import type {
@@ -66,15 +67,9 @@ async function calculateWeaponDamage(
     throw createError(400, "Invalid weapon upgrade level");
   }
 
-  const effectiveStats = talismans.reduce(
-    (stats, { effects }) => ({
-      strength: Math.min(99, stats.strength + effects!.attributeBonuses.strength),
-      dexterity: Math.min(99, stats.dexterity + effects!.attributeBonuses.dexterity),
-      intelligence: Math.min(99, stats.intelligence + effects!.attributeBonuses.intelligence),
-      faith: Math.min(99, stats.faith + effects!.attributeBonuses.faith),
-      arcane: Math.min(99, stats.arcane + effects!.attributeBonuses.arcane),
-    }),
+  const effectiveStats = applyAttributeBonuses(
     input.stats,
+    talismans.map(({ effects }) => effects!),
   );
   const attackRating = calculateAttackRating(
     weapon,

@@ -452,6 +452,10 @@ GET /api/armor/:armorId
 GET /api/talismans
 GET /api/talismans/:talismanId
 
+POST /api/builds/calculate-stats
+
+GET /api/character-classes
+
 GET /api/bosses
 GET /api/bosses/:bossId
 ```
@@ -463,6 +467,15 @@ accessory and effect IDs for later mapping, but expose only normalized selection
 data. Talisman effects remain `catalog-only` until their complete conditions and
 modifiers are verified from `SpEffectParam`; never infer support from the
 talisman name alone.
+
+The armor catalog uses the 587 uniquely named base-game `EquipParamProtector`
+rows below ID 5000000 in the four wearable categories. Exclude the internal
+zero-weight `Head`, `Body`, `Arms`, and `Legs` placeholders. Convert
+`*DamageCutRate` multipliers to normalized negation decimals with `1 - rate`,
+map `toughnessCorrectRate * 1000` as poise, and preserve all seven resistance
+point values. Negative damage negation is valid for equipment that increases
+incoming damage and must not be clamped to zero. Resident `SpEffectParam` IDs remain internal until each passive
+effect is explicitly supported. DLC armor requires a separate complete import.
 
 Permanent attribute bonuses are the first supported talisman effect group. Read
 them from `SpEffectParam.add*Status`, apply them before weapon attack-rating
@@ -589,6 +602,42 @@ defense/stealth effects. Validate their state markers. Preserve Scale's
 critical-damage multipliers, Feather's complete `1.3` incoming-damage tradeoff
 and linked dodge-effect timing, Knot's headshot-impact reduction, and Veil's
 crouched-at-distance concealment. Do not reinterpret these as generic defense.
+
+`POST /api/builds/calculate-stats` is the shared talisman build-stat calculation.
+It accepts a Regulation-backed character class, all eight base attributes, and
+up to four unique supported talismans. Character level is the class starting
+level plus every attribute point invested above that class's starting values.
+Reject attributes below the selected class's starting values.
+Calculate base HP, FP, stamina, and equip load from `CalcCorrectGraph` rows 100,
+101, 104, and 220 using effective attributes. Apply resource multipliers only
+after the base resource value has been resolved. Keep the source curves
+versioned in MongoDB; runtime requests must not read local CSV files.
+Player flat defenses use the level curve at `characterLevel + 79`, plus the
+verified governing attribute curve: Strength for physical, Intelligence for
+magic, Vigor for fire, no attribute curve for lightning, and Arcane for holy.
+Status resistances use their level curves at the same offset plus Vigor for
+poison/rot, Endurance for bleed/frost, Mind for sleep/madness, and Arcane for
+death blight. Floor only the combined value, then add flat talisman bonuses.
+Item Discovery is `CalcCorrectGraph` row 140 evaluated with effective Arcane,
+multiplied by 100 and floored. Add Silver Scarab-style Regulation bonuses only
+afterward; `itemDropRate: 0.75` represents 75 displayed discovery points.
+
+`POST /api/builds/calculate-stats` accepts up to four unique armor IDs, with at
+most one item per head, body, arms, and legs slot. Add weight, poise, and status
+resistance points. Combine armor negation multiplicatively as
+`1 - product(1 - pieceNegation)` for every damage type. Preserve request order
+in response metadata. If selected armor has unresolved resident effects, report
+that explicitly and never apply an inferred effect.
+
+The same endpoint accepts up to six unique canonical weapon IDs. Equipment
+load is the sum of selected armor, talisman, and weapon weights. Compare it to
+the final maximum equip load after attribute and resource modifiers. Classify
+ratios below 30% as `light`, below 70% as `medium`, below 100% as `heavy`, and
+100% or above as `overloaded`. Return current load, maximum load, ratio, and
+percentage so the frontend does not need to duplicate game rules.
+Return submitted and capped effective attributes separately; add resistance
+points and multiply resource/incoming-damage modifiers. Keep multiplier output
+decimal-stable. Unknown and `catalog-only` selections are rejected.
 
 Public build examples:
 
