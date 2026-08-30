@@ -6,6 +6,7 @@ export function mapWeaponResponse(record: WeaponCatalogRecord) {
     name: record.name,
     categoryId: record.categoryId,
     weaponTypeId: record.weaponTypeId,
+    weaponType: record.weaponType,
     weight: record.weight,
     iconId: record.iconId,
     swordArtId: record.swordArtId,

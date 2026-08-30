@@ -37,6 +37,11 @@ for (const field of Object.keys(ASH_OF_WAR_COMPATIBILITY_FIELDS)) {
   equipParamGemShape[field] = z.coerce.number().int().min(0).max(1);
 }
 
+for (let affinity = 0; affinity <= 12; affinity += 1) {
+  equipParamGemShape[`configurableWepAttr${affinity.toString().padStart(2, "0")}`] =
+    z.coerce.number().int().min(0).max(1);
+}
+
 export interface EquipParamGemRow {
   ID: number;
   Name: string;

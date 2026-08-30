@@ -94,6 +94,7 @@ const weaponCatalogSchema = new Schema<WeaponCatalogRecord>(
     name: { type: String, required: true },
     categoryId: { type: Number, required: true, min: 1 },
     weaponTypeId: { type: Number, required: true, min: 0 },
+    weaponType: { type: String, default: null },
     weight: { type: Number, required: true, min: 0 },
     iconId: { type: Number, required: true, min: 0 },
     swordArtId: { type: Number, min: 0, default: null },

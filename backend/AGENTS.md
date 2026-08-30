@@ -456,6 +456,140 @@ GET /api/bosses
 GET /api/bosses/:bossId
 ```
 
+The talisman catalog uses named base-game `EquipParamAccessory` rows below ID
+7000. Regulation 1.17.0 must map exactly 116 entries. IDs 7000 and above require
+a separate complete Shadow of the Erdtree import. Store the internal
+accessory and effect IDs for later mapping, but expose only normalized selection
+data. Talisman effects remain `catalog-only` until their complete conditions and
+modifiers are verified from `SpEffectParam`; never infer support from the
+talisman name alone.
+
+Permanent attribute bonuses are the first supported talisman effect group. Read
+them from `SpEffectParam.add*Status`, apply them before weapon attack-rating
+calculation, cap effective attributes at 99, and preserve the submitted base
+attributes in the response. The verified initial set is Starscourge Heirloom,
+Prosthesis-Wearer Heirloom, Stargazer Heirloom, and Two Fingers Heirloom.
+Reject unknown, duplicate, excessive, and `catalog-only` talisman selections.
+
+Radagon's and Marika's Scarseal/Soreseal are also supported permanent effects.
+Never model only their beneficial attributes: persist all eight attribute
+bonuses together with their incoming physical, magic, fire, lightning, and holy
+damage multipliers. The weapon calculator consumes only relevant scaling stats;
+the remaining normalized metadata belongs to future player-defense logic.
+
+The four Scorpion Charms are the verified permanent elemental-multiplier group.
+Use the PvE `atkEnemyDmgCorrectRate_*` fields: +12% applies only to the matching
+element after component motion value, added damage, and final-damage rate. Do
+not rewrite weapon attack rating. Preserve their +10% physical incoming-damage
+penalty from `defEnemyDmgCorrectRate_Physics`.
+
+Warrior Jar Shard and Shard of Alexander use the `skill-only` multiplier scope.
+Apply their Regulation `physicsAttackRate`, `magicAttackRate`, `fireAttackRate`,
+`thunderAttackRate`, and `darkAttackRate` only when `skillAttackId` selects an
+Ash of War or fixed weapon skill. Normal `attackId` requests must remain
+unchanged.
+
+The Axe Talisman uses the `charged-attack` scope. Resolve this from the selected
+verified normal attack profile (`charged-heavy`), not from a client-supplied
+boolean. Apply its `1.10` damage-type multipliers only to fully charged normal
+heavy attacks; uncharged attacks and skills remain unchanged.
+
+Dragoncrest Shield, Dragoncrest Greatshield, Spelldrake, Flamedrake, Boltdrake,
+Haligdrake, and Pearldrake variants are supported permanent PvE damage-negation
+effects. Read all five damage-type multipliers from the corresponding
+`defEnemyDmgCorrectRate_*` fields. Preserve these values in the catalog even
+while the outgoing-damage endpoint does not calculate damage received by the
+player.
+
+Crimson, Cerulean, and Viridian Amber Medallions, Arsenal Charm variants, and
+Erdtree's Favor variants are supported permanent resource effects. Map maximum
+HP, FP, stamina, and equip load directly from `maxHpRate`, `maxMpRate`,
+`maxStaminaRate`, and `equipWeightChangeRate`. Store neutral `1` multipliers as
+part of the complete effect contract; do not fabricate derived absolute values
+without the character-stat formula.
+
+Horn Charm, Prince of Death, and Mottled Necklace variants are supported
+permanent status-resistance effects. Preserve Regulation's individual poison,
+rot, bleed, frost, sleep, madness, and death-blight point bonuses instead of
+collapsing them into UI summary labels such as Immunity or Robustness.
+
+Graven-School and Graven-Mass are supported sorcery-only damage effects;
+Faithful's Canvas and Flock's Canvas are supported incantation-only damage
+effects. Keep these as separate spell scopes even though Regulation stores the
+same scalar in `magicAttackRate`. They must never modify weapon magic damage or
+weapon skills.
+
+Silver and Gold Scarabs, Moon of Nokstella, Green Turtle Talisman, Bull-Goat's
+Talisman, and Carian Filigreed Crest are supported permanent utility effects.
+Keep their discovery-rate bonus, rune multiplier, memory-slot bonus, stamina
+recovery bonus, poise-damage multiplier, and skill FP-cost multiplier in
+separate typed fields; do not combine values with different units.
+
+Old Lord's Talisman, Radagon Icon, and Primal Glintstone Blade are supported
+permanent spell utility effects. Map effect duration, virtual casting Dexterity,
+and spell FP cost from `extendLifeRate`,
+`dexterityCancelSystemOnlyAddDexterity`, and `magicConsumptionRate`. Primal
+Glintstone Blade's `maxHpRate` penalty is mandatory and must not be omitted.
+
+Crimson Seed, Cerulean Seed, and Blessed Dew are supported permanent recovery
+effects. Map flask multipliers directly. Regulation stores periodic healing as
+a negative `changeHpPoint`; expose Blessed Dew as a positive HP-per-second value
+derived using `motionInterval`, and reject silent sign or unit assumptions in
+other periodic effects.
+
+Hammer Talisman and Greatshield Talisman are supported guard-specific effects.
+Keep outgoing stamina damage and incoming guard stamina cost separate from HP
+damage. Daedicar's Woe is a supported unconditional incoming-damage modifier;
+preserve its `2.0` multiplier for all five damage types.
+
+Spear, Dagger, Twinblade, Lance, Claw, and Curved Sword Talismans use distinct
+conditional attack scopes: counterattack, critical, final chain attack, mounted,
+jumping, and guard counter. Persist their verified damage-type multipliers, but
+apply them only when a server-owned attack profile proves the condition. Never
+accept a client boolean as proof and never apply them to every weapon attack.
+
+Red- and Blue-Feathered Branchsword activate at 20% HP or below; Ritual Sword
+and Ritual Shield activate at 100% HP. Store both the Regulation threshold and
+the correct outgoing or incoming damage-type multipliers. Do not activate these
+effects until current and maximum HP are available as validated server state.
+
+Arrow's Reach, Arrow's Sting, Roar Medallion, and Godfrey Icon use distinct
+projectile-range, ranged-damage, roar/breath-damage, and charged-spell/skill
+scopes. Preserve `bowDistRate` as its Regulation bonus value. Apply damage scopes
+only to verified compatible server-owned profiles, never to generic attacks.
+
+Companion Jar and Perfumer's Talisman use separate throwable-pot and perfume
+damage scopes. Persist all five Regulation damage-type multipliers, and never
+apply either effect to weapons, skills, spells, or the other consumable category.
+
+Winged Sword Insignia, Rotten Winged Sword Insignia, and Millicent's Prosthesis
+must retain their Regulation accumulator thresholds and boost stages rather than
+one maximum multiplier. Read linked trigger/boost `SpEffectParam` rows, preserve
+stage duration, and include Millicent's permanent +5 Dexterity. Stage activation
+requires a future server-owned successive-hit state.
+
+Lord of Blood's Exultation and Kindred of Rot's Exultation use separate nearby
+blood-loss and poison/rot triggers. Validate their Regulation state-change IDs,
+follow `cycleOccurrenceSpEffectId`, and preserve the timed five-type damage
+boost. Runtime activation requires a server-owned status-trigger event.
+
+Taker's Cameo, Godskin Swaddling Cloth, both Assassin's Daggers, and Ancestral
+Spirit's Horn are event-recovery effects. Preserve trigger, accumulator threshold
+where applicable, maximum-HP percentage, flat HP, and flat FP components from
+their linked `SpEffectParam` rows. Regulation stores recovery as negative change
+values; expose positive recovery values. Runtime activation needs server events.
+
+Crepus's Vial, Longtail Cat Talisman, Shabriri's Woe, Sacrificial Twig, and both
+Trick-Mirrors are supported miscellaneous effects. Validate their Regulation
+state/VFX markers and preserve silence, fall-damage multiplier, target-priority
+modifier, rune-loss prevention, and appearance mode as separate fields.
+
+Crucible Scale, Feather, and Knot plus Concealing Veil are supported special
+defense/stealth effects. Validate their state markers. Preserve Scale's
+critical-damage multipliers, Feather's complete `1.3` incoming-damage tradeoff
+and linked dodge-effect timing, Knot's headshot-impact reduction, and Veil's
+crouched-at-distance concealment. Do not reinterpret these as generic defense.
+
 Public build examples:
 
 ```text
@@ -506,13 +640,36 @@ resolves the selected attack only within the selected weapon.
 
 Skill definitions declare their components explicitly. The mapper must support
 pure weapon-hit, pure projectile, and mixed attacks without inserting empty
-placeholder components. Square Off and Flame of the Redmanes are the reference
-cases for the first two forms; Transient Moonlight covers the mixed form.
+placeholder components. Square Off, Lion's Claw, Impaling Thrust, Piercing
+Fang, both Stamp variants, and Giant Hunt are verified weapon-hit cases; Flame
+of the Redmanes is the projectile case, and Transient Moonlight covers the
+mixed form. Charge Forth verifies full and early-release sequences; Unsheathe
+verifies stance follow-ups with separate FP costs.
 
 The public Ash-of-War catalog uses `EquipParamGem` playable rows, not their
 broad template rows. Compatibility comes from verified `canMountWep_*` flags.
 `GET /api/ashes-of-war` always returns an array and may filter by `weaponType`;
 `GET /api/ashes-of-war/:ashOfWarId` returns one-element or empty data arrays.
+Catalog entries use `supported` or `catalog-only` calculation status. The list
+may also filter by affinity and calculation status. `catalog-only` entries must
+never be accepted by the damage endpoint.
+
+Catalog Ash-of-War damage requests include `weaponId`, `ashOfWarId`, and
+`skillAttackId`. The backend resolves the weapon's normalized motion type and
+must reject incompatible combinations before calculation. Fixed weapon skills
+continue to use `weaponId` plus `skillAttackId` without `ashOfWarId`.
+
+Ashes whose motion values differ by weapon class use explicit skill variants.
+The repository selects a variant from the persisted weapon type; clients never
+submit an internal variant identifier. Wild Strikes is the verified reference
+case. Do not reuse one reference weapon's profile across incompatible classes.
+
+The completed MVP Ash-of-War calculation set is: Square Off, Flame of the
+Redmanes, Lion's Claw, Impaling Thrust, Piercing Fang, Stamp (Upward Cut), Stamp
+(Sweep), Giant Hunt, Wild Strikes, Charge Forth, and Unsheathe. Treat this as
+the canonical supported list. All other catalog Ashes remain `catalog-only`
+until their complete behavior chain is explicitly verified. Transient Moonlight
+is a fixed weapon skill and does not belong to this list.
 
 ---
 

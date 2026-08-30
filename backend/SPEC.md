@@ -314,8 +314,132 @@ The backend should expose:
 
 - id
 - name
-- description or effect
-- relevant effect metadata where available
+- icon ID
+- weight
+- calculation status
+
+The Regulation 1.17.0 MVP catalog imports 116 named base-game rows below accessory
+ID 7000 from `EquipParamAccessory`. DLC talismans require a separate complete
+Shadow of the Erdtree import. Internal accessory and `SpEffectParam` references remain
+server-owned. Public responses do not expose raw Regulation IDs. Routes are:
+
+```text
+GET /api/talismans
+GET /api/talismans/:talismanId
+```
+
+List routes return arrays; detail routes return a one-element array or an empty
+array on errors. Until an effect is explicitly mapped and tested, its
+calculation status remains `catalog-only`.
+
+The first supported effect group contains permanent, unconditional attribute
+bonuses. Starscourge Heirloom, Prosthesis-Wearer Heirloom, Stargazer Heirloom,
+and Two Fingers Heirloom add their Regulation-derived +5 bonus before weapon
+attack rating is calculated. Damage requests may include up to four unique
+`talismanIds`; unknown and unsupported selections are rejected. Effective
+attributes are capped at 99 and returned separately from the submitted base
+attributes.
+
+Radagon's Scarseal, Radagon's Soreseal, Marika's Scarseal, and Marika's
+Soreseal extend the same permanent group. Their complete catalog effects retain
+all eight attribute bonuses and their Regulation-derived incoming-damage
+multipliers. The outgoing weapon calculator applies the five weapon-scaling
+attributes; Vigor, Mind, Endurance, and incoming damage remain available as
+normalized effect metadata for later player-defense calculations.
+
+Magic, Lightning, Fire, and Sacred Scorpion Charm form the first permanent
+damage-multiplier group. Their Regulation PvE values apply +12% only to the
+matching outgoing damage type and retain the +10% incoming physical-damage
+penalty. Multipliers affect the final raw component output, including skill
+added damage, before target defense and absorption are evaluated. They do not
+alter the displayed weapon attack rating.
+
+Warrior Jar Shard and Shard of Alexander form the verified `skill-only`
+multiplier group. Their +10% and +15% Regulation multipliers apply to every
+damage component of interchangeable Ashes of War and fixed weapon skills. They
+must not affect normal weapon attacks.
+
+The Axe Talisman is the verified `charged-attack` scope. Its +10% Regulation
+multiplier applies to every damage type of fully charged normal heavy attacks.
+It does not affect uncharged heavy attacks or weapon skills.
+
+The four Dragoncrest variants and all base-game Spell-, Flame-, Bolt-, Halig-,
+and Pearldrake variants expose their verified PvE incoming-damage multipliers.
+These permanent effects are sourced from `defEnemyDmgCorrectRate_*` and retained
+for build defense calculations; they do not change outgoing boss damage.
+
+The three base-game tiers of Crimson, Cerulean, and Viridian Amber Medallions,
+Arsenal Charm including Great-Jar's Arsenal, and Erdtree's Favor expose their
+permanent maximum HP, FP, stamina, and equip-load multipliers. Absolute resource
+values remain a later build-stat calculation concern.
+
+Stalwart, Immunizing, and Clarifying Horn Charms, both Prince of Death variants,
+and both Mottled Necklaces expose their permanent Regulation point bonuses for
+poison, rot, bleed, frost, sleep, madness, and death blight separately.
+
+Graven-School and Graven-Mass expose sorcery-only damage multipliers. Faithful's
+Canvas and Flock's Canvas expose incantation-only damage multipliers. These
+scopes are retained for the later spell calculator and do not modify weapon or
+Ash-of-War damage.
+
+Silver and Gold Scarabs, Moon of Nokstella, Green Turtle Talisman, Bull-Goat's
+Talisman, and Carian Filigreed Crest expose their permanent utility values for
+discovery, rune acquisition, memory slots, stamina recovery, poise damage, and
+skill FP cost. Values with different units remain separate.
+
+Old Lord's Talisman exposes its spell-duration multiplier, Radagon Icon its
+virtual casting Dexterity, and Primal Glintstone Blade its spell FP-cost
+multiplier together with its maximum-HP penalty.
+
+Crimson Seed and Cerulean Seed expose their HP- and FP-flask recovery
+multipliers. Blessed Dew exposes its verified positive HP recovery per second,
+derived from Regulation's signed periodic HP change and interval.
+
+Hammer Talisman exposes its guard stamina-damage multiplier, Greatshield
+Talisman its guard stamina-cost multiplier, and Daedicar's Woe its permanent
+incoming-damage multiplier across all five damage types.
+
+Spear, Dagger, Twinblade, Lance, Claw, and Curved Sword Talismans expose separate
+counterattack, critical, final-chain, mounted, jumping, and guard-counter damage
+scopes. The catalog retains these values now; damage calculation consumes a
+scope only after the selected server-owned attack profile verifies it.
+
+Red- and Blue-Feathered Branchsword store their 20%-HP activation threshold and
+outgoing/incoming multipliers. Ritual Sword and Ritual Shield store their 100%-HP
+threshold and corresponding multipliers. Activation requires validated current
+and maximum HP and is not inferred by the existing weapon-damage endpoint.
+
+Arrow's Reach stores its projectile-range bonus, Arrow's Sting its ranged-damage
+multipliers, Roar Medallion its roar/breath multipliers, and Godfrey Icon its
+charged-spell/skill multipliers. These scopes require compatible server-owned
+profiles before calculation.
+
+Companion Jar exposes throwable-pot damage multipliers and Perfumer's Talisman
+exposes perfume damage multipliers. Both scopes remain isolated for the later
+consumable calculator.
+
+Winged Sword Insignia, Rotten Winged Sword Insignia, and Millicent's Prosthesis
+expose each successive-hit accumulator threshold, stage duration, and five-type
+damage multiplier. Millicent's permanent +5 Dexterity is included independently
+of its staged boost. Runtime activation awaits validated successive-hit state.
+
+Lord of Blood's Exultation stores its nearby blood-loss trigger and Kindred of
+Rot's Exultation its nearby poison-or-rot trigger. Both resolve their linked
+Regulation effect to a 20-second, five-type damage boost. Activation awaits a
+validated server-owned status event.
+
+Taker's Cameo, Godskin Swaddling Cloth, both Assassin's Daggers, and Ancestral
+Spirit's Horn expose enemy-kill, critical-hit, or successive-attack recovery.
+Percentage HP, flat HP, flat FP, and accumulator thresholds remain separate.
+
+Crepus's Vial, Longtail Cat Talisman, Shabriri's Woe, Sacrificial Twig, and both
+Trick-Mirrors expose their silence, fall-damage, enemy-priority, rune-retention,
+and multiplayer appearance effects as typed miscellaneous data.
+
+Crucible Scale exposes critical-damage reduction. Crucible Feather exposes its
+`1.3` incoming-damage penalty and linked dodge-effect refresh/duration. Crucible
+Knot exposes headshot-impact reduction, and Concealing Veil exposes conditional
+crouched-at-distance concealment.
 
 Talisman modifiers are not required to affect the initial damage-calculation MVP.
 
@@ -627,23 +751,53 @@ weapon API exposes only the skill selection data. Damage requests select either
 a normal `attackId` or a `skillAttackId`, never both. Skill components are
 loaded server-side and calculated separately before their results are summed.
 
-The Regulation skill mapper has three verified reference shapes: Square Off as
-a pure weapon-hit skill, Flame of the Redmanes as a pure projectile skill, and
-Transient Moonlight as a mixed skill. Only Transient Moonlight is persisted and
-selectable directly on its fixed weapon; interchangeable skills are selected
-through the standalone Ash-of-War catalog.
+The Regulation skill mapper supports pure weapon-hit, pure projectile, and
+mixed skills. Transient Moonlight remains selectable directly on its fixed
+weapon; interchangeable skills are selected through the standalone Ash-of-War
+catalog.
 
-The standalone Ash-of-War catalog is introduced with Square Off and Flame of
-the Redmanes. It stores playable `EquipParamGem` source rows, compatible weapon
-types, and normalized skill attacks. Public routes are:
+The standalone Ash-of-War catalog contains all 116 playable Regulation 1.17.0
+`EquipParamGem` rows. It stores compatible weapon types and affinities. Eleven
+entries are currently `supported`: Square Off, Flame of the Redmanes, Lion's
+Claw, Impaling Thrust, Piercing Fang, Stamp (Upward Cut), Stamp (Sweep), and
+Giant Hunt, Wild Strikes, Charge Forth, and Unsheathe. Wild Strikes stores
+separate profiles for each compatible weapon type so the backend resolves the
+correct class-specific motion values. The remaining entries are `catalog-only`
+until their damage components are verified. Public routes are:
+
+The completed MVP Ash-of-War calculation scope is:
+
+| Ash of War | Supported actions |
+| --- | --- |
+| Square Off | light and heavy follow-up |
+| Flame of the Redmanes | projectile |
+| Lion's Claw | weapon hit |
+| Impaling Thrust | weapon hit |
+| Piercing Fang | weapon hit |
+| Stamp (Upward Cut) | upward-cut follow-up |
+| Stamp (Sweep) | complete two-hit sweep |
+| Giant Hunt | weapon hit |
+| Wild Strikes | both loop hits and both complete follow-ups for all nine compatible weapon types |
+| Charge Forth | full sequence and early-release sequence |
+| Unsheathe | light and heavy follow-up |
+
+This list refers only to interchangeable Ashes in the standalone catalog.
+Transient Moonlight is a completed fixed Moonveil skill and is not counted
+among these eleven Ashes.
 
 ```text
 GET /api/ashes-of-war
 GET /api/ashes-of-war?weaponType=straight-sword
+GET /api/ashes-of-war?affinity=heavy&calculationStatus=catalog-only
 GET /api/ashes-of-war/:ashOfWarId
 ```
 
 Regulation source IDs and damage components remain server-owned.
+
+Interchangeable Ash-of-War damage requests provide `weaponId`, `ashOfWarId`,
+and `skillAttackId`. Compatibility is checked against the selected weapon's
+normalized motion type. A missing skill, unknown Ash of War, or incompatible
+weapon combination returns `404` with an empty data array.
 
 ---
 

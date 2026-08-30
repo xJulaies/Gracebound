@@ -24,7 +24,7 @@ describe("public Ash of War API", () => {
     const response = await request(app).get("/api/ashes-of-war");
 
     expect(response.status).toBe(200);
-    expect(response.body.data).toHaveLength(2);
+    expect(response.body.data).toHaveLength(3);
     expect(response.body.data[0]).toMatchObject({
       id: "flame-of-the-redmanes",
       compatibleWeaponTypes: ["straight-sword", "greatsword"],
@@ -32,12 +32,25 @@ describe("public Ash of War API", () => {
     });
     expect(response.body.data[0]).not.toHaveProperty("sourceGemId");
     expect(response.body.data[0].attacks[0]).not.toHaveProperty("components");
+    expect(response.body.data[2]).toMatchObject({
+      id: "wild-strikes",
+      calculationStatus: "catalog-only",
+      attacks: [],
+    });
   });
 
   it("filters by compatible weapon type", async () => {
     const response = await request(app).get("/api/ashes-of-war?weaponType=greatsword");
     expect(response.status).toBe(200);
     expect(response.body.data.map(({ id }: { id: string }) => id)).toEqual(["flame-of-the-redmanes"]);
+  });
+
+  it("filters by affinity and calculation support", async () => {
+    const response = await request(app).get(
+      "/api/ashes-of-war?affinity=heavy&calculationStatus=catalog-only",
+    );
+    expect(response.status).toBe(200);
+    expect(response.body.data.map(({ id }: { id: string }) => id)).toEqual(["wild-strikes"]);
   });
 
   it("returns one entry and handles invalid or unknown IDs", async () => {
@@ -58,12 +71,26 @@ describe("public Ash of War API", () => {
 const ashes: AshOfWarData[] = [
   ash("square-off", 11500, 6, ["straight-sword"]),
   ash("flame-of-the-redmanes", 50500, 14, ["straight-sword", "greatsword"]),
+  {
+    id: "wild-strikes",
+    sourceGemId: 10600,
+    sourceSwordArtId: 106,
+    name: "Wild Strikes",
+    iconId: 10600,
+    compatibleWeaponTypes: ["axe"],
+    compatibleAffinities: ["standard", "heavy"],
+    calculationStatus: "catalog-only",
+    skill: null,
+    skillVariants: [],
+  },
 ];
 
 function ash(id: string, sourceGemId: number, fpCost: number, compatibleWeaponTypes: string[]): AshOfWarData {
   const name = id.split("-").map((part) => part[0]!.toUpperCase() + part.slice(1)).join(" ");
   return {
-    id, sourceGemId, name, iconId: sourceGemId, compatibleWeaponTypes,
+    id, sourceGemId, name, iconId: sourceGemId, sourceSwordArtId: sourceGemId,
+    compatibleWeaponTypes, compatibleAffinities: ["standard"],
+    calculationStatus: "supported",
     skill: {
       id, name, sourceSwordArtId: sourceGemId,
       attacks: [{
@@ -75,6 +102,7 @@ function ash(id: string, sourceGemId: number, fpCost: number, compatibleWeaponTy
         }],
       }],
     },
+    skillVariants: [],
   };
 }
 

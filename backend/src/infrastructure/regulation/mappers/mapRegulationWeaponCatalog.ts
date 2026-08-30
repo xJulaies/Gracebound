@@ -9,6 +9,7 @@ import type { RegulationWeaponTables } from "./mapRegulationWeaponData";
 import { mapRegulationWeapon } from "./mapRegulationWeaponData";
 import type { WeaponParamRow } from "../schemas/weaponParam.schema";
 import { addRegulationWeaponNames } from "../data/regulationWeaponNames";
+import { meleeWeaponClassDefinitions } from "../data/meleeWeaponClassDefinitions";
 
 const PLAYER_WEAPON_CATEGORIES = new Set([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]);
 
@@ -73,6 +74,10 @@ export function mapRegulationWeaponCatalog(
       name: canonicalRow.Name,
       categoryId: canonicalRow.weaponCategory,
       weaponTypeId: canonicalRow.wepType,
+      weaponType:
+        meleeWeaponClassDefinitions.find(
+          ({ motionCategoryId }) => motionCategoryId === canonicalRow.wepmotionCategory,
+        )?.slug ?? null,
       weight: canonicalRow.weight,
       iconId: canonicalRow.iconId,
       swordArtId:

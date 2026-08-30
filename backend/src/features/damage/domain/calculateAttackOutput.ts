@@ -25,12 +25,14 @@ export function calculateAttackOutput(
   attackRating: DamageTypes,
   attack: WeaponSkillAttack,
   target?: DamageTarget,
+  outgoingDamageMultipliers: DamageTypes = unitDamageTypes(),
 ) {
   const components = attack.components.map((component) => {
     const rawOffensiveOutput = mapDamageTypes((damageType) =>
       (attackRating[damageType] * component.motionValues[damageType] / 100 +
         component.addedDamage[damageType]) *
-      component.finalDamageRates[damageType],
+      component.finalDamageRates[damageType] *
+      outgoingDamageMultipliers[damageType],
     );
     const offensiveOutput = withTotal(floorDamageTypes(rawOffensiveOutput));
 
@@ -90,6 +92,10 @@ export function calculateAttackOutput(
     ...(target ? { target: { id: target.id, name: target.name }, damage } : {}),
     accuracy: "estimated" as const,
   };
+}
+
+function unitDamageTypes(): DamageTypes {
+  return { physical: 1, magic: 1, fire: 1, lightning: 1, holy: 1 };
 }
 
 function mapDamageTypes(

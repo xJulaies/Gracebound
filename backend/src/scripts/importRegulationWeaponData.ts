@@ -117,9 +117,12 @@ async function importRegulationWeaponData() {
       total + skills.reduce((subtotal, skill) => subtotal + skill.attacks.length, 0),
     0,
   );
+  const supportedAshes = ashesOfWar.filter(
+    ({ calculationStatus }) => calculationStatus === "supported",
+  ).length;
 
   console.log(
-    `Validated ${catalog.report.canonicalWeapons} weapons, ${catalog.report.validatedCalculations} calculation variants, ${attackProfiles} direct attack profiles for ${weaponsWithAttacks.length} melee weapons, ${skillAttacks} attacks across ${skillProfiles} fixed skills, and ${ashesOfWar.length} Ashes of War`,
+    `Validated ${catalog.report.canonicalWeapons} weapons, ${catalog.report.validatedCalculations} calculation variants, ${attackProfiles} direct attack profiles for ${weaponsWithAttacks.length} melee weapons, ${skillAttacks} attacks across ${skillProfiles} fixed skills, and ${ashesOfWar.length} Ashes of War (${supportedAshes} supported)`,
   );
 
   if (process.argv.includes("--dry-run")) {
@@ -141,7 +144,9 @@ async function importRegulationWeaponData() {
     console.log(
       `Imported game version ${summary.gameVersion}: ${summary.weapons} weapons, ${summary.variants} variants, ${summary.attacks} verified attacks, ${summary.reinforcements} reinforcement datasets, ${summary.scalingCurves} scaling curves`,
     );
-    console.log(`Imported ${ashSummary.ashesOfWar} verified Ashes of War`);
+    console.log(
+      `Imported ${ashSummary.ashesOfWar} Ashes of War (${supportedAshes} supported)`,
+    );
   } finally {
     await disconnectMongoDB();
   }

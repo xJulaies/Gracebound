@@ -16,10 +16,30 @@ The importer also reads `SwordArtsParam.csv`, `Bullet.csv`, and
 `FinalDamageRateParam.csv`. The first persisted skill slice maps both Transient
 Moonlight attacks into separate projectile and weapon-hit components.
 
-The generic mapper is additionally verified against pure weapon-hit (Square
-Off) and pure projectile (Flame of the Redmanes) definitions. These become
-standalone MongoDB catalog entries using the playable `EquipParamGem` rows and
-their weapon compatibility flags.
+The generic mapper is additionally verified against pure weapon-hit, pure
+projectile, mixed, and weapon-class-dependent definitions. Eleven standalone
+Ashes currently have verified damage profiles: Square Off, Flame of the
+Redmanes, Lion's Claw, Impaling Thrust, Piercing Fang, Stamp (Upward Cut), Stamp
+(Sweep), Giant Hunt, Wild Strikes, Charge Forth, and Unsheathe. Wild Strikes
+keeps separate Regulation-derived skill profiles for all nine compatible weapon
+types.
+
+Regulation 1.17.0 contributes 116 playable Ash-of-War rows. Every entry exposes
+weapon-type and affinity compatibility. Unverified entries are imported as
+`catalog-only` with no damage profile; only `supported` entries may be used by
+the damage endpoint.
+
+The base-game talisman import reads `EquipParamAccessory.csv`, validates the
+116 named Regulation 1.17.0 rows below accessory ID 7000, and stores a normalized
+`talismans` catalog. DLC rows remain excluded until a complete DLC export exists.
+Run it with:
+
+```powershell
+npm run data:import:talismans -- --exports "C:\path\to\exports" --regulation "C:\path\to\regulation.bin"
+```
+
+Raw accessory and effect IDs remain internal. Effect calculations are added in
+separate verified slices.
 
 Compare two local export versions before importing an update:
 

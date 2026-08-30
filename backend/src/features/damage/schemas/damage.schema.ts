@@ -18,6 +18,13 @@ const bossIdSchema = z
   .string()
   .regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/)
   .optional();
+const talismanIdsSchema = z
+  .array(z.string().regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/))
+  .max(4)
+  .refine((ids) => new Set(ids).size === ids.length, {
+    message: "Talisman IDs must be unique",
+  })
+  .default([]);
 
 export const manualDamageSchema = z.strictObject({
   attackRating: damageTypesSchema,
@@ -37,6 +44,7 @@ const weaponDamageFields = {
     arcane: z.number().int().min(1).max(99),
   }),
   bossId: bossIdSchema,
+  talismanIds: talismanIdsSchema,
 };
 
 const attackIdSchema = z.string().regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/);
@@ -44,6 +52,11 @@ const attackIdSchema = z.string().regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/);
 export const weaponDamageSchema = z.union([
   z.strictObject({ ...weaponDamageFields, attackId: attackIdSchema }),
   z.strictObject({ ...weaponDamageFields, skillAttackId: attackIdSchema }),
+  z.strictObject({
+    ...weaponDamageFields,
+    ashOfWarId: attackIdSchema,
+    skillAttackId: attackIdSchema,
+  }),
 ]);
 
 export const calculateDamageSchema = z.union([

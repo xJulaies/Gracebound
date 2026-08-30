@@ -32,6 +32,7 @@ export interface WeaponCatalogEntry {
   name: string;
   categoryId: number;
   weaponTypeId: number;
+  weaponType: string | null;
   weight: number;
   iconId: number;
   swordArtId: number | null;

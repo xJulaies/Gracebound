@@ -6,6 +6,7 @@ import { createAshOfWarRouter } from "./features/ashesOfWar/routes/ashOfWar.rout
 import { createBossRouter } from "./features/bosses/routes/boss.routes";
 import { createDamageRouter } from "./features/damage/routes/damage.routes";
 import { createWeaponRouter } from "./features/weapons/routes/weapon.routes";
+import { createTalismanRouter } from "./features/talismans/routes/talisman.routes";
 import type { Authentication } from "./shared/auth/authentication.types";
 import { createAnswer } from "./shared/http/createAnswer";
 import { errorHandler } from "./shared/middleware/errorHandler";
@@ -31,6 +32,7 @@ export function createApp(authentication: Authentication) {
   app.use("/api", createAshOfWarRouter());
   app.use("/api", createBossRouter());
   app.use("/api", createDamageRouter());
+  app.use("/api", createTalismanRouter());
   app.use("/api", createWeaponRouter());
   app.use(notFoundHandler);
   app.use(errorHandler);

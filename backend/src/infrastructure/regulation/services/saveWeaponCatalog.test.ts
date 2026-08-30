@@ -30,7 +30,7 @@ describe("saveWeaponCatalog", () => {
       variants: 4,
       reinforcements: 1,
       scalingCurves: 2,
-      attacks: 3,
+      attacks: 4,
     });
     expect(await WeaponCatalogModel.countDocuments()).toBe(4);
     expect(await WeaponVariantModel.countDocuments()).toBe(4);
@@ -46,6 +46,10 @@ describe("saveWeaponCatalog", () => {
         expect.objectContaining({
           id: "katana-1h-heavy-1",
           sourceAttackId: 900100,
+        }),
+        expect.objectContaining({
+          id: "katana-1h-charged-heavy-1",
+          sourceAttackId: 900105,
         }),
       ],
     });

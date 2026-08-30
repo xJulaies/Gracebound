@@ -4,10 +4,13 @@ import { findBossById } from "../../bosses/repositories/boss.repository";
 import { calculateAttackRating } from "../../weapons/domain/calculateAttackRating";
 import {
   findWeaponAttackProfile,
+  findWeaponCatalogById,
   findWeaponCalculationData,
   findWeaponSkillAttack,
 } from "../../weapons/repositories/weapon.repository";
 import type { WeaponSkillAttack } from "../../weapons/domain/weaponSkill.types";
+import { findCompatibleAshOfWarAttack } from "../../ashesOfWar/repositories/ashOfWar.repository";
+import { findTalismansByIds } from "../../talismans/repositories/talisman.repository";
 import { calculateAttackOutput } from "../domain/calculateAttackOutput";
 import { calculateHitDamage } from "../domain/calculateDamage";
 import type {
@@ -36,12 +39,13 @@ async function calculateWeaponDamage(
   input: WeaponDamageInput,
   target?: Awaited<ReturnType<typeof findDamageTarget>>,
 ) {
-  const [calculationData, attack] = await Promise.all([
+  const [calculationData, attack, talismans] = await Promise.all([
     findWeaponCalculationData(
       input.weaponId,
       settings.SUPPORTED_GAME_VERSION,
     ),
     findSelectedAttack(input),
+    findTalismansByIds(input.talismanIds, settings.SUPPORTED_GAME_VERSION),
   ]);
 
   if (!calculationData) {
@@ -52,19 +56,71 @@ async function calculateWeaponDamage(
     throw createError(404, "Weapon attack not found");
   }
 
+  if (talismans.length !== input.talismanIds.length || talismans.some(({ effects }) => !effects)) {
+    throw createError(400, "Unsupported talisman selection");
+  }
+
   const { weapon, dataSet } = calculationData;
 
   if (input.upgradeLevel > weapon.maxUpgradeLevel) {
     throw createError(400, "Invalid weapon upgrade level");
   }
 
+  const effectiveStats = talismans.reduce(
+    (stats, { effects }) => ({
+      strength: Math.min(99, stats.strength + effects!.attributeBonuses.strength),
+      dexterity: Math.min(99, stats.dexterity + effects!.attributeBonuses.dexterity),
+      intelligence: Math.min(99, stats.intelligence + effects!.attributeBonuses.intelligence),
+      faith: Math.min(99, stats.faith + effects!.attributeBonuses.faith),
+      arcane: Math.min(99, stats.arcane + effects!.attributeBonuses.arcane),
+    }),
+    input.stats,
+  );
   const attackRating = calculateAttackRating(
     weapon,
     input.upgradeLevel,
-    input.stats,
+    effectiveStats,
     dataSet,
   );
-  const calculation = calculateAttackOutput(attackRating, attack, target);
+  const outgoingDamageMultipliers = talismans.reduce(
+    (multipliers, { effects }) => ({
+      physical: multipliers.physical * effects!.outgoingDamageMultipliers.physical,
+      magic: multipliers.magic * effects!.outgoingDamageMultipliers.magic,
+      fire: multipliers.fire * effects!.outgoingDamageMultipliers.fire,
+      lightning: multipliers.lightning * effects!.outgoingDamageMultipliers.lightning,
+      holy: multipliers.holy * effects!.outgoingDamageMultipliers.holy,
+    }),
+    unitDamageTypes(),
+  );
+  const appliedDamageMultipliers = "skillAttackId" in input
+    ? talismans.reduce(
+      (multipliers, { effects }) => ({
+        physical: multipliers.physical * effects!.skillDamageMultipliers.physical,
+        magic: multipliers.magic * effects!.skillDamageMultipliers.magic,
+        fire: multipliers.fire * effects!.skillDamageMultipliers.fire,
+        lightning: multipliers.lightning * effects!.skillDamageMultipliers.lightning,
+        holy: multipliers.holy * effects!.skillDamageMultipliers.holy,
+      }),
+      outgoingDamageMultipliers,
+    )
+    : input.attackId.includes("charged-heavy")
+      ? talismans.reduce(
+        (multipliers, { effects }) => ({
+          physical: multipliers.physical * effects!.chargedAttackDamageMultipliers.physical,
+          magic: multipliers.magic * effects!.chargedAttackDamageMultipliers.magic,
+          fire: multipliers.fire * effects!.chargedAttackDamageMultipliers.fire,
+          lightning: multipliers.lightning * effects!.chargedAttackDamageMultipliers.lightning,
+          holy: multipliers.holy * effects!.chargedAttackDamageMultipliers.holy,
+        }),
+        outgoingDamageMultipliers,
+      )
+      : outgoingDamageMultipliers;
+  const calculation = calculateAttackOutput(
+    attackRating,
+    attack,
+    target,
+    appliedDamageMultipliers,
+  );
 
   return {
     weapon: {
@@ -74,6 +130,8 @@ async function calculateWeaponDamage(
       upgradeLevel: input.upgradeLevel,
     },
     stats: input.stats,
+    effectiveStats,
+    talismans: talismans.map(({ id, name }) => ({ id, name })),
     ...calculation,
     limitations: [
       "Buffs, status effects, and special mechanics are not included.",
@@ -84,6 +142,22 @@ async function calculateWeaponDamage(
 async function findSelectedAttack(
   input: WeaponDamageInput,
 ): Promise<WeaponSkillAttack | null> {
+  if ("ashOfWarId" in input) {
+    const weapon = await findWeaponCatalogById(
+      input.weaponId,
+      settings.SUPPORTED_GAME_VERSION,
+    );
+
+    if (!weapon?.weaponType) return null;
+
+    return findCompatibleAshOfWarAttack(
+      input.ashOfWarId,
+      input.skillAttackId,
+      weapon.weaponType,
+      settings.SUPPORTED_GAME_VERSION,
+    );
+  }
+
   if ("skillAttackId" in input) {
     return findWeaponSkillAttack(
       input.weaponId,

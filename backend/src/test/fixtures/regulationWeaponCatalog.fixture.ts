@@ -47,7 +47,7 @@ export function createRegulationWeaponCatalogFixture(): WeaponCatalogDataSet {
 
   return {
     catalog: {
-      moonveil: catalogWeapon("moonveil", 9060000, "Moonveil", moonveilAttack),
+      moonveil: catalogWeapon("moonveil", 9060000, "Moonveil", [moonveilAttack, moonveilChargedAttack]),
       longsword: catalogWeapon("longsword", 1000000, "Longsword", longswordAttack),
       "serpentbone-blade": catalogWeapon(
         "serpentbone-blade",
@@ -104,7 +104,7 @@ function catalogWeapon(
   id: string,
   sourceId: number,
   name: string,
-  attack?: WeaponAttackProfile,
+  attack?: WeaponAttackProfile | WeaponAttackProfile[],
 ) {
   return {
     id,
@@ -112,12 +112,18 @@ function catalogWeapon(
     name,
     categoryId: 3,
     weaponTypeId: 13,
+    weaponType:
+      id === "longsword"
+        ? "straight-sword"
+        : id === "grafted-blade-greatsword"
+          ? "colossal-sword"
+          : "katana",
     weight: 6.5,
     iconId: sourceId,
     swordArtId: 1178,
     canChangeAffinity: false,
     variants: [{ id, sourceId, affinity: "standard" as const }],
-    attacks: attack ? [attack] : [],
+    attacks: attack ? (Array.isArray(attack) ? attack : [attack]) : [],
     skills: id === "moonveil" ? [moonveilSkill] : [],
   };
 }
@@ -137,6 +143,16 @@ const moonveilAttack: WeaponAttackProfile = {
     holy: 125,
   },
   physicalAttackType: "slash",
+};
+
+const moonveilChargedAttack: WeaponAttackProfile = {
+  ...moonveilAttack,
+  id: "katana-1h-charged-heavy-1",
+  name: "One-handed charged heavy attack 1",
+  behaviorJudgeId: 105,
+  sourceBehaviorId: 100900105,
+  sourceAttackId: 900105,
+  motionValues: damageTypes(160),
 };
 
 const longswordAttack: WeaponAttackProfile = {

@@ -2,6 +2,8 @@ import { describe, expect, it } from "vitest";
 import { moonveilSkillDefinition } from "../data/moonveilSkillDefinition";
 import { squareOffSkillDefinition } from "../data/squareOffSkillDefinition";
 import { flameOfTheRedmanesSkillDefinition } from "../data/flameOfTheRedmanesSkillDefinition";
+import { standardAshOfWarSkillDefinitions } from "../data/standardAshOfWarSkillDefinitions";
+import { wildStrikesSkillDefinitions } from "../data/wildStrikesSkillDefinitions";
 import type { WeaponParamRow } from "../schemas/weaponParam.schema";
 import type { AttackParamRow, BehaviorParamRow } from "../schemas/weaponAttackParam.schema";
 import type { BulletParamRow, FinalDamageRateRow, SwordArtsParamRow } from "../schemas/weaponSkillParam.schema";
@@ -73,6 +75,125 @@ describe("mapRegulationWeaponSkill", () => {
       },
     ]);
   });
+
+  it("maps the verified standard Ashes of War from their 1.17 attack rows", () => {
+    const standardTables = {
+      ...tables,
+      behaviors: [
+        { ...behavior(300000270, 270, 0, 301701900), variationId: 0 },
+        { ...behavior(300000271, 271, 0, 301701901), variationId: 0 },
+        { ...behavior(300000272, 272, 0, 301701902), variationId: 0 },
+        { ...behavior(300000273, 273, 0, 301701903), variationId: 0 },
+        { ...behavior(300000274, 274, 0, 301701904), variationId: 0 },
+        { ...behavior(300000275, 275, 0, 301701905), variationId: 0 },
+        { ...behavior(300000000, 0, 0, 300300820), variationId: 0 },
+        { ...behavior(300000010, 10, 0, 300000010), variationId: 0 },
+        { ...behavior(300000012, 12, 0, 300000050), variationId: 0 },
+        { ...behavior(300000290, 290, 0, 300000290), variationId: 0 },
+        { ...behavior(300000890, 890, 0, 300000891), variationId: 0 },
+        { ...behavior(300000891, 891, 0, 300000892), variationId: 0 },
+        { ...behavior(300000150, 150, 0, 301700910), variationId: 0 },
+        { ...behavior(300000560, 560, 0, 300000560), variationId: 0 },
+        { ...behavior(300000565, 565, 0, 300000565), variationId: 0 },
+      ],
+      attacks: [
+        attack(301701900, 35, 0, 2, 0, 10000),
+        attack(301701901, 35, 0, 2, 0, 10000),
+        attack(301701902, 35, 0, 2, 0, 10000),
+        attack(301701903, 35, 0, 2, 0, 10000),
+        attack(301701904, 145, 0, 2, 0, 10000),
+        attack(301701905, 145, 0, 2, 0, 10000),
+        attack(300300820, 240, 0, 0, 0, 10000),
+        attack(300000010, 187, 0, 1, 0, 10000),
+        attack(300000050, 212, 0, 1, 0, 10000),
+        attack(300000290, 215, 0, 0, 0, 10000),
+        attack(300000891, 92, 0, 0, 0, 10000),
+        attack(300000892, 112, 0, 0, 0, 10000),
+        attack(301700910, 220, 0, 1, 0, 10000),
+        attack(300000560, 190, 0, 253, 0, 10000),
+        attack(300000565, 245, 0, 253, 0, 10000),
+      ],
+      swordArts: [
+        swordArt(105, "Charge Forth", 16, -1),
+        swordArt(100, "Lion's Claw", 20, -1),
+        swordArt(101, "Impaling Thrust", 9, -1),
+        swordArt(102, "Piercing Fang", 16, -1),
+        swordArt(106, "Stamp (Upward Cut)", 5, 8),
+        swordArt(107, "Stamp (Sweep)", 5, 8),
+        swordArt(116, "Giant Hunt", 16, -1),
+        swordArt(114, "Unsheathe", 0, 15, 10),
+      ],
+    };
+
+    const skills = standardAshOfWarSkillDefinitions.map(({ definition }) =>
+      mapRegulationWeaponSkill(moonveil, definition, standardTables),
+    );
+
+    expect(skills.map(({ id }) => id)).toEqual([
+      "charge-forth",
+      "lions-claw",
+      "impaling-thrust",
+      "piercing-fang",
+      "stamp-upward-cut",
+      "stamp-sweep",
+      "giant-hunt",
+      "unsheathe",
+    ]);
+    expect(skills.flatMap(({ attacks: skillAttacks }) => skillAttacks)).toMatchObject([
+      {
+        fpCost: 16,
+        components: [35, 35, 35, 35, 145].map((value) => ({ motionValues: allDamage(value) })),
+      },
+      {
+        fpCost: 16,
+        components: [35, 145].map((value) => ({ motionValues: allDamage(value) })),
+      },
+      { fpCost: 20, components: [{ motionValues: allDamage(240) }] },
+      { fpCost: 9, components: [{ motionValues: allDamage(187) }] },
+      { fpCost: 16, components: [{ motionValues: allDamage(212) }] },
+      { fpCost: 8, components: [{ motionValues: allDamage(215) }] },
+      {
+        fpCost: 8,
+        components: [
+          { motionValues: allDamage(92) },
+          { motionValues: allDamage(112) },
+        ],
+      },
+      { fpCost: 16, components: [{ motionValues: allDamage(220) }] },
+      { fpCost: 10, components: [{ motionValues: allDamage(190) }] },
+      { fpCost: 15, components: [{ motionValues: allDamage(245) }] },
+    ]);
+  });
+
+  it("maps weapon-class-specific Wild Strikes motion values", () => {
+    const standard = wildStrikesSkillDefinitions.find(({ weaponType }) => weaponType === "greatsword")!;
+    const curvedSword = wildStrikesSkillDefinitions.find(({ weaponType }) => weaponType === "curved-sword")!;
+    const wildStrikesTables = {
+      ...tables,
+      behaviors: [
+        ...wildStrikeBehaviors(0, 301401800),
+        ...wildStrikeBehaviors(700, 301400800),
+      ],
+      attacks: [
+        ...wildStrikeAttacks(301401800, [107, 114, 45, 154, 44, 203]),
+        ...wildStrikeAttacks(301400800, [126, 119, 52, 183, 52, 243]),
+      ],
+      swordArts: [swordArt(110, "Wild Strikes", 2, 15, 10)],
+    };
+
+    const standardSkill = mapRegulationWeaponSkill(moonveil, standard.definition, wildStrikesTables);
+    const curvedSkill = mapRegulationWeaponSkill(moonveil, curvedSword.definition, wildStrikesTables);
+
+    expect(standardSkill.attacks[0]?.components[0]?.motionValues).toEqual(allDamage(107));
+    expect(curvedSkill.attacks[0]?.components[0]?.motionValues).toEqual(allDamage(126));
+    expect(standardSkill.attacks[2]).toMatchObject({
+      fpCost: 10,
+      components: [
+        { motionValues: allDamage(45) },
+        { motionValues: allDamage(154) },
+      ],
+    });
+  });
 });
 
 const moonveil = { ID: 9060000, Name: "Moonveil", atkAttribute: 0, atkAttribute2: 2 } as WeaponParamRow;
@@ -113,4 +234,35 @@ function rates(value: number) {
 
 function allDamage(value: number) {
   return { physical: value, magic: value, fire: value, lightning: value, holy: value };
+}
+
+function swordArt(
+  ID: number,
+  Name: string,
+  useMagicPoint_L2: number,
+  useMagicPoint_R2: number,
+  useMagicPoint_R1 = -1,
+): SwordArtsParamRow {
+  return {
+    ID,
+    Name,
+    useMagicPoint_L1: -1,
+    useMagicPoint_L2,
+    useMagicPoint_R1,
+    useMagicPoint_R2,
+  };
+}
+
+function wildStrikeBehaviors(variationId: number, firstAttackId: number): BehaviorParamRow[] {
+  const attackIds = [firstAttackId, firstAttackId + 10, firstAttackId + 1, firstAttackId + 2, firstAttackId + 3, firstAttackId + 4];
+  const judgeIds = [500, 510, 501, 502, 503, 504];
+  return judgeIds.map((judgeId, index) => ({
+    ...behavior(300000000 + variationId * 1000 + judgeId, judgeId, 0, attackIds[index]!),
+    variationId,
+  }));
+}
+
+function wildStrikeAttacks(firstAttackId: number, motionValues: number[]): AttackParamRow[] {
+  const attackIds = [firstAttackId, firstAttackId + 10, firstAttackId + 1, firstAttackId + 2, firstAttackId + 3, firstAttackId + 4];
+  return attackIds.map((id, index) => attack(id, motionValues[index]!, 0, 0, 0, 10000));
 }

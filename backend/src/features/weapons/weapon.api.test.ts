@@ -74,7 +74,13 @@ describe("public weapon API", () => {
       id: "moonveil",
       name: "Moonveil",
       gameVersion: REGULATION_TEST_GAME_VERSION,
-      attacks: [{ id: "katana-1h-heavy-1", name: "One-handed heavy attack 1" }],
+      attacks: [
+        { id: "katana-1h-heavy-1", name: "One-handed heavy attack 1" },
+        {
+          id: "katana-1h-charged-heavy-1",
+          name: "One-handed charged heavy attack 1",
+        },
+      ],
       skills: [
         {
           id: "transient-moonlight",
