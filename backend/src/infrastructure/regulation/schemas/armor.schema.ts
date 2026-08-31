@@ -30,3 +30,77 @@ export const armorParamRowSchema = z.object({
 });
 
 export type ArmorParamRow = z.infer<typeof armorParamRowSchema>;
+
+const multiplier = z.preprocess((value) => value === "" ? 1 : value, z.coerce.number().finite().nonnegative());
+
+export const armorEffectRowSchema = z.object({
+  ID: z.coerce.number().int().nonnegative(),
+  addLifeForceStatus: z.coerce.number().int(),
+  addWillpowerStatus: z.coerce.number().int(),
+  addEndureStatus: z.coerce.number().int(),
+  addStrengthStatus: z.coerce.number().int(),
+  addDexterityStatus: z.coerce.number().int(),
+  addMagicStatus: z.coerce.number().int(),
+  addFaithStatus: z.coerce.number().int(),
+  addLuckStatus: z.coerce.number().int(),
+  maxHpRate: multiplier,
+  maxMpRate: multiplier,
+  maxStaminaRate: multiplier,
+  equipWeightChangeRate: multiplier,
+  artsConsumptionRate: multiplier,
+  magicConsumptionRate: multiplier,
+  miracleConsumptionRate: multiplier,
+  neutralDamageCutRate: multiplier,
+  magicDamageCutRate: multiplier,
+  fireDamageCutRate: multiplier,
+  thunderDamageCutRate: multiplier,
+  darkDamageCutRate: multiplier,
+  changePoisonResistPoint: finite,
+  changeDiseaseResistPoint: finite,
+  changeBloodResistPoint: finite,
+  changeFreezeResistPoint: finite,
+  changeSleepResistPoint: finite,
+  changeMadnessResistPoint: finite,
+  changeCurseResistPoint: finite,
+  changeHpEstusFlaskCorrectRate: multiplier,
+  changeMpEstusFlaskCorrectRate: multiplier,
+  invocationConditionsStateChange1: z.coerce.number().int(),
+  cycleOccurrenceSpEffectId: z.coerce.number().int(),
+  effectEndurance: finite,
+  atkEnemyDmgCorrectRate_Physics: multiplier,
+  atkEnemyDmgCorrectRate_Magic: multiplier,
+  atkEnemyDmgCorrectRate_Fire: multiplier,
+  atkEnemyDmgCorrectRate_Thunder: multiplier,
+  atkEnemyDmgCorrectRate_Dark: multiplier,
+  conditionHp: finite,
+  motionInterval: finite,
+  changeHpPoint: finite,
+  hearingSearchEnemyRate: multiplier,
+  targetPriority: finite,
+  physicsAttackPower: finite,
+  behaviorId: z.coerce.number().int(),
+  physicsAttackRate: multiplier,
+  magicAttackRate: multiplier,
+  fireAttackRate: multiplier,
+  thunderAttackRate: multiplier,
+  darkAttackRate: multiplier,
+  physicsAttackPowerRate: multiplier,
+  stateInfo: z.coerce.number().int(),
+});
+
+export type ArmorEffectRow = z.infer<typeof armorEffectRowSchema>;
+
+export const armorBehaviorRowSchema = z.object({
+  ID: z.coerce.number().int().nonnegative(),
+  refType: z.coerce.number().int(),
+  refId: z.coerce.number().int(),
+});
+
+export const armorBulletRowSchema = z.object({
+  ID: z.coerce.number().int().nonnegative(),
+  hitRadius: finite,
+  spEffectId0: z.coerce.number().int(),
+});
+
+export type ArmorBehaviorRow = z.infer<typeof armorBehaviorRowSchema>;
+export type ArmorBulletRow = z.infer<typeof armorBulletRowSchema>;

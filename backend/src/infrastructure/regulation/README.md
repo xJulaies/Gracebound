@@ -4,6 +4,13 @@ Raw Smithbox CSV exports and `regulation.bin` remain local and must not be
 committed. The weapon importer validates and maps the complete catalog before
 opening a MongoDB connection.
 
+`EquipParamWeapon.csv` must include the `enableMagic` and `enableMiracle`
+columns. They identify sorcery staffs and sacred seals without relying on names
+or hard-coded weapon lists. Catalyst scaling reuses the imported reinforcement,
+AttackElementCorrect, and CalcCorrectGraph data with a Regulation base value of
+100. Keep scaling separated by damage type until spell attack components are
+mapped and can select the correct component.
+
 The weapon import also reads `BehaviorParam_PC.csv` and `AtkParam_Pc.csv` for
 the explicitly verified direct-melee slice. Version 1.17.0 maps 9,810 attack
 profiles to 318 weapons across 29 motion categories. Jump, critical, mounted,
@@ -51,13 +58,28 @@ npm run data:import:classes -- --exports "C:\path\to\exports" --regulation "C:\p
 
 Append `--dry-run` to validate the complete input without changing MongoDB.
 
-Import the normalized base-game armor catalog from `EquipParamProtector.csv`:
+Import the normalized base-game armor catalog from `EquipParamProtector.csv`
+and its resident passive effects from `SpEffectParam.csv`. The importer also
+uses `BehaviorParam_PC.csv` and `Bullet.csv` to resolve effects such as Deathbed
+Dress ally regeneration:
 
 ```powershell
 npm run data:import:armor -- --exports "C:\path\to\exports" --regulation "C:\path\to\regulation.bin"
 ```
 
 Regulation 1.17.0 must produce exactly 587 wearable base-game armor pieces.
+
+Import the normalized spell catalog from `Magic.csv`:
+
+```powershell
+npm run data:import:spells -- --exports "C:\path\to\exports" --regulation "C:\path\to\regulation.bin"
+```
+
+Regulation 1.17.0 must produce exactly 70 sorceries and 101 incantations.
+The spell importer also reads `Bullet.csv`, `AtkParam_Pc.csv`, and
+`FinalDamageRateParam.csv`. Glintstone Pebble, Great Glintstone Shard, and Swift
+Glintstone Shard are verified direct projectile profiles; all other spells
+remain catalog-only.
 
 Compare two local export versions before importing an update:
 

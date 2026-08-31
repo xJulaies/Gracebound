@@ -99,6 +99,12 @@ const weaponCatalogSchema = new Schema<WeaponCatalogRecord>(
     iconId: { type: Number, required: true, min: 0 },
     swordArtId: { type: Number, min: 0, default: null },
     canChangeAffinity: { type: Boolean, required: true },
+    castingTypes: {
+      type: [String],
+      required: true,
+      default: [],
+      enum: ["sorcery", "incantation"],
+    },
     variants: {
       type: [variantReferenceSchema],
       required: true,

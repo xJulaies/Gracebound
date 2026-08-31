@@ -17,6 +17,7 @@
     "data:import:talismans": "tsx src/scripts/importRegulationTalismanData.ts",
     "data:import:classes": "tsx src/scripts/importRegulationCharacterClassData.ts",
     "data:import:armor": "tsx src/scripts/importRegulationArmorData.ts",
+    "data:import:spells": "tsx src/scripts/importRegulationSpellData.ts",
     "data:import:regulation": "tsx src/scripts/importRegulationWeaponData.ts",
     "data:compare:regulation": "tsx src/scripts/compareRegulationExports.ts",
     "test": "vitest run",

@@ -9,6 +9,7 @@ import { createWeaponRouter } from "./features/weapons/routes/weapon.routes";
 import { createTalismanRouter } from "./features/talismans/routes/talisman.routes";
 import { createCharacterClassRouter } from "./features/characterClasses/routes/characterClass.routes";
 import { createArmorRouter } from "./features/armor/routes/armor.routes";
+import { createSpellRouter } from "./features/spells/routes/spell.routes";
 import type { Authentication } from "./shared/auth/authentication.types";
 import { createAnswer } from "./shared/http/createAnswer";
 import { errorHandler } from "./shared/middleware/errorHandler";
@@ -33,6 +34,7 @@ export function createApp(authentication: Authentication) {
   app.use("/api", createBuildRouter(authentication.getAuthenticatedUserId));
   app.use("/api", createCharacterClassRouter());
   app.use("/api", createArmorRouter());
+  app.use("/api", createSpellRouter());
   app.use("/api", createAshOfWarRouter());
   app.use("/api", createBossRouter());
   app.use("/api", createDamageRouter());

@@ -73,6 +73,38 @@ export function calculateAttackRating(
   return attackRating;
 }
 
+export function calculateCatalystScaling(
+  weapon: WeaponCalculationData,
+  upgradeLevel: number,
+  attributes: Attributes,
+  damageType: keyof DamageTypes,
+  dataSet: WeaponDataSet,
+): number {
+  const reinforcement = dataSet.reinforcements[weapon.reinforcementId]
+    ?.find((entry) => entry.level === upgradeLevel);
+
+  if (!reinforcement || upgradeLevel > weapon.maxUpgradeLevel) {
+    throw new Error(`Invalid upgrade level for ${weapon.name}`);
+  }
+
+  const scaling = weapon.corrections[damageType].map((correction) =>
+    calculateAttributeScaling(
+      correction,
+      weapon,
+      attributes,
+      reinforcement.scalingMultiplier[correction.attribute],
+      dataSet,
+    ),
+  );
+  const requirementPenalty = Math.min(0, ...scaling);
+  const scalingMultiplier = Math.max(
+    requirementPenalty,
+    scaling.reduce((total, value) => total + value, 0),
+  );
+
+  return Math.floor(100 + 100 * scalingMultiplier);
+}
+
 function calculateAttributeScaling(
   correction: AttributeCorrection,
   weapon: WeaponCalculationData,

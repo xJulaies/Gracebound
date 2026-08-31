@@ -452,6 +452,9 @@ GET /api/armor/:armorId
 GET /api/talismans
 GET /api/talismans/:talismanId
 
+GET /api/spells
+GET /api/spells/:spellId
+
 POST /api/builds/calculate-stats
 
 GET /api/character-classes
@@ -459,6 +462,15 @@ GET /api/character-classes
 GET /api/bosses
 GET /api/bosses/:bossId
 ```
+
+The Regulation 1.17.0 base-game spell catalog contains 70 sorceries and 101
+incantations from `Magic.csv`. Exclude NPC-prefixed rows, IDs 4641/4642, the
+duplicate Briars casting rows 8000/8001, and DLC IDs from 2000000 onward.
+Correct the internal casting-category mismatches for Death Lightning
+(incantation) and Night Maiden's Mist (sorcery). Public entries expose base FP
+cost, memory slots, Intelligence/Faith/Arcane requirements, icon, and
+`catalog-only` calculation status. Do not infer charged FP cost or spell damage
+until the corresponding behavior, bullet, attack, and catalyst data is mapped.
 
 The talisman catalog uses named base-game `EquipParamAccessory` rows below ID
 7000. Regulation 1.17.0 must map exactly 116 entries. IDs 7000 and above require
@@ -474,8 +486,49 @@ zero-weight `Head`, `Body`, `Arms`, and `Legs` placeholders. Convert
 `*DamageCutRate` multipliers to normalized negation decimals with `1 - rate`,
 map `toughnessCorrectRate * 1000` as poise, and preserve all seven resistance
 point values. Negative damage negation is valid for equipment that increases
-incoming damage and must not be clamped to zero. Resident `SpEffectParam` IDs remain internal until each passive
-effect is explicitly supported. DLC armor requires a separate complete import.
+incoming damage and must not be clamped to zero. Join resident `SpEffectParam`
+rows during import. The supported safe subset is permanent attribute bonuses,
+HP/FP/stamina/equip-load multipliers, skill/sorcery/incantation FP-cost
+multipliers, and the five general incoming-damage multipliers. Apply attribute
+bonuses before progression curves, then resource multipliers. Keep resident IDs
+internal. Also preserve direct status-resistance changes, Crimson/Cerulean
+flask recovery multipliers, and the verified 20/60-second triggered attack
+boosts for White Mask, Mushroom Crown, and Black Dumpling. Triggered boosts are
+catalog metadata until the server receives authoritative combat state; never
+apply them unconditionally. Mark pieces with remaining resident behavior as partially unresolved until
+their conditional and attack-scope-specific fields are verified. DLC armor
+requires a separate complete import.
+
+Royal Remains pieces expose their Regulation HP threshold and per-second wearer
+regeneration. Deathbed Dress ally healing must follow the verified
+`SpEffectParam -> BehaviorParam_PC -> Bullet -> SpEffectParam` chain and retain
+its radius; do not treat it as wearer healing. Preserve Black Knife Armor's
+enemy-hearing multiplier, Duelist/Rotten Duelist aggro-priority modifier, and
+Briar-set dodge-contact physical damage as separate utility fields. These
+values are not generic weapon damage modifiers.
+
+Offensive armor modifiers must retain their verified scope. Supported scopes
+include thorn/cold/comet/glintstone-stars sorceries, Comet Azur, Noble Presence,
+Crucible and Golden Order incantations, glintstone and Envoy bubble weapon
+skills, Omen Bairn tools, Ancestral Infant, throwable pots, jumping attacks,
+and Silver Tear Mask's all-physical penalty. Combine matching pieces only when
+the server-owned attack, spell, skill, or consumable profile proves the scope;
+the client must not activate a scope with an arbitrary boolean.
+`POST /api/damage/calculate` accepts up to four unique armor IDs with one item
+per slot. Apply armor attribute bonuses before weapon attack rating. Of the
+scoped armor modifiers, apply Silver Tear Mask to physical output and Raptor's
+Black Feathers only when the resolved normal attack profile is a jumping
+attack. Other scopes remain cataloged until their own server-owned attack
+profiles exist.
+
+Armor effect resolution is stored per catalog item and exposed as
+`hasUnresolvedPassiveEffects`; do not derive it merely from the presence of a
+resident effect ID. The 1.17.0 audit must find exactly 98 distinct resident
+effect IDs across 90 armor pieces. Only Pumpkin Helm remains partial: state
+marker 450 proves reduced headshot impact, but Regulation does not expose the
+engine-side numeric coefficient used to calculate it. Crown glow rows 486 and
+1950-1958 are verified non-gameplay markers and must not be reported as
+unresolved. Any inventory drift must fail import validation.
 
 Permanent attribute bonuses are the first supported talisman effect group. Read
 them from `SpEffectParam.add*Status`, apply them before weapon attack-rating
@@ -626,8 +679,9 @@ afterward; `itemDropRate: 0.75` represents 75 displayed discovery points.
 most one item per head, body, arms, and legs slot. Add weight, poise, and status
 resistance points. Combine armor negation multiplicatively as
 `1 - product(1 - pieceNegation)` for every damage type. Preserve request order
-in response metadata. If selected armor has unresolved resident effects, report
-that explicitly and never apply an inferred effect.
+in response metadata. Apply only the verified passive subset described above,
+return its normalized values, and report that remaining resident-effect fields
+are unresolved rather than inferring them.
 
 The same endpoint accepts up to six unique canonical weapon IDs. Equipment
 load is the sum of selected armor, talisman, and weapon weights. Compare it to
@@ -981,5 +1035,30 @@ Before modifying the backend:
 8. Keep regulation and ERDB structures behind the import and mapping boundary.
 9. Add or update tests for business-critical logic.
 10. Avoid modifying unrelated features.
+
+Build stats accepts up to ten unique spell IDs. Validate them against the
+active Regulation version and return catalog metadata. Available memory slots
+are two base slots plus zero to eight submitted Memory Stones and supported
+talisman bonuses. Reject selections exceeding that capacity. FP use, catalyst
+scaling, and spell damage remain deferred. Validate Intelligence, Faith, and
+Arcane requirements against effective stats after supported equipment bonuses.
+
+Identify catalysts only through `EquipParamWeapon.enableMagic` and
+`enableMiracle`. Catalyst scaling uses the existing weapon reinforcement,
+attribute-correction, and correction-curve data with base value 100. Preserve
+scaling per damage type; do not choose a single spell scaling value until a
+verified spell attack component supplies its damage type.
+
+Build stats accepts an optional catalyst selection containing canonical weapon
+ID, calculation-variant ID, and upgrade level. Verify variant ownership,
+supported casting types, upgrade bounds, and effective attribute requirements.
+Return Regulation-derived scaling for all five damage types.
+
+Spell damage support starts with verified direct projectile profiles. Resolve
+Magic primary bullet references to Bullet and AtkParam_Pc, treat the attack's
+per-type attack values as spell motion values, and apply FinalDamageRateParam.
+Glintstone Pebble, Great Glintstone Shard, and Swift Glintstone Shard are
+currently `supported`; all other spells remain `catalog-only` until verified
+through the generic mapper.
 
 If a requested implementation conflicts with this document or `spec.md`, explicitly identify the conflict before changing the architecture.

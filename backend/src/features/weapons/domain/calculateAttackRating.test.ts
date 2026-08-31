@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import { weaponFixtures } from "../data/weapon.fixtures";
 import {
   calculateAttackRating,
+  calculateCatalystScaling,
   calculateScalingCorrection,
 } from "./calculateAttackRating";
 
@@ -21,6 +22,32 @@ describe("calculateScalingCorrection", () => {
       0.148277,
       5,
     );
+  });
+});
+
+describe("calculateCatalystScaling", () => {
+  it("uses the selected damage correction with a base scaling value of 100", () => {
+    const weapon = weaponFixtures.weapons.moonveil;
+
+    expect(weapon).toBeDefined();
+    expect(calculateCatalystScaling(
+      weapon!,
+      10,
+      { strength: 12, dexterity: 30, intelligence: 70, faith: 8, arcane: 8 },
+      "magic",
+      weaponFixtures,
+    )).toBe(197);
+  });
+
+  it("rejects an unavailable upgrade level", () => {
+    const weapon = weaponFixtures.weapons.moonveil!;
+    expect(() => calculateCatalystScaling(
+      weapon,
+      11,
+      { strength: 12, dexterity: 30, intelligence: 70, faith: 8, arcane: 8 },
+      "magic",
+      weaponFixtures,
+    )).toThrow("Invalid upgrade level for Moonveil");
   });
 });
 

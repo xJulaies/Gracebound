@@ -20,6 +20,8 @@ import { ScalingCurveModel } from "../weapons/models/scalingCurve.model";
 import { WeaponVariantModel } from "../weapons/models/weapon.model";
 import { WeaponCatalogModel } from "../weapons/models/weaponCatalog.model";
 import { BossModel } from "../bosses/models/boss.model";
+import { saveArmorCatalog } from "../../infrastructure/regulation/services/saveArmorCatalog";
+import { neutralArmorPassiveEffects, type ArmorData } from "../armor/domain/armor.types";
 
 const passThroughAuthentication: RequestHandler = (_req, _res, next) => {
   next();
@@ -50,8 +52,25 @@ beforeEach(async () => {
       gameVersion: REGULATION_TEST_GAME_VERSION,
       sourceHash: REGULATION_TEST_SOURCE_HASH,
     }),
+    saveArmorCatalog([silverTearMask], {
+      gameVersion: REGULATION_TEST_GAME_VERSION,
+      sourceHash: REGULATION_TEST_SOURCE_HASH,
+    }),
   ]);
 });
+
+const silverTearEffects = neutralArmorPassiveEffects();
+silverTearEffects.scopedDamageBoosts.push({
+  scope: "all-physical-attacks",
+  damageMultipliers: { physical: 0.95, magic: 1, fire: 1, lightning: 1, holy: 1 },
+});
+const silverTearMask: ArmorData = {
+  id: "silver-tear-mask", sourceProtectorId: 610900, name: "Silver Tear Mask", slot: "head",
+  iconId: 1, weight: 4.6, poise: 5,
+  damageNegation: { physical: 0, strike: 0, slash: 0, pierce: 0, magic: 0, fire: 0, lightning: 0, holy: 0 },
+  resistances: { poison: 0, rot: 0, bleed: 0, frost: 0, sleep: 0, madness: 0, deathBlight: 0 },
+  sourceEffectIds: [6109000], hasUnresolvedPassiveEffects: false, passiveEffects: silverTearEffects,
+};
 
 const boss: BossData = {
   id: "test-boss",
@@ -502,6 +521,18 @@ describe("POST /api/damage/calculate with MongoDB weapon data", () => {
     expect(response.body.data[0]).toMatchObject({
       attackRating: { physical: 251, magic: 420, total: 671 },
       offensiveOutput: { physical: 313, magic: 588, total: 901 },
+    });
+  });
+
+  it("applies a supported armor multiplier only to its verified damage scope", async () => {
+    const response = await request(app)
+      .post("/api/damage/calculate")
+      .send({ ...createWeaponDamageRequest(), armorIds: ["silver-tear-mask"] });
+
+    expect(response.status).toBe(200);
+    expect(response.body.data[0]).toMatchObject({
+      armor: [{ id: "silver-tear-mask", name: "Silver Tear Mask", slot: "head" }],
+      offensiveOutput: { physical: 298, magic: 525, total: 823 },
     });
   });
 

@@ -11,6 +11,8 @@ export function mapArmorResponse(armor: ArmorRecord) {
     damageNegation: armor.damageNegation,
     resistances: armor.resistances,
     hasPassiveEffects: armor.sourceEffectIds.length > 0,
+    hasUnresolvedPassiveEffects: armor.hasUnresolvedPassiveEffects,
+    passiveEffects: armor.passiveEffects,
     gameVersion: armor.gameVersion,
   };
 }

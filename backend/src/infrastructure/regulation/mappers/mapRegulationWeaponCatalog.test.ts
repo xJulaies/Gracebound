@@ -3,6 +3,7 @@ import type { WeaponParamRow } from "../schemas/weaponParam.schema";
 import {
   getWeaponAffinity,
   isCanonicalPlayerWeapon,
+  mapCastingTypes,
 } from "./mapRegulationWeaponCatalog";
 
 describe("isCanonicalPlayerWeapon", () => {
@@ -15,6 +16,16 @@ describe("isCanonicalPlayerWeapon", () => {
     expect(isCanonicalPlayerWeapon(row(2092000, 2090000, 1, "[NPC] Inseparable Sword"))).toBe(false);
     expect(isCanonicalPlayerWeapon(row(1000, 1000, 1, ""))).toBe(false);
     expect(isCanonicalPlayerWeapon(row(170000, 170000, 0, "Throwing Dagger"))).toBe(false);
+  });
+});
+
+describe("mapCastingTypes", () => {
+  it("maps staff and sacred-seal Regulation flags", () => {
+    expect(mapCastingTypes({ enableMagic: 1, enableMiracle: 0 })).toEqual(["sorcery"]);
+    expect(mapCastingTypes({ enableMagic: 0, enableMiracle: 1 })).toEqual(["incantation"]);
+    expect(mapCastingTypes({ enableMagic: 1, enableMiracle: 1 })).toEqual([
+      "sorcery", "incantation",
+    ]);
   });
 });
 

@@ -85,6 +85,7 @@ export function mapRegulationWeaponCatalog(
           ? null
           : canonicalRow.swordArtsParamId,
       canChangeAffinity: variants.length > 1,
+      castingTypes: mapCastingTypes(canonicalRow),
       variants,
       attacks: [],
       skills: [],
@@ -106,6 +107,13 @@ export function mapRegulationWeaponCatalog(
       affinityCounts,
     },
   };
+}
+
+export function mapCastingTypes(row: Pick<WeaponParamRow, "enableMagic" | "enableMiracle">) {
+  return [
+    ...(row.enableMagic === 1 ? ["sorcery" as const] : []),
+    ...(row.enableMiracle === 1 ? ["incantation" as const] : []),
+  ];
 }
 
 function validateCalculations(dataSet: WeaponDataSet): number {

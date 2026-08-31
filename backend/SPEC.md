@@ -636,21 +636,101 @@ and must not be silently approximated.
 
 Equipment references should use stable application game-data identifiers.
 
+## Spell catalog
+
+`GET /api/spells` and `GET /api/spells/:spellId` expose 171 playable
+Regulation-derived base-game spells: 70 sorceries and 101 incantations. The
+list route may filter by `type=sorcery` or `type=incantation`. Entries include
+base FP cost, memory-slot cost, Intelligence/Faith/Arcane requirements, icon,
+and `catalog-only` calculation status. NPC rows, unused Carian Retaliation
+variants, duplicate Briars casting rows, and DLC IDs are excluded. Death
+Lightning and Night Maiden's Mist use their actual player-facing spell types
+rather than their mismatched internal casting prefixes.
+
+Spell selection is deliberately separate from spell-damage calculation.
+Charged FP behavior, catalyst scaling, projectiles, attack components, buffs,
+and healing values require additional verified Regulation mappings and must not
+be inferred by the catalog importer.
+
+The build-stats endpoint accepts up to ten unique spell IDs and validates them
+against the active Regulation version. `memoryStoneCount` accepts zero through
+eight. Available slots are two base slots plus Memory Stones and supported
+talisman bonuses. The response exposes available, used, and remaining slots;
+over-capacity selections are rejected. FP use, catalyst scaling, and spell
+damage remain outside this step. Intelligence, Faith, and Arcane requirements
+are validated against effective stats after supported armor and talisman
+bonuses. All current spell entries are `catalog-only`.
+
+Weapon catalog entries expose Regulation-derived `castingTypes` for sorcery
+staffs and sacred seals. Catalyst scaling is calculated from the existing
+weapon variant, reinforcement, AttackElementCorrect, and CalcCorrectGraph data
+using a base value of 100. Values remain separated by damage type until spell
+attack components are mapped; the backend must not guess which value a spell
+uses.
+
+`POST /api/builds/calculate-stats` accepts an optional `catalyst` with
+`weaponId`, `variantId`, and `upgradeLevel`. The backend verifies that the
+variant belongs to the catalog weapon, that its casting types cover every
+selected spell, that the upgrade exists, and that effective attributes meet
+the catalyst requirements. The response exposes five Regulation-derived
+scaling values; spell damage remains deferred.
+
+`POST /api/damage/calculate` supports the verified Glintstone Pebble direct
+projectile using its `Magic 4000 -> Bullet 10400000 -> AtkParam_Pc 40000`
+references. Its magic motion value is 152 and its final damage rate is 1.0.
+The endpoint combines this profile with the selected catalyst's Regulation
+scaling and optionally applies the existing boss defense and absorption rules.
+Great Glintstone Shard and Swift Glintstone Shard use the same verified direct
+projectile path with magic motion values 211 and 114. The remaining 168 spells
+stay `catalog-only`.
+
 ## Armor catalog
 
 `GET /api/armor` and `GET /api/armor/:armorId` expose 587 Regulation-derived
 base-game armor pieces. Each entry includes slot, weight, poise, eight physical
-or elemental damage-negation values, seven status-resistance values, and
-whether an unresolved passive effect exists. Raw protector and SpEffect IDs
-remain internal. DLC rows at ID 5000000 and above are excluded until handled as
-a complete versioned dataset.
+or elemental damage-negation values, seven status-resistance values, normalized
+supported passive effects, and whether unresolved passive behavior remains.
+The supported subset consists of permanent attribute bonuses, resource and FP
+cost multipliers, and general incoming-damage multipliers read directly from
+resident `SpEffectParam` rows. Direct status-resistance changes and flask
+recovery multipliers are included. White Mask, Mushroom Crown, and Black
+Dumpling expose their trigger, duration, and five outgoing-damage multipliers,
+but their bonuses are not activated without authoritative combat state. Raw
+protector and SpEffect IDs remain internal.
+
+Royal Remains regeneration includes its maximum-HP activation threshold and HP
+per second for the wearer. Deathbed Dress exposes nearby-ally HP per second and
+radius, derived through its Behavior and Bullet references. Stealth, aggro
+priority, and Briar dodge-contact damage remain distinct normalized utility
+effects rather than being folded into weapon attack rating.
+
+Offensive armor effects are stored as scoped five-type multipliers. Scopes
+distinguish specific sorcery/incantation families, named skills or tools,
+throwable pots, jumping attacks, and the Silver Tear Mask physical penalty.
+They remain inactive unless the selected server-owned attack profile matches
+the stored scope; merely equipping the armor does not create a global bonus.
+The weapon damage endpoint accepts the selected armor IDs, rejects duplicate
+slots, and applies armor attribute bonuses before attack-rating calculation.
+It currently activates the Silver Tear physical modifier and Raptor jumping
+modifier because normal weapon attack profiles can prove those scopes.
+
+The catalog stores and exposes effect-resolution state per armor item. For the
+1.17.0 base-game dataset, 98 distinct resident effects occur on 90 pieces.
+Pumpkin Helm is the only partial entry: its reduced-headshot-impact marker is
+exposed, while the unavailable engine-side coefficient is not guessed. Crown
+glow state rows are classified as visual-only rather than unresolved gameplay.
+Import validation rejects changes to these audited invariants.
+DLC rows at ID 5000000 and above are excluded until handled as a complete
+versioned dataset.
 
 `POST /api/builds/calculate-stats` accepts up to four unique armor IDs and
 rejects duplicate slots. It returns selected armor metadata, total armor
 weight, total poise, multiplicatively combined damage negation, and status
 resistances including armor and talisman points. `hasUnresolvedPassiveEffects`
-is true whenever a selected piece references an unsupported resident effect;
-such effects are never silently approximated.
+is true while a selected piece contains resident-effect behavior beyond that
+verified subset. Armor attribute bonuses are applied before resource and
+protection curves; resource modifiers are applied afterward. Unsupported
+conditional or attack-scope-specific behavior is never silently approximated.
 
 The endpoint also accepts up to six unique canonical weapon IDs. Total
 equipment load includes armor, supported talismans, and weapons. Load category

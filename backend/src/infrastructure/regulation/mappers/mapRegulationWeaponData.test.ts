@@ -38,7 +38,7 @@ function moonveilTables() {
     ID: 9060000, Name: "Moonveil", weaponCategory: 3, wepType: 13, wepmotionCategory: 29, originEquipWep: 9060000, weight: 6.5, iconId: 10654, swordArtsParamId: 1178, behaviorVariationId: 905, attackBasePhysics: 73, attackBaseMagic: 87, attackBaseFire: 0, attackBaseThunder: 0, attackBaseDark: 0,
     correctStrength: 12, correctAgility: 50, correctMagic: 60, correctFaith: 0, correctLuck: 0,
     properStrength: 12, properAgility: 18, properMagic: 23, properFaith: 0, properLuck: 0,
-    reinforceTypeId: 2200, attackElementCorrectId: 10000, correctType_Physics: 0, correctType_Magic: 4, correctType_Fire: 0, correctType_Thunder: 0, correctType_Dark: 0, atkAttribute: 0, atkAttribute2: 2,
+    reinforceTypeId: 2200, attackElementCorrectId: 10000, correctType_Physics: 0, correctType_Magic: 4, correctType_Fire: 0, correctType_Thunder: 0, correctType_Dark: 0, atkAttribute: 0, atkAttribute2: 2, enableMagic: 0, enableMiracle: 0,
   } satisfies WeaponParamRow;
   const reinforcements = Array.from({ length: 11 }, (_, level) => ({
     ID: 2200 + level, Name: `Unique +${level}`, physicsAtkRate: 1 + 0.145 * level, magicAtkRate: 1 + 0.145 * level, fireAtkRate: 1 + 0.145 * level, thunderAtkRate: 1 + 0.145 * level, darkAtkRate: 1 + 0.145 * level,

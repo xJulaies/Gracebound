@@ -1,6 +1,7 @@
 import type { WeaponDataSet } from "./weapon.types";
 import type { WeaponAttackProfile } from "./weaponAttack.types";
 import type { WeaponSkillProfile } from "./weaponSkill.types";
+import type { SpellType } from "../../spells/domain/spell.types";
 
 export const WEAPON_AFFINITIES = [
   "standard",
@@ -37,6 +38,7 @@ export interface WeaponCatalogEntry {
   iconId: number;
   swordArtId: number | null;
   canChangeAffinity: boolean;
+  castingTypes: SpellType[];
   variants: WeaponVariantReference[];
   attacks: WeaponAttackProfile[];
   skills: WeaponSkillProfile[];

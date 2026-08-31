@@ -1,4 +1,4 @@
-import type { ArmorData } from "../../armor/domain/armor.types";
+import { neutralArmorPassiveEffects, type ArmorData } from "../../armor/domain/armor.types";
 
 export function calculateArmorStats(armor: ArmorData[]) {
   const slots = new Set(armor.map(({ slot }) => slot));
@@ -17,8 +17,35 @@ export function calculateArmorStats(armor: ArmorData[]) {
       madness: total.madness + item.resistances.madness,
       deathBlight: total.deathBlight + item.resistances.deathBlight,
     }), { poison: 0, rot: 0, bleed: 0, frost: 0, sleep: 0, madness: 0, deathBlight: 0 }),
-    hasUnresolvedPassiveEffects: armor.some(({ sourceEffectIds }) => sourceEffectIds.length > 0),
+    passiveEffects: combinePassiveEffects(armor),
+    hasUnresolvedPassiveEffects: armor.some(({ hasUnresolvedPassiveEffects }) => hasUnresolvedPassiveEffects),
   };
+}
+
+function combinePassiveEffects(armor: ArmorData[]) {
+  return armor.reduce((total, item) => ({
+    attributeBonuses: mapValues(total.attributeBonuses, (key, value) => value + item.passiveEffects.attributeBonuses[key]),
+    resourceMultipliers: mapValues(total.resourceMultipliers, (key, value) => round(value * item.passiveEffects.resourceMultipliers[key])),
+    fpCostMultipliers: mapValues(total.fpCostMultipliers, (key, value) => round(value * item.passiveEffects.fpCostMultipliers[key])),
+    incomingDamageMultipliers: mapValues(total.incomingDamageMultipliers, (key, value) => round(value * item.passiveEffects.incomingDamageMultipliers[key])),
+    statusResistanceBonuses: mapValues(total.statusResistanceBonuses, (key, value) => value + item.passiveEffects.statusResistanceBonuses[key]),
+    flaskRecoveryMultipliers: mapValues(total.flaskRecoveryMultipliers, (key, value) => round(value * item.passiveEffects.flaskRecoveryMultipliers[key])),
+    conditionalAttackBoosts: [...total.conditionalAttackBoosts, ...item.passiveEffects.conditionalAttackBoosts],
+    regenerationEffects: [...total.regenerationEffects, ...item.passiveEffects.regenerationEffects],
+    utilityEffects: {
+      enemyHearingMultiplier: round(total.utilityEffects.enemyHearingMultiplier * item.passiveEffects.utilityEffects.enemyHearingMultiplier),
+      aggroPriorityModifier: round(total.utilityEffects.aggroPriorityModifier + item.passiveEffects.utilityEffects.aggroPriorityModifier),
+      dodgeContactPhysicalDamage: round(total.utilityEffects.dodgeContactPhysicalDamage + item.passiveEffects.utilityEffects.dodgeContactPhysicalDamage),
+      reducesHeadshotImpact: total.utilityEffects.reducesHeadshotImpact || item.passiveEffects.utilityEffects.reducesHeadshotImpact,
+    },
+    scopedDamageBoosts: [...total.scopedDamageBoosts, ...item.passiveEffects.scopedDamageBoosts],
+  }), neutralArmorPassiveEffects());
+}
+
+function mapValues<T extends Record<string, number>>(values: T, map: (key: keyof T, value: number) => number): T {
+  return Object.fromEntries(
+    (Object.keys(values) as Array<keyof T>).map((key) => [key, map(key, values[key])]),
+  ) as T;
 }
 
 function combineDamageNegation(armor: ArmorData[]) {

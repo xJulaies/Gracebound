@@ -11,6 +11,7 @@ export function createTalismanFixture(
     resourceMultipliers?: Partial<TalismanEffects["resourceMultipliers"]>;
     statusResistanceBonuses?: Partial<TalismanEffects["statusResistanceBonuses"]>;
     incomingDamageMultipliers?: Partial<TalismanEffects["incomingDamageMultipliers"]>;
+    utilityEffects?: Partial<TalismanEffects["utilityEffects"]>;
   } = {},
 ): TalismanData {
   const effects = neutralTalismanEffects();
@@ -34,6 +35,7 @@ export function createTalismanFixture(
         ...effects.incomingDamageMultipliers,
         ...overrides.incomingDamageMultipliers,
       },
+      utilityEffects: { ...effects.utilityEffects, ...overrides.utilityEffects },
     },
   };
 }

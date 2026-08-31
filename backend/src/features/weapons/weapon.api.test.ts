@@ -39,6 +39,7 @@ describe("public weapon API", () => {
       id: "grafted-blade-greatsword",
       name: "Grafted Blade Greatsword",
       gameVersion: REGULATION_TEST_GAME_VERSION,
+      castingTypes: [],
       variants: [
         { id: "grafted-blade-greatsword", affinity: "standard" },
       ],

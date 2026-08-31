@@ -122,6 +122,7 @@ function catalogWeapon(
     iconId: sourceId,
     swordArtId: 1178,
     canChangeAffinity: false,
+    castingTypes: id === "moonveil" ? ["sorcery" as const] : [],
     variants: [{ id, sourceId, affinity: "standard" as const }],
     attacks: attack ? (Array.isArray(attack) ? attack : [attack]) : [],
     skills: id === "moonveil" ? [moonveilSkill] : [],

@@ -38,6 +38,8 @@ export const weaponParamRowSchema = z.object({
   correctType_Dark: integerFromCsv.nonnegative(),
   atkAttribute: integerFromCsv.nonnegative(),
   atkAttribute2: integerFromCsv.nonnegative(),
+  enableMagic: integerFromCsv.min(0).max(1).default(0),
+  enableMiracle: integerFromCsv.min(0).max(1).default(0),
 });
 
 export const reinforceWeaponRowSchema = z.object({

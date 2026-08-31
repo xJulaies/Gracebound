@@ -25,6 +25,11 @@ const talismanIdsSchema = z
     message: "Talisman IDs must be unique",
   })
   .default([]);
+const armorIdsSchema = z
+  .array(z.string().regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/))
+  .max(4)
+  .refine((ids) => new Set(ids).size === ids.length, { message: "Armor IDs must be unique" })
+  .default([]);
 
 export const manualDamageSchema = z.strictObject({
   attackRating: damageTypesSchema,
@@ -45,7 +50,17 @@ const weaponDamageFields = {
   }),
   bossId: bossIdSchema,
   talismanIds: talismanIdsSchema,
+  armorIds: armorIdsSchema,
 };
+
+const spellDamageSchema = z.strictObject({
+  spellId: z.string().regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/),
+  catalystWeaponId: z.string().regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/),
+  catalystVariantId: z.string().regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/),
+  upgradeLevel: z.number().int().min(0).max(25),
+  stats: weaponDamageFields.stats,
+  bossId: bossIdSchema,
+});
 
 const attackIdSchema = z.string().regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/);
 
@@ -62,8 +77,10 @@ export const weaponDamageSchema = z.union([
 export const calculateDamageSchema = z.union([
   manualDamageSchema,
   weaponDamageSchema,
+  spellDamageSchema,
 ]);
 
 export type CalculateDamageInput = z.infer<typeof calculateDamageSchema>;
 export type ManualDamageInput = z.infer<typeof manualDamageSchema>;
 export type WeaponDamageInput = z.infer<typeof weaponDamageSchema>;
+export type SpellDamageInput = z.infer<typeof spellDamageSchema>;
