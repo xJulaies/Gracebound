@@ -22,9 +22,6 @@ export const calculateBuildStatsSchema = z.strictObject({
   weaponIds: z
     .array(z.string().regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/))
     .max(6)
-    .refine((ids) => new Set(ids).size === ids.length, {
-      message: "Weapon IDs must be unique",
-    })
     .default([]),
   spellIds: z
     .array(z.string().regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/))

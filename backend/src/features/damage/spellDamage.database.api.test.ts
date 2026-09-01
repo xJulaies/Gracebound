@@ -19,6 +19,10 @@ const app = createApp({
   authenticationMiddleware: passThroughAuthentication,
   getAuthenticatedUserId: () => null,
 });
+const authenticatedApp = createApp({
+  authenticationMiddleware: passThroughAuthentication,
+  getAuthenticatedUserId: (request) => request.header("x-test-user-id") ?? null,
+});
 
 useMongoMemoryServer({ replicaSet: true });
 
@@ -63,6 +67,33 @@ const stats = {
 };
 
 describe("POST /api/damage/calculate spell damage", () => {
+  it("calculates a selected spell from a saved owned build", async () => {
+    const createResponse = await request(authenticatedApp)
+      .post("/api/me/builds")
+      .set("x-test-user-id", "user-1")
+      .send({
+        name: "Pebble Build", level: 150,
+        stats: { vigor: 50, mind: 30, endurance: 25, ...stats },
+        spellIds: ["glintstone-pebble"],
+        equipment: {
+          catalyst: { weaponId: "moonveil", variantId: "moonveil", upgradeLevel: 10 },
+        },
+      });
+    expect(createResponse.status).toBe(201);
+
+    const response = await request(authenticatedApp)
+      .post(`/api/me/builds/${createResponse.body.data[0].id}/calculate-damage`)
+      .set("x-test-user-id", "user-1")
+      .send({ spellId: "glintstone-pebble" });
+
+    expect(response.status).toBe(200);
+    expect(response.body.data[0]).toMatchObject({
+      spell: { id: "glintstone-pebble" },
+      catalyst: { weaponId: "moonveil", variantId: "moonveil", upgradeLevel: 10 },
+      offensiveOutput: { magic: 299, total: 299 },
+    });
+  });
+
   it("calculates the verified projectile from catalyst scaling", async () => {
     const response = await request(app).post("/api/damage/calculate").send({
       spellId: "glintstone-pebble",

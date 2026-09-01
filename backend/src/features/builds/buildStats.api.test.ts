@@ -23,6 +23,10 @@ const app = createApp({
   authenticationMiddleware: passThroughAuthentication,
   getAuthenticatedUserId: () => null,
 });
+const authenticatedApp = createApp({
+  authenticationMiddleware: passThroughAuthentication,
+  getAuthenticatedUserId: (request) => request.header("x-test-user-id") ?? null,
+});
 
 useMongoMemoryServer({ replicaSet: true });
 
@@ -75,6 +79,47 @@ const stats = {
   vigor: 50, mind: 30, endurance: 25, strength: 12,
   dexterity: 30, intelligence: 70, faith: 9, arcane: 9,
 };
+
+describe("saved build catalog validation", () => {
+  it("persists a valid character class and spell loadout", async () => {
+    const response = await request(authenticatedApp)
+      .post("/api/me/builds")
+      .set("x-test-user-id", "user-1")
+      .send({
+        name: "Astrologer Spells",
+        characterClassId: "astrologer",
+        level: 156,
+        stats,
+        memoryStoneCount: 1,
+        spellIds: ["glintstone-pebble"],
+        equipment: {
+          weaponSlots: {
+            rightHand1: { weaponId: "moonveil", variantId: "moonveil", upgradeLevel: 10 },
+          },
+        },
+      });
+
+    expect(response.status).toBe(201);
+    expect(response.body.data[0]).toMatchObject({
+      characterClassId: "astrologer",
+      level: 156,
+      memoryStoneCount: 1,
+      spellIds: ["glintstone-pebble"],
+    });
+  });
+
+  it("rejects a level that does not match class and attributes", async () => {
+    const response = await request(authenticatedApp)
+      .post("/api/me/builds")
+      .set("x-test-user-id", "user-1")
+      .send({
+        name: "Invalid Level", characterClassId: "astrologer",
+        level: 150, stats,
+      });
+
+    expect(response.status).toBe(400);
+  });
+});
 
 describe("POST /api/builds/calculate-stats", () => {
   it("calculates aggregate build stats from supported talismans", async () => {
@@ -294,7 +339,7 @@ describe("POST /api/builds/calculate-stats", () => {
     expect(duplicateSlot.status).toBe(400);
   });
 
-  it("rejects unknown and duplicate weapon selections", async () => {
+  it("rejects unknown and accepts duplicate weapon selections", async () => {
     const [unknown, duplicate] = await Promise.all([
       request(app).post("/api/builds/calculate-stats").send({
         characterClassId: "astrologer", stats, talismanIds: [], armorIds: [], weaponIds: ["unknown"],
@@ -304,7 +349,7 @@ describe("POST /api/builds/calculate-stats", () => {
       }),
     ]);
     expect(unknown.status).toBe(400);
-    expect(duplicate.status).toBe(400);
+    expect(duplicate.status).toBe(200);
   });
 });
 

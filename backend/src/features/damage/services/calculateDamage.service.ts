@@ -9,7 +9,7 @@ import {
   findWeaponSkillAttack,
 } from "../../weapons/repositories/weapon.repository";
 import type { WeaponSkillAttack } from "../../weapons/domain/weaponSkill.types";
-import { findCompatibleAshOfWarAttack } from "../../ashesOfWar/repositories/ashOfWar.repository";
+import { findCompatibleAshOfWarAttack, findCompatibleAshOfWarBuff } from "../../ashesOfWar/repositories/ashOfWar.repository";
 import { findTalismansByIds } from "../../talismans/repositories/talisman.repository";
 import { applyAttributeBonuses } from "../../builds/domain/calculateBuildStats";
 import { findArmorByIds } from "../../armor/repositories/armor.repository";
@@ -156,20 +156,23 @@ async function calculateWeaponDamage(
   input: WeaponDamageInput,
   target?: Awaited<ReturnType<typeof findDamageTarget>>,
 ) {
-  const [calculationData, attack, talismans, armor, buffs] = await Promise.all([
+  const [calculationData, weaponCatalog, attack, talismans, armor, buffs] = await Promise.all([
     findWeaponCalculationData(
-      input.weaponId,
+      input.weaponVariantId,
       settings.SUPPORTED_GAME_VERSION,
     ),
+    findWeaponCatalogById(input.weaponId, settings.SUPPORTED_GAME_VERSION),
     findSelectedAttack(input),
     findTalismansByIds(input.talismanIds, settings.SUPPORTED_GAME_VERSION),
     findArmorByIds(input.armorIds, settings.SUPPORTED_GAME_VERSION),
     findSpellsByIds(input.buffSpellIds, settings.SUPPORTED_GAME_VERSION),
   ]);
 
-  if (!calculationData) {
+  if (!calculationData || !weaponCatalog) {
     throw createError(404, "Weapon not found");
   }
+  const selectedVariant = weaponCatalog.variants.find(({ id }) => id === input.weaponVariantId);
+  if (!selectedVariant) throw createError(400, "Weapon variant does not belong to selected weapon");
 
   if (!attack) {
     throw createError(404, "Weapon attack not found");
@@ -205,9 +208,19 @@ async function calculateWeaponDamage(
     dataSet,
   );
   const appliedWeaponBuff = await resolveWeaponBuff(input.weaponBuff, weapon.canApplyWeaponBuff === true, effectiveStats);
-  const attackRating = appliedWeaponBuff
-    ? addDamageTypes(baseAttackRating, appliedWeaponBuff.addedDamage)
+  const appliedSkillBuff = await resolveSkillBuff(input);
+  if (appliedWeaponBuff && appliedSkillBuff) {
+    throw createError(400, "Spell and skill weapon buffs cannot be active together");
+  }
+  const skillAdjustedAttackRating = appliedSkillBuff
+    ? addDamageTypes(
+      multiplyAttackRating(baseAttackRating, appliedSkillBuff.effect.attackPowerMultipliers),
+      appliedSkillBuff.effect.addedDamage,
+    )
     : baseAttackRating;
+  const attackRating = appliedWeaponBuff
+    ? addDamageTypes(skillAdjustedAttackRating, appliedWeaponBuff.addedDamage)
+    : skillAdjustedAttackRating;
   const outgoingDamageMultipliers = talismans.reduce(
     (multipliers, { effects }) => ({
       physical: multipliers.physical * effects!.outgoingDamageMultipliers.physical,
@@ -241,11 +254,11 @@ async function calculateWeaponDamage(
         outgoingDamageMultipliers,
       )
       : outgoingDamageMultipliers;
-  const appliedDamageMultipliers = applyBuffMultipliers(applySupportedArmorDamageMultipliers(
+  const appliedDamageMultipliers = multiplyDamageTypes(applyBuffMultipliers(applySupportedArmorDamageMultipliers(
     talismanDamageMultipliers,
     armorStats.passiveEffects.scopedDamageBoosts,
     "attackId" in input && input.attackId.includes("jumping"),
-  ), selectedBuffs);
+  ), selectedBuffs), appliedSkillBuff?.effect.outgoingDamageMultipliers ?? unitDamageTypes());
   const calculation = calculateAttackOutput(
     attackRating,
     attack,
@@ -259,6 +272,7 @@ async function calculateWeaponDamage(
       name: weapon.name,
       gameVersion: weapon.gameVersion,
       upgradeLevel: input.upgradeLevel,
+      affinity: selectedVariant.affinity,
     },
     stats: input.stats,
     effectiveStats,
@@ -268,12 +282,30 @@ async function calculateWeaponDamage(
       id, name, slot: buffEffect!.slot, durationSeconds: buffEffect!.durationSeconds,
     })),
     weaponBuff: appliedWeaponBuff?.metadata ?? null,
+    skillBuff: appliedSkillBuff ? {
+      id: appliedSkillBuff.id, name: appliedSkillBuff.name,
+      ...appliedSkillBuff.effect,
+    } : null,
     ...calculation,
     limitations: [
       ...(appliedWeaponBuff?.metadata.limitations ?? []),
+      ...(appliedSkillBuff?.effect.limitations ?? []),
       "Unmodeled status effects and special mechanics are not included.",
     ],
   };
+}
+
+async function resolveSkillBuff(input: WeaponDamageInput) {
+  if (!input.skillBuffAshOfWarId) return null;
+  const weapon = await findWeaponCatalogById(input.weaponId, settings.SUPPORTED_GAME_VERSION);
+  if (!weapon?.weaponType) throw createError(400, "Invalid skill-buff weapon");
+  const variant = weapon.variants.find(({ id }) => id === input.weaponVariantId);
+  if (!variant) throw createError(400, "Invalid skill-buff weapon variant");
+  const ash = await findCompatibleAshOfWarBuff(
+    input.skillBuffAshOfWarId, weapon.weaponType, variant.affinity, settings.SUPPORTED_GAME_VERSION,
+  );
+  if (!ash?.buffEffect) throw createError(400, "Unsupported skill buff selection");
+  return { id: ash.id, name: ash.name, effect: ash.buffEffect };
 }
 
 async function resolveWeaponBuff(
@@ -334,6 +366,22 @@ function addDamageTypes(left: ReturnType<typeof unitDamageTypes>, right: ReturnT
   };
 }
 
+function multiplyDamageTypes(left: ReturnType<typeof unitDamageTypes>, right: ReturnType<typeof unitDamageTypes>) {
+  return {
+    physical: left.physical * right.physical,
+    magic: left.magic * right.magic,
+    fire: left.fire * right.fire,
+    lightning: left.lightning * right.lightning,
+    holy: left.holy * right.holy,
+  };
+}
+
+function multiplyAttackRating(left: ReturnType<typeof unitDamageTypes>, right: ReturnType<typeof unitDamageTypes>) {
+  return Object.fromEntries(Object.entries(left).map(([type, value]) => [
+    type, Math.floor(value * right[type as keyof typeof right]),
+  ])) as ReturnType<typeof unitDamageTypes>;
+}
+
 function validateGeneralBuffs<T extends { id: string; name: string; buffEffect: { slot: string; durationSeconds: number; outgoingDamageMultipliers: ReturnType<typeof unitDamageTypes> } | null }>(
   requestedIds: string[],
   buffs: T[],
@@ -392,11 +440,14 @@ async function findSelectedAttack(
     );
 
     if (!weapon?.weaponType) return null;
+    const variant = weapon.variants.find(({ id }) => id === input.weaponVariantId);
+    if (!variant) return null;
 
     return findCompatibleAshOfWarAttack(
       input.ashOfWarId,
       input.skillAttackId,
       weapon.weaponType,
+      variant.affinity,
       settings.SUPPORTED_GAME_VERSION,
     );
   }

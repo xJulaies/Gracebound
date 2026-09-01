@@ -7,12 +7,17 @@ import { standardAshOfWarSkillDefinitions } from "../data/standardAshOfWarSkillD
 import { wildStrikesSkillDefinitions } from "../data/wildStrikesSkillDefinitions";
 import type { WeaponParamRow } from "../schemas/weaponParam.schema";
 import type { EquipParamGemRow } from "../schemas/weaponSkillParam.schema";
+import type { ArmorEffectRow } from "../schemas/armor.schema";
 import {
   mapRegulationWeaponSkill,
   type RegulationWeaponSkillDefinition,
 } from "./mapRegulationWeaponSkill";
 
 const LONGSWORD_SOURCE_ID = 1000000;
+const VERIFIED_SKILL_BUFF_EFFECT_IDS = new Map([
+  [20100, 821], [21400, 1776], [21700, 1676], [60000, 1691],
+  [60100, 1701], [60600, 1755], [60700, 1821],
+]);
 
 const verifiedAshes = new Map<number, RegulationWeaponSkillDefinition>([
   { sourceGemId: 11500, definition: squareOffSkillDefinition },
@@ -26,6 +31,7 @@ export function mapVerifiedAshesOfWar(
   gems: EquipParamGemRow[],
   weapons: WeaponParamRow[],
   tables: SkillTables,
+  effects: ArmorEffectRow[] = [],
 ): AshOfWarData[] {
   const referenceWeapon = findOne(weapons, LONGSWORD_SOURCE_ID, "weapon");
 
@@ -33,6 +39,7 @@ export function mapVerifiedAshesOfWar(
     .filter(({ ID, Name }) => ID >= 10000 && /^Ash of War:\s*.+/.test(Name))
     .map((gem) => {
     const definition = verifiedAshes.get(gem.ID);
+    const buffEffect = mapSkillBuffEffect(gem.ID, effects);
     const skillVariants = gem.ID === 11000
       ? wildStrikesSkillDefinitions.map(({ weaponType, motionCategoryId, definition: variantDefinition }) => ({
         weaponTypes: [weaponType],
@@ -62,15 +69,62 @@ export function mapVerifiedAshesOfWar(
       compatibleAffinities: WEAPON_AFFINITIES.filter(
         (_affinity, index) => gem[`configurableWepAttr${index.toString().padStart(2, "0")}`] === 1,
       ),
-      calculationStatus: definition || skillVariants.length > 0
+      calculationStatus: definition || skillVariants.length > 0 || buffEffect
         ? "supported" as const
         : "catalog-only" as const,
+      buffEffect,
       skill: definition
         ? mapRegulationWeaponSkill(referenceWeapon, definition, tables)
         : null,
       skillVariants,
     };
   });
+}
+
+function mapSkillBuffEffect(gemId: number, effects: ArmorEffectRow[]) {
+  const effectId = VERIFIED_SKILL_BUFF_EFFECT_IDS.get(gemId);
+  if (!effectId) return null;
+  const effect = effects.find(({ ID }) => ID === effectId);
+  if (!effect) throw new Error(`Missing skill buff effect ${effectId} for Ash of War ${gemId}`);
+  const hitEffect = effect.atkOccurrenceSpEffectId >= 0
+    ? effects.find(({ ID }) => ID === effect.atkOccurrenceSpEffectId)
+    : null;
+  if (effect.atkOccurrenceSpEffectId >= 0 && !hitEffect) {
+    throw new Error(`Missing skill buff hit effect ${effect.atkOccurrenceSpEffectId}`);
+  }
+  return {
+    durationSeconds: effect.effectEndurance,
+    consumption: gemId === 60000 || gemId === 60100 ? "next-hit" as const : "duration" as const,
+    attackPowerMultipliers: damageTypes(effect, "AttackPowerRate"),
+    outgoingDamageMultipliers: {
+      physical: effect.atkEnemyDmgCorrectRate_Physics,
+      magic: effect.atkEnemyDmgCorrectRate_Magic,
+      fire: effect.atkEnemyDmgCorrectRate_Fire,
+      lightning: effect.atkEnemyDmgCorrectRate_Thunder,
+      holy: effect.atkEnemyDmgCorrectRate_Dark,
+    },
+    addedDamage: damageTypes(effect, "AttackPower"),
+    addedStatusBuildup: {
+      poison: hitEffect?.poizonAttackPower ?? 0, rot: hitEffect?.diseaseAttackPower ?? 0,
+      bleed: hitEffect?.bloodAttackPower ?? 0, frost: hitEffect?.freezeAttackPower ?? 0,
+      sleep: hitEffect?.sleepAttackPower ?? 0, madness: hitEffect?.madnessAttackPower ?? 0,
+      deathBlight: hitEffect?.curseAttackPower ?? 0,
+    },
+    poiseDamageMultiplier: effect.saAttackPowerRate ?? 1,
+    limitations: gemId === 60600
+      ? ["Seppuku self-damage is not included."]
+      : gemId === 20100
+        ? ["Sacred Blade anti-undead behavior is not included."]
+        : [],
+  };
+}
+
+function damageTypes(effect: ArmorEffectRow, suffix: "AttackPower" | "AttackPowerRate") {
+  return {
+    physical: effect[`physics${suffix}`] ?? 1, magic: effect[`magic${suffix}`] ?? 1,
+    fire: effect[`fire${suffix}`] ?? 1, lightning: effect[`thunder${suffix}`] ?? 1,
+    holy: effect[`dark${suffix}`] ?? 1,
+  };
 }
 
 function findReferenceWeapon(rows: WeaponParamRow[], motionCategoryId: number): WeaponParamRow {

@@ -9,6 +9,42 @@ const nullableEquipmentIdSchema = z
   .max(100)
   .nullable();
 
+const equipmentIdSchema = z.string().trim().min(1).max(100);
+
+const weaponBuffSchema = z.strictObject({
+  spellId: equipmentIdSchema,
+  catalystWeaponId: equipmentIdSchema,
+  catalystVariantId: equipmentIdSchema,
+  upgradeLevel: z.number().int().min(0).max(25),
+}).nullable().default(null);
+
+const catalystSchema = z.strictObject({
+  weaponId: equipmentIdSchema,
+  variantId: equipmentIdSchema,
+  upgradeLevel: z.number().int().min(0).max(25),
+}).nullable().default(null);
+
+const weaponSlotSchema = z.strictObject({
+  weaponId: equipmentIdSchema,
+  variantId: equipmentIdSchema,
+  upgradeLevel: z.number().int().min(0).max(25),
+  ashOfWarId: nullableEquipmentIdSchema.default(null),
+}).nullable();
+
+const emptyWeaponSlots = {
+  rightHand1: null, rightHand2: null, rightHand3: null,
+  leftHand1: null, leftHand2: null, leftHand3: null,
+};
+
+const weaponSlotsSchema = z.strictObject({
+  rightHand1: weaponSlotSchema.default(null),
+  rightHand2: weaponSlotSchema.default(null),
+  rightHand3: weaponSlotSchema.default(null),
+  leftHand1: weaponSlotSchema.default(null),
+  leftHand2: weaponSlotSchema.default(null),
+  leftHand3: weaponSlotSchema.default(null),
+}).default(emptyWeaponSlots);
+
 export const statsSchema = z.strictObject({
   vigor: z.number().int().min(1).max(99),
   mind: z.number().int().min(1).max(99),
@@ -38,8 +74,8 @@ const armorSchema = z
 
 const equipmentSchema = z
   .strictObject({
-    primaryWeaponId: nullableEquipmentIdSchema.default(null),
-    weaponUpgradeLevel: z.number().int().min(0).max(25).default(0),
+    weaponSlots: weaponSlotsSchema,
+    catalyst: catalystSchema,
     armor: armorSchema,
     talismanIds: z
       .array(z.string().trim().min(1).max(100))
@@ -48,16 +84,20 @@ const equipmentSchema = z
         message: "Talisman IDs must be unique",
       })
       .default([]),
+    buffSpellIds: z.array(equipmentIdSchema)
+      .max(2)
+      .refine((ids) => new Set(ids).size === ids.length, {
+        message: "Buff spell IDs must be unique",
+      })
+      .default([]),
+    weaponBuff: weaponBuffSchema,
   })
   .superRefine((equipment, context) => {
-    if (
-      equipment.primaryWeaponId === null &&
-      equipment.weaponUpgradeLevel !== 0
-    ) {
+    if (Object.values(equipment.weaponSlots).every((slot) => slot === null) && equipment.weaponBuff !== null) {
       context.addIssue({
         code: "custom",
-        message: "An upgrade level requires a selected weapon",
-        path: ["weaponUpgradeLevel"],
+        message: "A weapon buff requires a selected weapon",
+        path: ["weaponBuff"],
       });
     }
   });
@@ -70,13 +110,21 @@ const visibilitySchema = z.enum(BUILD_VISIBILITIES);
 export const createBuildSchema = z.strictObject({
   name: nameSchema,
   description: descriptionSchema.default(""),
+  characterClassId: nullableEquipmentIdSchema.default(null),
   level: levelSchema,
   stats: statsSchema,
+  memoryStoneCount: z.number().int().min(0).max(8).default(0),
+  spellIds: z.array(equipmentIdSchema)
+    .max(10)
+    .refine((ids) => new Set(ids).size === ids.length, { message: "Spell IDs must be unique" })
+    .default([]),
   equipment: equipmentSchema.default({
-    primaryWeaponId: null,
-    weaponUpgradeLevel: 0,
+    weaponSlots: emptyWeaponSlots,
+    catalyst: null,
     armor: emptyArmor,
     talismanIds: [],
+    buffSpellIds: [],
+    weaponBuff: null,
   }),
   visibility: visibilitySchema.default("private"),
 });
@@ -85,8 +133,14 @@ export const updateBuildSchema = z
   .strictObject({
     name: nameSchema.optional(),
     description: descriptionSchema.optional(),
+    characterClassId: nullableEquipmentIdSchema.optional(),
     level: levelSchema.optional(),
     stats: statsSchema.optional(),
+    memoryStoneCount: z.number().int().min(0).max(8).optional(),
+    spellIds: z.array(equipmentIdSchema)
+      .max(10)
+      .refine((ids) => new Set(ids).size === ids.length, { message: "Spell IDs must be unique" })
+      .optional(),
     equipment: equipmentSchema.optional(),
     visibility: visibilitySchema.optional(),
   })
@@ -97,3 +151,17 @@ export const updateBuildSchema = z
 export type CreateBuildInput = z.infer<typeof createBuildSchema>;
 export type UpdateBuildInput = z.infer<typeof updateBuildSchema>;
 export type CreateBuildData = CreateBuildInput & { ownerId: string };
+
+const attackIdSchema = z.string().regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/);
+const bossIdSchema = attackIdSchema.optional();
+export const weaponSlotIdSchema = z.enum([
+  "rightHand1", "rightHand2", "rightHand3", "leftHand1", "leftHand2", "leftHand3",
+]);
+
+export const savedBuildDamageSchema = z.union([
+  z.strictObject({ weaponSlotId: weaponSlotIdSchema, attackId: attackIdSchema, skillBuffActive: z.boolean().default(false), bossId: bossIdSchema }),
+  z.strictObject({ weaponSlotId: weaponSlotIdSchema, skillAttackId: attackIdSchema, skillBuffActive: z.boolean().default(false), bossId: bossIdSchema }),
+  z.strictObject({ spellId: attackIdSchema, charged: z.boolean().default(false), bossId: bossIdSchema }),
+]);
+
+export type SavedBuildDamageInput = z.infer<typeof savedBuildDamageSchema>;

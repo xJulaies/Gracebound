@@ -51,6 +51,7 @@ export const manualDamageSchema = z.strictObject({
 
 const weaponDamageFields = {
   weaponId: z.string().trim().min(1).max(100),
+  weaponVariantId: z.string().trim().min(1).max(100),
   upgradeLevel: z.number().int().min(0).max(25),
   stats: z.strictObject({
     strength: z.number().int().min(1).max(99),
@@ -64,6 +65,7 @@ const weaponDamageFields = {
   armorIds: armorIdsSchema,
   buffSpellIds: buffSpellIdsSchema,
   weaponBuff: weaponBuffSchema,
+  skillBuffAshOfWarId: z.string().regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/).nullable().default(null),
 };
 
 const spellDamageSchema = z.strictObject({

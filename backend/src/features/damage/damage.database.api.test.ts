@@ -33,6 +33,10 @@ const app = createApp({
   authenticationMiddleware: passThroughAuthentication,
   getAuthenticatedUserId: () => null,
 });
+const authenticatedApp = createApp({
+  authenticationMiddleware: passThroughAuthentication,
+  getAuthenticatedUserId: (request) => request.header("x-test-user-id") ?? null,
+});
 
 useMongoMemoryServer({ replicaSet: true });
 
@@ -46,7 +50,7 @@ beforeEach(async () => {
       gameVersion: REGULATION_TEST_GAME_VERSION,
       sourceHash: REGULATION_TEST_SOURCE_HASH,
     }),
-    saveAshOfWarCatalog([squareOff, wildStrikes], {
+    saveAshOfWarCatalog([squareOff, wildStrikes, cragblade], {
       gameVersion: REGULATION_TEST_GAME_VERSION,
       sourceHash: REGULATION_TEST_SOURCE_HASH,
     }),
@@ -117,6 +121,7 @@ const squareOff: AshOfWarData = {
   compatibleWeaponTypes: ["straight-sword"],
   compatibleAffinities: ["standard"],
   calculationStatus: "supported",
+  buffEffect: null,
   skill: {
     id: "square-off",
     name: "Square Off",
@@ -152,6 +157,7 @@ const wildStrikes: AshOfWarData = {
   compatibleWeaponTypes: ["straight-sword"],
   compatibleAffinities: ["standard"],
   calculationStatus: "supported",
+  buffEffect: null,
   skill: null,
   skillVariants: [
     {
@@ -181,6 +187,20 @@ const wildStrikes: AshOfWarData = {
       },
     },
   ],
+};
+
+const cragblade: AshOfWarData = {
+  id: "cragblade", sourceGemId: 60700, name: "Cragblade", iconId: 60700,
+  sourceSwordArtId: 607, compatibleWeaponTypes: ["straight-sword"],
+  compatibleAffinities: ["standard"], calculationStatus: "supported",
+  skill: null, skillVariants: [],
+  buffEffect: {
+    durationSeconds: 60, consumption: "duration",
+    attackPowerMultipliers: { physical: 1.15, magic: 1, fire: 1, lightning: 1, holy: 1 },
+    outgoingDamageMultipliers: damageTypes(1), addedDamage: damageTypes(0),
+    addedStatusBuildup: { poison: 0, rot: 0, bleed: 0, frost: 0, sleep: 0, madness: 0, deathBlight: 0 },
+    poiseDamageMultiplier: 1.1, limitations: [],
+  },
 };
 
 const starscourgeHeirloom: TalismanData = {
@@ -337,6 +357,7 @@ function createWeaponDamageRequest(
 ) {
   return {
     weaponId,
+    weaponVariantId: weaponId,
     upgradeLevel,
     attackId,
     stats: {
@@ -357,6 +378,7 @@ function createWeaponSkillDamageRequest(
 ) {
   return {
     weaponId,
+    weaponVariantId: weaponId,
     upgradeLevel: 10,
     skillAttackId,
     stats: {
@@ -545,6 +567,22 @@ describe("POST /api/damage/calculate with MongoDB weapon data", () => {
     });
   });
 
+  it("applies a verified active Ash-of-War weapon buff", async () => {
+    const response = await request(app).post("/api/damage/calculate").send({
+      ...createWeaponDamageRequest("longsword", 10, undefined, "straight-sword-1h-light-1"),
+      skillBuffAshOfWarId: "cragblade",
+    });
+
+    expect(response.status).toBe(200);
+    expect(response.body.data[0]).toMatchObject({
+      attackRating: { physical: 288 },
+      skillBuff: {
+        id: "cragblade", durationSeconds: 60,
+        attackPowerMultipliers: { physical: 1.15 }, poiseDamageMultiplier: 1.1,
+      },
+    });
+  });
+
   it("rejects two buffs that occupy the same slot", async () => {
     const response = await request(app).post("/api/damage/calculate").send({
       ...createWeaponDamageRequest("longsword", 10, undefined, "straight-sword-1h-light-1"),
@@ -584,6 +622,34 @@ describe("POST /api/damage/calculate with MongoDB weapon data", () => {
       },
     });
     expect(response.body.data[0]).not.toHaveProperty("damage");
+  });
+
+  it("uses a verified infused variant while keeping attacks on the canonical weapon", async () => {
+    const standard = await WeaponVariantModel.findOne({ id: "longsword" }).lean();
+    await WeaponVariantModel.create({ ...standard, _id: undefined, id: "longsword-heavy", sourceId: 1000100 });
+    await WeaponCatalogModel.updateOne({ id: "longsword" }, {
+      $push: { variants: { id: "longsword-heavy", sourceId: 1000100, affinity: "heavy" } },
+    });
+
+    const response = await request(app).post("/api/damage/calculate").send({
+      ...createWeaponDamageRequest("longsword", 10, undefined, "straight-sword-1h-light-1"),
+      weaponVariantId: "longsword-heavy",
+    });
+
+    expect(response.status).toBe(200);
+    expect(response.body.data[0]).toMatchObject({
+      weapon: { id: "longsword-heavy", affinity: "heavy" },
+      attack: { id: "straight-sword-1h-light-1" },
+    });
+  });
+
+  it("rejects a calculation variant belonging to another weapon", async () => {
+    const response = await request(app).post("/api/damage/calculate").send({
+      ...createWeaponDamageRequest("longsword", 10, undefined, "straight-sword-1h-light-1"),
+      weaponVariantId: "moonveil",
+    });
+
+    expect(response.status).toBe(400);
   });
 
   it("applies verified permanent talisman attribute bonuses before attack rating", async () => {
@@ -945,5 +1011,118 @@ describe("POST /api/damage/calculate with MongoDB weapon data", () => {
 
     expect(response.status).toBe(400);
     expect(response.body.data).toEqual([]);
+  });
+});
+
+describe("saved build damage calculation", () => {
+  it("rejects conflicting buff slots while saving a build", async () => {
+    const response = await request(authenticatedApp)
+      .post("/api/me/builds")
+      .set("x-test-user-id", "user-1")
+      .send({
+        name: "Invalid Buff Stack",
+        level: 100,
+        stats: {
+          vigor: 40, mind: 20, endurance: 30, strength: 20,
+          dexterity: 20, intelligence: 20, faith: 20, arcane: 20,
+        },
+        equipment: {
+          buffSpellIds: ["flame-grant-me-strength", "test-body-buff"],
+        },
+      });
+
+    expect(response.status).toBe(400);
+    expect(response.body.data).toEqual([]);
+  });
+
+  it("persists buff selections and calculates from the owned build", async () => {
+    const createResponse = await request(authenticatedApp)
+      .post("/api/me/builds")
+      .set("x-test-user-id", "user-1")
+      .send({
+        name: "Buffed Longsword",
+        level: 150,
+        stats: {
+          vigor: 50, mind: 25, endurance: 30, strength: 80,
+          dexterity: 80, intelligence: 80, faith: 80, arcane: 80,
+        },
+        equipment: {
+          weaponSlots: {
+            rightHand1: {
+              weaponId: "longsword", variantId: "longsword", upgradeLevel: 10,
+              ashOfWarId: "square-off",
+            },
+            leftHand1: {
+              weaponId: "longsword", variantId: "longsword", upgradeLevel: 10,
+              ashOfWarId: "cragblade",
+            },
+          },
+          armor: { headId: null, chestId: null, armsId: null, legsId: null },
+          talismanIds: [],
+          buffSpellIds: ["golden-vow"],
+          weaponBuff: {
+            spellId: "frozen-armament", catalystWeaponId: "moonveil",
+            catalystVariantId: "moonveil", upgradeLevel: 10,
+          },
+        },
+      });
+
+    expect(createResponse.status).toBe(201);
+    expect(createResponse.body.data[0].equipment).toMatchObject({
+      buffSpellIds: ["golden-vow"],
+      weaponBuff: { spellId: "frozen-armament" },
+      weaponSlots: {
+        rightHand1: { ashOfWarId: "square-off" },
+        leftHand1: { weaponId: "longsword", variantId: "longsword", ashOfWarId: "cragblade" },
+      },
+    });
+
+    const damageResponse = await request(authenticatedApp)
+      .post(`/api/me/builds/${createResponse.body.data[0].id}/calculate-damage`)
+      .set("x-test-user-id", "user-1")
+      .send({ weaponSlotId: "rightHand1", attackId: "straight-sword-1h-light-1" });
+
+    expect(damageResponse.status).toBe(200);
+    expect(damageResponse.body.data[0]).toMatchObject({
+      buffs: [{ id: "golden-vow", slot: "aura" }],
+      weaponBuff: {
+        id: "frozen-armament",
+        addedStatusBuildup: { frost: 63 },
+      },
+    });
+
+    const leftHandResponse = await request(authenticatedApp)
+      .post(`/api/me/builds/${createResponse.body.data[0].id}/calculate-damage`)
+      .set("x-test-user-id", "user-1")
+      .send({
+        weaponSlotId: "leftHand1", attackId: "straight-sword-1h-light-1",
+      });
+    expect(leftHandResponse.status).toBe(200);
+  });
+
+  it("activates the buff belonging to the selected saved weapon slot", async () => {
+    const createResponse = await request(authenticatedApp)
+      .post("/api/me/builds").set("x-test-user-id", "user-1").send({
+        name: "Cragblade Build", level: 100,
+        stats: {
+          vigor: 40, mind: 20, endurance: 30, strength: 40,
+          dexterity: 20, intelligence: 10, faith: 10, arcane: 10,
+        },
+        equipment: { weaponSlots: { rightHand1: {
+          weaponId: "longsword", variantId: "longsword", upgradeLevel: 10,
+          ashOfWarId: "cragblade",
+        } } },
+      });
+    expect(createResponse.status).toBe(201);
+
+    const response = await request(authenticatedApp)
+      .post(`/api/me/builds/${createResponse.body.data[0].id}/calculate-damage`)
+      .set("x-test-user-id", "user-1")
+      .send({
+        weaponSlotId: "rightHand1", attackId: "straight-sword-1h-light-1",
+        skillBuffActive: true,
+      });
+    expect(response.status).toBe(200);
+    expect(response.body.data[0].skillBuff).toMatchObject({ id: "cragblade" });
   });
 });

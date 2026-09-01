@@ -228,6 +228,7 @@ POST   /api/me/builds
 GET    /api/me/builds/:buildId
 PATCH  /api/me/builds/:buildId
 DELETE /api/me/builds/:buildId
+POST   /api/me/builds/:buildId/calculate-damage
 ```
 
 The client must not choose the owner.
@@ -239,6 +240,22 @@ ownerId = authenticatedUserId
 ```
 
 Do not accept an `ownerId` from the request body.
+
+Saved builds persist the character class, memory stones, spell loadout, six
+fixed weapon slots (`rightHand1` through `rightHand3` and `leftHand1` through
+`leftHand3`), spell catalyst, aura/body buff IDs, and optional weapon-buff
+catalyst. Each occupied weapon slot owns its canonical weapon ID, calculation
+variant, upgrade level, and optional Ash of War.
+Validate active-version catalog references, class-derived level, spell capacity
+and requirements, weapon/Ash compatibility, catalyst compatibility, and buff
+slots before writing. Saved-build damage requests supply only a selected stored
+spell or a weapon-slot ID plus attack/skill action and optional boss; the backend
+derives the weapon, Ash of War, stats, and other equipment from the owned build.
+
+Draft builds may omit a character class, but this never disables catalog
+validation. Validate every selected weapon and variant, upgrade bound, armor
+item and slot, supported talisman, spell, catalyst, and Ash of War against the
+active game version before persistence.
 
 ---
 
@@ -762,6 +779,12 @@ Catalog Ash-of-War damage requests include `weaponId`, `ashOfWarId`, and
 must reject incompatible combinations before calculation. Fixed weapon skills
 continue to use `weaponId` plus `skillAttackId` without `ashOfWarId`.
 
+All weapon damage requests distinguish canonical `weaponId` from calculation
+`weaponVariantId`. Resolve attacks and skills through the canonical weapon, but
+attack rating through the selected variant. Verify that the variant belongs to
+the weapon and use its affinity when checking Ash-of-War damage and buff
+compatibility. Never accept a free-standing variant as authoritative.
+
 Ashes whose motion values differ by weapon class use explicit skill variants.
 The repository selects a variant from the persisted weapon type; clients never
 submit an internal variant identifier. Wild Strikes is the verified reference
@@ -773,6 +796,15 @@ Redmanes, Lion's Claw, Impaling Thrust, Piercing Fang, Stamp (Upward Cut), Stamp
 the canonical supported list. All other catalog Ashes remain `catalog-only`
 until their complete behavior chain is explicitly verified. Transient Moonlight
 is a fixed weapon skill and does not belong to this list.
+
+Buff-only Ashes use a typed `buffEffect` rather than fake damage components.
+The verified initial set is Sacred Blade, Flaming Strike, Lightning Slash,
+Determination, Royal Knight's Resolve, Seppuku, and Cragblade. Apply attack-
+power multipliers and flat added damage before motion values, and outgoing
+multipliers afterward. Determination and Royal Knight's Resolve are next-hit
+effects. Preserve added status buildup, poise-damage modifiers, duration, and
+limitations. A spell weapon buff and an Ash weapon buff cannot be active on the
+same weapon simultaneously.
 
 ---
 

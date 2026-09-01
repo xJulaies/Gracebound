@@ -1,11 +1,30 @@
 import type { RequestHandler } from "express";
 import request from "supertest";
-import { describe, expect, it } from "vitest";
+import { beforeEach, describe, expect, it } from "vitest";
 import { createApp } from "../../app";
 import { useMongoMemoryServer } from "../../test/useMongoMemoryServer";
 import { BuildModel } from "./models/build.model";
+import { saveWeaponCatalog } from "../../infrastructure/regulation/services/saveWeaponCatalog";
+import { createRegulationWeaponCatalogFixture, REGULATION_TEST_GAME_VERSION, REGULATION_TEST_SOURCE_HASH } from "../../test/fixtures/regulationWeaponCatalog.fixture";
+import { saveTalismanCatalog } from "../../infrastructure/regulation/services/saveTalismanCatalog";
+import { createTalismanFixture } from "../../test/fixtures/talisman.fixture";
 
-useMongoMemoryServer();
+useMongoMemoryServer({ replicaSet: true });
+
+beforeEach(async () => {
+  await Promise.all([
+    saveWeaponCatalog(createRegulationWeaponCatalogFixture(), {
+      gameVersion: REGULATION_TEST_GAME_VERSION,
+      sourceHash: REGULATION_TEST_SOURCE_HASH,
+    }),
+    saveTalismanCatalog([
+      createTalismanFixture("shard-of-alexander", "Shard of Alexander"),
+    ], {
+      gameVersion: REGULATION_TEST_GAME_VERSION,
+      sourceHash: REGULATION_TEST_SOURCE_HASH,
+    }),
+  ]);
+});
 
 const passThroughAuthentication: RequestHandler = (_req, _res, next) => {
   next();
@@ -34,8 +53,11 @@ function createBuildRequest() {
     level: 150,
     stats,
     equipment: {
-      primaryWeaponId: "moonveil",
-      weaponUpgradeLevel: 10,
+      weaponSlots: {
+        rightHand1: { weaponId: "moonveil", variantId: "moonveil", upgradeLevel: 10, ashOfWarId: null },
+        rightHand2: null, rightHand3: null, leftHand1: null, leftHand2: null, leftHand3: null,
+      },
+      catalyst: null,
       armor: {
         headId: null,
         chestId: null,
@@ -43,6 +65,8 @@ function createBuildRequest() {
         legsId: null,
       },
       talismanIds: ["shard-of-alexander"],
+      buffSpellIds: [],
+      weaponBuff: null,
     },
     visibility: "private",
   };
@@ -87,6 +111,29 @@ describe("protected build API", () => {
       .send({ ...createBuildRequest(), ownerId: "user-2" });
 
     expect(response.status).toBe(400);
+    expect(await BuildModel.countDocuments()).toBe(0);
+  });
+
+  it("rejects unknown draft-build equipment references", async () => {
+    const unknownWeapon = createBuildRequest();
+    unknownWeapon.equipment.weaponSlots.rightHand1 = {
+      weaponId: "unknown-weapon", variantId: "unknown-weapon", upgradeLevel: 10, ashOfWarId: null,
+    };
+    unknownWeapon.equipment.talismanIds = [];
+    const weaponResponse = await request(app)
+      .post("/api/me/builds")
+      .set("x-test-user-id", "user-1")
+      .send(unknownWeapon);
+
+    const unknownTalisman = createBuildRequest();
+    unknownTalisman.equipment.talismanIds = ["unknown-talisman"];
+    const talismanResponse = await request(app)
+      .post("/api/me/builds")
+      .set("x-test-user-id", "user-1")
+      .send(unknownTalisman);
+
+    expect(weaponResponse.status).toBe(400);
+    expect(talismanResponse.status).toBe(400);
     expect(await BuildModel.countDocuments()).toBe(0);
   });
 

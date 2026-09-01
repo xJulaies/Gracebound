@@ -29,11 +29,17 @@ describe("buildRepository", () => {
     const build = await createBuild({
       ownerId: "user-1",
       name: "Owned Build",
+      characterClassId: null,
       level: 120,
       stats,
+      memoryStoneCount: 0,
+      spellIds: [],
       equipment: {
-        primaryWeaponId: null,
-        weaponUpgradeLevel: 0,
+        weaponSlots: {
+          rightHand1: null, rightHand2: null, rightHand3: null,
+          leftHand1: null, leftHand2: null, leftHand3: null,
+        },
+        catalyst: null,
         armor: {
           headId: null,
           chestId: null,
@@ -41,6 +47,8 @@ describe("buildRepository", () => {
           legsId: null,
         },
         talismanIds: [],
+        buffSpellIds: [],
+        weaponBuff: null,
       },
       description: "",
       visibility: "private",

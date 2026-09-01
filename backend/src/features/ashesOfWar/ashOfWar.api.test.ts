@@ -80,6 +80,7 @@ const ashes: AshOfWarData[] = [
     compatibleWeaponTypes: ["axe"],
     compatibleAffinities: ["standard", "heavy"],
     calculationStatus: "catalog-only",
+    buffEffect: null,
     skill: null,
     skillVariants: [],
   },
@@ -91,6 +92,7 @@ function ash(id: string, sourceGemId: number, fpCost: number, compatibleWeaponTy
     id, sourceGemId, name, iconId: sourceGemId, sourceSwordArtId: sourceGemId,
     compatibleWeaponTypes, compatibleAffinities: ["standard"],
     calculationStatus: "supported",
+    buffEffect: null,
     skill: {
       id, name, sourceSwordArtId: sourceGemId,
       attacks: [{

@@ -27,6 +27,7 @@ import { saveAshOfWarCatalog } from "../infrastructure/regulation/services/saveA
 import { mapVerifiedAshesOfWar } from "../infrastructure/regulation/mappers/mapVerifiedAshesOfWar";
 import { parseEquipParamGemCsv } from "../infrastructure/regulation/parsers/parseWeaponSkillCsv";
 import { validateWeaponCatalogVersion } from "../infrastructure/regulation/services/validateWeaponCatalogVersion";
+import { parseArmorEffectCsv } from "../infrastructure/regulation/parsers/parseArmorParamCsv";
 
 const REQUIRED_EXPORTS = {
   weapons: "EquipParamWeapon.csv",
@@ -39,6 +40,7 @@ const REQUIRED_EXPORTS = {
   swordArts: "SwordArtsParam.csv",
   finalDamageRates: "FinalDamageRateParam.csv",
   gems: "EquipParamGem.csv",
+  effects: "SpEffectParam.csv",
 } as const;
 
 async function importRegulationWeaponData() {
@@ -55,6 +57,7 @@ async function importRegulationWeaponData() {
     swordArts,
     finalDamageRates,
     gems,
+    effects,
     sourceHash,
   ] =
     await Promise.all([
@@ -68,6 +71,7 @@ async function importRegulationWeaponData() {
       readExport(exportDirectory, REQUIRED_EXPORTS.swordArts),
       readExport(exportDirectory, REQUIRED_EXPORTS.finalDamageRates),
       readExport(exportDirectory, REQUIRED_EXPORTS.gems),
+      readExport(exportDirectory, REQUIRED_EXPORTS.effects),
       sha256(regulationFile),
     ]);
 
@@ -97,6 +101,7 @@ async function importRegulationWeaponData() {
     parseEquipParamGemCsv(gems),
     weaponRows,
     skillTables,
+    parseArmorEffectCsv(effects),
   );
 
   validateWeaponCatalogVersion(settings.SUPPORTED_GAME_VERSION, catalog.report);

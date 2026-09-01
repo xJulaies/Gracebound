@@ -23,9 +23,17 @@ describe("BuildModel", () => {
     });
 
     expect(build.description).toBe("");
+    expect(build.characterClassId).toBeNull();
+    expect(build.memoryStoneCount).toBe(0);
+    expect(build.spellIds).toEqual([]);
     expect(build.visibility).toBe("private");
-    expect(build.equipment.primaryWeaponId).toBeNull();
+    expect(Object.values(build.toObject().equipment.weaponSlots)).toEqual([
+      null, null, null, null, null, null,
+    ]);
     expect(build.equipment.talismanIds).toEqual([]);
+    expect(build.equipment.buffSpellIds).toEqual([]);
+    expect(build.equipment.catalyst).toBeNull();
+    expect(build.equipment.weaponBuff).toBeNull();
     expect(build.createdAt).toBeInstanceOf(Date);
     expect(build.updatedAt).toBeInstanceOf(Date);
     expect(build.toObject()).not.toHaveProperty("__v");

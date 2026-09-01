@@ -15,6 +15,7 @@ export function mapAshOfWarResponse(record: AshOfWarRecord) {
     compatibleWeaponTypes: [...record.compatibleWeaponTypes],
     compatibleAffinities: [...record.compatibleAffinities],
     calculationStatus: record.calculationStatus,
+    buffEffect: record.buffEffect,
     attacks: attacks.map(({ id, name, fpCost }) => ({ id, name, fpCost })),
     gameVersion: record.gameVersion,
   };

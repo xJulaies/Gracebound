@@ -17,8 +17,11 @@ function createValidBuildInput() {
       arcane: 8,
     },
     equipment: {
-      primaryWeaponId: "moonveil",
-      weaponUpgradeLevel: 10,
+      weaponSlots: {
+        rightHand1: { weaponId: "moonveil", variantId: "moonveil", upgradeLevel: 10, ashOfWarId: null },
+        rightHand2: null, rightHand3: null, leftHand1: null, leftHand2: null, leftHand3: null,
+      },
+      catalyst: null,
       armor: {
         headId: null,
         chestId: null,
@@ -26,6 +29,8 @@ function createValidBuildInput() {
         legsId: null,
       },
       talismanIds: ["shard-of-alexander"],
+      buffSpellIds: [],
+      weaponBuff: null,
     },
     visibility: "public" as const,
   };
@@ -51,10 +56,16 @@ describe("createBuildSchema", () => {
     const result = createBuildSchema.parse(input);
 
     expect(result.description).toBe("");
+    expect(result.characterClassId).toBeNull();
+    expect(result.memoryStoneCount).toBe(0);
+    expect(result.spellIds).toEqual([]);
     expect(result.visibility).toBe("private");
     expect(result.equipment).toEqual({
-      primaryWeaponId: null,
-      weaponUpgradeLevel: 0,
+      weaponSlots: {
+        rightHand1: null, rightHand2: null, rightHand3: null,
+        leftHand1: null, leftHand2: null, leftHand3: null,
+      },
+      catalyst: null,
       armor: {
         headId: null,
         chestId: null,
@@ -62,6 +73,8 @@ describe("createBuildSchema", () => {
         legsId: null,
       },
       talismanIds: [],
+      buffSpellIds: [],
+      weaponBuff: null,
     });
   });
 
@@ -97,25 +110,48 @@ describe("createBuildSchema", () => {
       expect(() =>
         createBuildSchema.parse({
           ...input,
-          equipment: { ...input.equipment, weaponUpgradeLevel },
+          equipment: {
+            ...input.equipment,
+            weaponSlots: {
+              ...input.equipment.weaponSlots,
+              rightHand1: { ...input.equipment.weaponSlots.rightHand1!, upgradeLevel: weaponUpgradeLevel },
+            },
+          },
         }),
       ).toThrow();
     },
   );
 
-  it("rejects an upgrade level when no weapon is selected", () => {
+  it("requires a selected weapon for weapon buffs", () => {
     const input = createValidBuildInput();
-
-    expect(() =>
-      createBuildSchema.parse({
-        ...input,
-        equipment: {
-          ...input.equipment,
-          primaryWeaponId: null,
-          weaponUpgradeLevel: 10,
+    expect(() => createBuildSchema.parse({
+      ...input,
+      equipment: {
+        ...input.equipment,
+        weaponSlots: {
+          rightHand1: null, rightHand2: null, rightHand3: null,
+          leftHand1: null, leftHand2: null, leftHand3: null,
         },
-      }),
-    ).toThrow();
+        weaponBuff: {
+          spellId: "frozen-armament", catalystWeaponId: "staff",
+          catalystVariantId: "staff", upgradeLevel: 25,
+        },
+      },
+    })).toThrow();
+  });
+
+  it("rejects incomplete weapon-slot selections", () => {
+    const input = createValidBuildInput();
+    expect(() => createBuildSchema.parse({
+      ...input,
+      equipment: {
+        ...input.equipment,
+        weaponSlots: {
+          ...input.equipment.weaponSlots,
+          rightHand1: { weaponId: "moonveil", upgradeLevel: 10 },
+        },
+      },
+    })).toThrow();
   });
 
   it("rejects more than four or duplicate talismans", () => {
@@ -140,6 +176,12 @@ describe("createBuildSchema", () => {
         },
       }),
     ).toThrow();
+  });
+
+  it("rejects duplicate spells and invalid memory stone counts", () => {
+    const input = createValidBuildInput();
+    expect(() => createBuildSchema.parse({ ...input, spellIds: ["comet", "comet"] })).toThrow();
+    expect(() => createBuildSchema.parse({ ...input, memoryStoneCount: 9 })).toThrow();
   });
 
   it("rejects client-controlled ownership and unknown fields", () => {

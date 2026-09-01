@@ -23,7 +23,7 @@ export async function calculateBuildStatsFromInput(input: CalculateBuildStatsInp
     findCharacterResourceCurves(settings.SUPPORTED_GAME_VERSION),
     findTalismansByIds(input.talismanIds, settings.SUPPORTED_GAME_VERSION),
     findArmorByIds(input.armorIds, settings.SUPPORTED_GAME_VERSION),
-    findWeaponCatalogByIds(input.weaponIds, settings.SUPPORTED_GAME_VERSION),
+    findWeaponCatalogByIds([...new Set(input.weaponIds)], settings.SUPPORTED_GAME_VERSION),
     findSpellsByIds(input.spellIds, settings.SUPPORTED_GAME_VERSION),
     input.catalyst
       ? findWeaponCatalogById(input.catalyst.weaponId, settings.SUPPORTED_GAME_VERSION)
@@ -41,7 +41,7 @@ export async function calculateBuildStatsFromInput(input: CalculateBuildStatsInp
     throw createError(400, "Unsupported talisman selection");
   }
   if (armor.length !== input.armorIds.length) throw createError(400, "Unknown armor selection");
-  if (weapons.length !== input.weaponIds.length) throw createError(400, "Unknown weapon selection");
+  if (weapons.length !== new Set(input.weaponIds).size) throw createError(400, "Unknown weapon selection");
   if (spells.length !== input.spellIds.length) throw createError(400, "Unknown spell selection");
   const talismansById = new Map(talismans.map((talisman) => [talisman.id, talisman]));
   const selectedTalismans = input.talismanIds.map((id) => talismansById.get(id)!);

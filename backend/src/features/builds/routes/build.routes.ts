@@ -3,6 +3,7 @@ import type { GetAuthenticatedUserId } from "../../../shared/auth/authentication
 import { requireAuthenticatedUser } from "../../../shared/middleware/requireAuthenticatedUser";
 import {
   createOwnedBuild,
+  calculateOwnedBuildDamage,
   deleteOwnedBuild,
   getOwnedBuild,
   getPublicBuild,
@@ -13,6 +14,7 @@ import {
 import {
   validateBuildId,
   validateCreateBuild,
+  validateSavedBuildDamage,
   validateUpdateBuild,
 } from "../middleware/validateBuildRequest";
 import { calculateSelectedBuildStats } from "../controllers/buildStats.controller";
@@ -31,6 +33,12 @@ export function createBuildRouter(
   router.get("/me/builds", listOwnedBuilds);
   router.post("/me/builds", validateCreateBuild, createOwnedBuild);
   router.get("/me/builds/:buildId", validateBuildId, getOwnedBuild);
+  router.post(
+    "/me/builds/:buildId/calculate-damage",
+    validateBuildId,
+    validateSavedBuildDamage,
+    calculateOwnedBuildDamage,
+  );
   router.patch(
     "/me/builds/:buildId",
     validateBuildId,

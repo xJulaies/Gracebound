@@ -755,6 +755,30 @@ Frozen Armament follows its hit-occurrence effect and adds 63 frost buildup per
 hit. Poison Armament similarly adds 70 poison buildup per hit. These values are
 returned as weapon-buff metadata; proc damage and accumulated status remain
 outside the stateless damage request.
+
+Saved builds retain `characterClassId`, level, memory stones, selected spells,
+six named weapon slots, spell catalyst, `buffSpellIds`, and an optional
+`weaponBuff` catalyst selection. The weapon slots are `rightHand1`,
+`rightHand2`, `rightHand3`, `leftHand1`, `leftHand2`, and `leftHand3`. Each slot
+is nullable or contains canonical weapon ID, calculation variant, upgrade level,
+and optional Ash of War. Duplicate canonical weapons are valid and contribute
+their weight independently.
+When a class is selected, its derived level, spell requirements, memory capacity,
+and equipment catalogs are validated through the same build-stats service used
+by the preview API. Ashes must match the stored weapon type and affinity.
+General buffs must be supported aura/body effects with no duplicate slot; a
+weapon buff must be compatible with the selected buffable weapon and catalyst.
+`POST /api/me/builds/:buildId/calculate-damage` is owner-protected and accepts a
+stored spell, or a stored weapon-slot ID plus attack or skill and an optional
+boss ID. The backend derives a slot's Ash of War and rejects empty slots. Stats
+and equipment always come from the stored build rather than client duplicates.
+
+A draft build may keep `characterClassId: null`. In that state level derivation,
+resource curves, and spell requirements cannot be finalized, but all supplied
+catalog references remain mandatory and are validated against the active game
+version. Unknown weapons or variants, excessive upgrade levels, invalid armor
+slots, unsupported talismans, unknown spells, and incompatible catalysts or
+Ashes of War are rejected before the build is stored.
 Weapon damage accepts one `weaponBuff` containing spell ID, catalyst weapon and
 variant IDs, and catalyst upgrade level. The backend verifies catalyst type,
 ownership, upgrade and attribute requirements plus target-weapon
@@ -984,13 +1008,21 @@ weapon; interchangeable skills are selected through the standalone Ash-of-War
 catalog.
 
 The standalone Ash-of-War catalog contains all 116 playable Regulation 1.17.0
-`EquipParamGem` rows. It stores compatible weapon types and affinities. Eleven
-entries are currently `supported`: Square Off, Flame of the Redmanes, Lion's
+`EquipParamGem` rows. It stores compatible weapon types and affinities. Eighteen
+entries are currently `supported`. Eleven expose verified damage actions:
+Square Off, Flame of the Redmanes, Lion's
 Claw, Impaling Thrust, Piercing Fang, Stamp (Upward Cut), Stamp (Sweep), and
 Giant Hunt, Wild Strikes, Charge Forth, and Unsheathe. Wild Strikes stores
 separate profiles for each compatible weapon type so the backend resolves the
 correct class-specific motion values. The remaining entries are `catalog-only`
-until their damage components are verified. Public routes are:
+until their damage components or buff effects are verified. Seven additional
+entries expose verified buff effects: Sacred Blade (+90 holy, 40 seconds),
+Flaming Strike (+90 fire, 40 seconds), Lightning Slash (+85 lightning, 40
+seconds), Determination (×1.60 next hit within 10 seconds), Royal Knight's
+Resolve (×1.80 next hit within 10 seconds), Seppuku (+30 physical and 30 bleed
+buildup, 60 seconds), and Cragblade (×1.15 physical attack power and ×1.10 poise
+damage, 60 seconds). Seppuku self-damage and Sacred Blade's anti-undead behavior
+remain explicit limitations. Public routes are:
 
 The completed MVP Ash-of-War calculation scope is:
 
@@ -1021,10 +1053,13 @@ GET /api/ashes-of-war/:ashOfWarId
 
 Regulation source IDs and damage components remain server-owned.
 
-Interchangeable Ash-of-War damage requests provide `weaponId`, `ashOfWarId`,
-and `skillAttackId`. Compatibility is checked against the selected weapon's
-normalized motion type. A missing skill, unknown Ash of War, or incompatible
-weapon combination returns `404` with an empty data array.
+Weapon damage requests provide canonical `weaponId` and calculation
+`weaponVariantId`. Attacks and fixed skills resolve from the canonical weapon;
+attack rating resolves from the variant after ownership validation. The
+response includes the selected affinity. Interchangeable Ash-of-War requests
+add `ashOfWarId` and `skillAttackId`; compatibility is checked against both the
+weapon type and variant affinity. A missing skill, unknown Ash, foreign variant,
+or incompatible combination is rejected.
 
 ---
 

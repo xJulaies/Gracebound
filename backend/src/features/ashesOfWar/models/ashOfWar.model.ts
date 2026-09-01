@@ -2,6 +2,14 @@ import { model, Schema } from "mongoose";
 import type { AshOfWarData } from "../domain/ashOfWar.types";
 import { weaponSkillSchema } from "../../weapons/models/weaponCatalog.model";
 import { WEAPON_AFFINITIES } from "../../weapons/domain/weaponCatalog.types";
+import { damageTypesSchema } from "../../weapons/models/gameData.schemas";
+
+const statusBuildupSchema = new Schema({
+  poison: { type: Number, required: true }, rot: { type: Number, required: true },
+  bleed: { type: Number, required: true }, frost: { type: Number, required: true },
+  sleep: { type: Number, required: true }, madness: { type: Number, required: true },
+  deathBlight: { type: Number, required: true },
+}, { _id: false });
 
 export type AshOfWarRecord = AshOfWarData & {
   source: "REGULATION";
@@ -27,6 +35,19 @@ const ashOfWarSchema = new Schema<AshOfWarRecord>(
       type: String,
       required: true,
       enum: ["supported", "catalog-only"],
+    },
+    buffEffect: {
+      type: new Schema({
+        durationSeconds: { type: Number, required: true, min: 0 },
+        consumption: { type: String, required: true, enum: ["duration", "next-hit"] },
+        attackPowerMultipliers: { type: damageTypesSchema, required: true },
+        outgoingDamageMultipliers: { type: damageTypesSchema, required: true },
+        addedDamage: { type: damageTypesSchema, required: true },
+        addedStatusBuildup: { type: statusBuildupSchema, required: true },
+        poiseDamageMultiplier: { type: Number, required: true, min: 0 },
+        limitations: { type: [String], required: true, default: [] },
+      }, { _id: false }),
+      default: null,
     },
     skill: { type: weaponSkillSchema, default: null },
     skillVariants: {

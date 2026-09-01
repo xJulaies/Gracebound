@@ -23,16 +23,30 @@ export function findAshOfWarById(id: string, gameVersion: string) {
   return AshOfWarModel.findOne({ id, gameVersion }).lean().exec();
 }
 
+export function findCompatibleAshOfWarBuff(
+  id: string,
+  weaponType: string,
+  affinity: WeaponAffinity,
+  gameVersion: string,
+) {
+  return AshOfWarModel.findOne({
+    id, gameVersion, compatibleWeaponTypes: weaponType, compatibleAffinities: affinity,
+    calculationStatus: "supported", buffEffect: { $ne: null },
+  }).select("id name buffEffect").lean().exec();
+}
+
 export async function findCompatibleAshOfWarAttack(
   ashOfWarId: string,
   skillAttackId: string,
   weaponType: string,
+  affinity: WeaponAffinity,
   gameVersion: string,
 ) {
   const ash = await AshOfWarModel.findOne({
     id: ashOfWarId,
     gameVersion,
     compatibleWeaponTypes: weaponType,
+    compatibleAffinities: affinity,
     calculationStatus: "supported",
   })
     .select("skill skillVariants")

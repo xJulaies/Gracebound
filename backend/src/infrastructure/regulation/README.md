@@ -33,8 +33,11 @@ types.
 
 Regulation 1.17.0 contributes 116 playable Ash-of-War rows. Every entry exposes
 weapon-type and affinity compatibility. Unverified entries are imported as
-`catalog-only` with no damage profile; only `supported` entries may be used by
-the damage endpoint.
+`catalog-only` with no damage or buff profile; only `supported` entries may be
+used by the damage endpoint. Eighteen are supported: eleven damage profiles and
+seven verified weapon-buff profiles. Buff values come from their named
+`SpEffectParam` rows, including duration, next-hit consumption, attack-power and
+outgoing multipliers, flat added damage, status buildup, and poise damage.
 
 The base-game talisman import reads `EquipParamAccessory.csv`, validates the
 116 named Regulation 1.17.0 rows below accessory ID 7000, and stores a normalized
