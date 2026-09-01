@@ -2,11 +2,38 @@ import type { DamageTypes } from "../../damage/domain/damage.types";
 
 export type SpellType = "sorcery" | "incantation";
 
-export interface SpellAttackProfile {
+export interface StatusBuildup {
+  poison: number;
+  rot: number;
+  bleed: number;
+  frost: number;
+  sleep: number;
+  madness: number;
+  deathBlight: number;
+}
+
+export interface SpellBuffEffect {
+  slot: "aura" | "body" | "weapon";
+  durationSeconds: number;
+  outgoingDamageMultipliers: DamageTypes;
+  weaponAddedDamageScaling: DamageTypes;
+  weaponAddedStatusBuildup: StatusBuildup;
+  limitations: string[];
+}
+
+export interface SpellAttackComponent {
+  id: string;
+  label: string;
+  outputUnit: "per-hit" | "per-tick";
   sourceBulletId: number;
   sourceAttackId: number;
   motionValues: DamageTypes;
   finalDamageRates: DamageTypes;
+  statusBuildup: StatusBuildup;
+}
+
+export interface SpellAttackProfile extends SpellAttackComponent {
+  additionalComponents: SpellAttackComponent[];
 }
 
 export interface SpellData {
@@ -15,6 +42,8 @@ export interface SpellData {
   name: string;
   type: SpellType;
   fpCost: number;
+  chargedFpCost: number | null;
+  sustainedFpCost: number | null;
   slotsRequired: number;
   requirements: {
     intelligence: number;
@@ -23,5 +52,7 @@ export interface SpellData {
   };
   iconId: number;
   calculationStatus: "catalog-only" | "supported";
+  buffEffect: SpellBuffEffect | null;
   attack: SpellAttackProfile | null;
+  chargedAttack: SpellAttackProfile | null;
 }

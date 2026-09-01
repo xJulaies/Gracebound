@@ -11,6 +11,9 @@ export const magicParamRowSchema = z.object({
   iconId: z.coerce.number().int().nonnegative(),
   refCategory1: z.coerce.number().int().nonnegative().default(0),
   refId1: z.coerce.number().int().default(-1),
+  refCategory2: z.coerce.number().int().nonnegative().default(0),
+  refId2: z.coerce.number().int().default(-1),
+  mp_charge: z.coerce.number().int().nonnegative().default(0),
 });
 
 export type MagicParamRow = z.infer<typeof magicParamRowSchema>;

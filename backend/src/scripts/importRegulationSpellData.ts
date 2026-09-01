@@ -8,22 +8,25 @@ import { mapBaseGameSpells } from "../infrastructure/regulation/mappers/mapRegul
 import { parseMagicParamCsv } from "../infrastructure/regulation/parsers/parseMagicParamCsv";
 import { parseAttackParamCsv } from "../infrastructure/regulation/parsers/parseWeaponAttackCsv";
 import { parseBulletParamCsv, parseFinalDamageRateCsv } from "../infrastructure/regulation/parsers/parseWeaponSkillCsv";
+import { parseArmorEffectCsv } from "../infrastructure/regulation/parsers/parseArmorParamCsv";
 import { saveSpellCatalog } from "../infrastructure/regulation/services/saveSpellCatalog";
 
 async function importRegulationSpellData() {
   const exportDirectory = requiredArgument("--exports");
   const regulationFile = requiredArgument("--regulation");
-  const [csv, bulletsCsv, attacksCsv, finalRatesCsv, sourceHash] = await Promise.all([
+  const [csv, bulletsCsv, attacksCsv, finalRatesCsv, effectsCsv, sourceHash] = await Promise.all([
     readFile(path.join(exportDirectory, "Magic.csv"), "utf8"),
     readFile(path.join(exportDirectory, "Bullet.csv"), "utf8"),
     readFile(path.join(exportDirectory, "AtkParam_Pc.csv"), "utf8"),
     readFile(path.join(exportDirectory, "FinalDamageRateParam.csv"), "utf8"),
+    readFile(path.join(exportDirectory, "SpEffectParam.csv"), "utf8"),
     sha256(regulationFile),
   ]);
   const spells = mapBaseGameSpells(parseMagicParamCsv(csv), {
     bullets: parseBulletParamCsv(bulletsCsv),
     attacks: parseAttackParamCsv(attacksCsv),
     finalDamageRates: parseFinalDamageRateCsv(finalRatesCsv),
+    effects: parseArmorEffectCsv(effectsCsv),
   });
   if (settings.SUPPORTED_GAME_VERSION === "1.17.0") validateCatalog(spells);
   console.log(`Validated ${spells.length} base-game spells`);
@@ -50,7 +53,24 @@ function validateCatalog(spells: ReturnType<typeof mapBaseGameSpells>) {
     if (!spells.some((spell) => spell.id === id)) throw new Error(`Missing reference spell ${id}`);
   }
   const supported = spells.filter(({ calculationStatus }) => calculationStatus === "supported");
-  const expectedSupported = ["glintstone-pebble", "great-glintstone-shard", "swift-glintstone-shard"];
+  const expectedSupported = [
+    "glintstone-pebble", "great-glintstone-shard", "swift-glintstone-shard",
+    "glintstone-cometshard", "comet",
+    "glintstone-icecrag", "gravity-well",
+    "flame-sling", "wrath-of-gold", "discus-of-light", "lightning-spear",
+    "frenzied-burst",
+    "glintblade-phalanx", "carian-phalanx", "greatblade-phalanx",
+    "collapsing-stars", "bestial-sling", "pest-threads",
+    "crystal-barrage", "comet-azur", "crystal-torrent",
+    "cannon-of-haima", "giantsflame-take-thee", "greyoll-s-roar",
+    "crystal-burst", "scouring-black-flame", "beast-claw", "the-flame-of-frenzy",
+    "magma-shot", "roiling-magma", "explosive-ghostflame",
+    "shattering-crystal", "ancient-dragons-lightning-spear", "fortissax-s-lightning-spear",
+    "scholar-s-armament", "flame-grant-me-strength", "black-flame-blade",
+    "bloodflame-blade", "golden-vow", "electrify-armament",
+    "order-s-blade", "vyke-s-dragonbolt", "howl-of-shabriri",
+    "frozen-armament", "poison-armament",
+  ];
   if (supported.length !== expectedSupported.length ||
       expectedSupported.some((id) => !supported.some((spell) => spell.id === id))) {
     throw new Error("Incomplete verified direct-projectile spell profiles");

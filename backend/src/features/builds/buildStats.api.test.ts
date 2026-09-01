@@ -345,6 +345,7 @@ function spell(
   return {
     id, sourceMagicId: id.length, name, type, fpCost: 10, slotsRequired,
     requirements, iconId: 1,
-    calculationStatus: "catalog-only", attack: null,
+    calculationStatus: "catalog-only", buffEffect: null, attack: null,
+    chargedFpCost: null, sustainedFpCost: null, chargedAttack: null,
   };
 }

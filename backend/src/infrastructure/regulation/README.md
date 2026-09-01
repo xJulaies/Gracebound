@@ -77,9 +77,53 @@ npm run data:import:spells -- --exports "C:\path\to\exports" --regulation "C:\pa
 
 Regulation 1.17.0 must produce exactly 70 sorceries and 101 incantations.
 The spell importer also reads `Bullet.csv`, `AtkParam_Pc.csv`, and
-`FinalDamageRateParam.csv`. Glintstone Pebble, Great Glintstone Shard, and Swift
-Glintstone Shard are verified direct projectile profiles; all other spells
-remain catalog-only.
+`FinalDamageRateParam.csv`. Glintstone Pebble, Great Glintstone Shard, Swift
+Glintstone Shard, Flame Sling, Wrath of Gold, Discus of Light, Lightning Spear,
+and Frenzied Burst are verified direct hit profiles. Glintstone Cometshard,
+Comet, Flame Sling, Wrath of Gold, and Frenzied Burst preserve distinct normal
+and charged profiles; unverified spells remain catalog-only.
+
+Glintblade Phalanx, Carian Phalanx, Greatblade Phalanx, Collapsing Stars,
+Bestial Sling, and Pest Threads are mapped as per-projectile hit profiles. The
+import does not infer a total hit count.
+
+Crystal Barrage, Comet Azur, and Crystal Torrent are mapped as `per-tick`
+profiles. Their `Magic.mp_charge` values are stored as ongoing FP costs rather
+than charged-cast costs. Total duration and total damage remain combat-state
+concerns and are not inferred during import.
+
+Cannon of Haima and Giantsflame Take Thee resolve their verified explosion
+attacks through `Bullet.HitBulletID`. Greyoll's Roar uses its direct area attack.
+Do not generalize hit-bullet traversal to unverified multi-component spells.
+
+Crystal Burst, Scouring Black Flame, Beast Claw, and The Flame of Frenzy use
+verified normal/charged per-projectile profiles. Their emitted projectile count
+is not treated as a guaranteed hit count.
+
+Magma Shot, Roiling Magma, and Explosive Ghostflame use multi-component attack
+profiles. Each impact, explosion, or lingering-area tick retains its own Bullet,
+attack, output unit, and status buildup. Their aggregate is explicitly limited
+to one occurrence per component and is not a total-duration estimate.
+
+Shattering Crystal and both Ancient Dragon lightning spear spells normalize
+long repeated Bullet chains into distinct per-hit profiles. Repeated copies of
+the same attack row are not counted as guaranteed hits. Magic IDs 6940/6941 use
+player-facing `Lightning Spear` name overrides for Smithbox's internal `Light
+Spear` labels.
+
+The spell importer also normalizes eleven offensive buffs. Golden Vow, Flame
+Grant Me Strength, and Howl of Shabriri provide verified aura/body multipliers.
+Eight weapon buffs preserve catalyst-scaling coefficients, flat per-hit status
+buildup, and limitations. Weapon
+damage applies them only with a verified catalyst and
+`EquipParamWeapon.isEnhance` eligibility. Partial secondary mechanics such as
+anti-undead behavior, equip-load changes, and incoming-damage penalties remain
+explicit limitations.
+
+The importer reads Bullet-linked `SpEffectParam` rows for normalized per-hit
+status buildup. Glintstone Icecrag exposes 100 frost buildup; Gravity Well's
+pull effect remains non-damaging utility metadata. Frenzied Burst exposes
+90/105 madness buildup for its normal/charged profiles.
 
 Compare two local export versions before importing an update:
 

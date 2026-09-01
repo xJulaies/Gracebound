@@ -35,6 +35,7 @@ export interface WeaponCalculationData {
   name: string;
   gameVersion: string;
   maxUpgradeLevel: number;
+  canApplyWeaponBuff?: boolean;
   reinforcementId: string;
   requirements: Attributes;
   baseAttack: DamageTypes;

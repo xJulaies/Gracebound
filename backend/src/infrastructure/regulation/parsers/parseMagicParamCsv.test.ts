@@ -8,6 +8,7 @@ describe("parseMagicParamCsv", () => {
       ID: 4000, Name: "[Sorcery] Glintstone Pebble", mp: 7, slotLength: 1,
       requirementIntellect: 10, requirementFaith: 0, requirementLuck: 0, iconId: 4000,
       refCategory1: 0, refId1: -1,
+      refCategory2: 0, refId2: -1, mp_charge: 0,
     }]);
   });
 

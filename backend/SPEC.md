@@ -659,7 +659,7 @@ talisman bonuses. The response exposes available, used, and remaining slots;
 over-capacity selections are rejected. FP use, catalyst scaling, and spell
 damage remain outside this step. Intelligence, Faith, and Arcane requirements
 are validated against effective stats after supported armor and talisman
-bonuses. All current spell entries are `catalog-only`.
+bonuses. Spell entries without a verified combat profile remain `catalog-only`.
 
 Weapon catalog entries expose Regulation-derived `castingTypes` for sorcery
 staffs and sacred seals. Catalyst scaling is calculated from the existing
@@ -673,7 +673,8 @@ uses.
 variant belongs to the catalog weapon, that its casting types cover every
 selected spell, that the upgrade exists, and that effective attributes meet
 the catalyst requirements. The response exposes five Regulation-derived
-scaling values; spell damage remains deferred.
+scaling values. Verified spell profiles can additionally be calculated through
+the damage endpoint.
 
 `POST /api/damage/calculate` supports the verified Glintstone Pebble direct
 projectile using its `Magic 4000 -> Bullet 10400000 -> AtkParam_Pc 40000`
@@ -681,8 +682,95 @@ references. Its magic motion value is 152 and its final damage rate is 1.0.
 The endpoint combines this profile with the selected catalyst's Regulation
 scaling and optionally applies the existing boss defense and absorption rules.
 Great Glintstone Shard and Swift Glintstone Shard use the same verified direct
-projectile path with magic motion values 211 and 114. The remaining 168 spells
-stay `catalog-only`.
+projectile path with magic motion values 211 and 114. Glintstone Cometshard and
+Comet additionally provide normal/charged magic motion values 259/324 and
+292/365. Damage requests select the charged profile with `charged: true`.
+
+Glintstone Icecrag adds a direct magic motion value of 199 and 100 frost buildup
+per hit from Bullet-linked `SpEffectParam 1440000`. Gravity Well adds a direct
+magic motion value of 148; its pull `SpEffectParam 470` is utility behavior and
+does not add damage or status. Status buildup is returned separately and does
+not imply a proc.
+
+The grouped direct-incantation mapping additionally supports Flame Sling
+(202/255 fire), Wrath of Gold (350/420 holy), Discus of Light (150 holy),
+Lightning Spear (234 lightning), and Frenzied Burst (250/309 fire). The paired
+values are normal/charged motion values. Frenzied Burst separately exposes
+90/105 madness buildup. Lightning Spear remains normal-only until its indirect
+charged attack chain is resolved.
+
+Verified multi-projectile profiles return damage per connecting projectile:
+Glintblade Phalanx (60 magic), Carian Phalanx (48 magic), Greatblade Phalanx
+(100 magic), Collapsing Stars (44 magic), Bestial Sling (87 physical), and Pest
+Threads (60 physical). Collapsing Stars exposes the same 44 motion value for
+normal and charged projectiles; no total-cast damage is inferred.
+
+Channeled profiles expose `outputUnit: per-tick`: Crystal Barrage has 36 magic,
+Comet Azur 55 magic, and Crystal Torrent 57 magic per verified damage tick.
+Their initial/ongoing FP costs are 14/2, 40/10, and 20/5 respectively. Ongoing
+FP cost is distinct from charged FP cost. The API does not infer channel
+duration, total ticks, total damage, or total FP consumption.
+
+Verified area profiles include Cannon of Haima (285 magic), Giantsflame Take
+Thee (325/389 fire normal/charged), and Greyoll's Roar (320 physical). Cannon
+and Giantsflame resolve damage through the root Bullet's `HitBulletID`; their
+non-damaging delivery attacks are not exposed as damage.
+
+Verified spread profiles return per-projectile values: Crystal Burst (40/40
+magic), Scouring Black Flame (255/255 fire), Beast Claw (193/222 physical), and
+The Flame of Frenzy (107/124 fire plus 21/28 madness). Values are
+normal/charged. Projectile counts are not multiplied into the result.
+
+Multi-component profiles expose each phase independently. Magma Shot has
+normal/charged impact values 210/250 fire and magma ticks 48/53 fire. Roiling
+Magma has projectile 234/325, explosion 318/390, and magma tick 43/48 fire.
+Explosive Ghostflame has an initial 312 magic hit with 130 frost and recurring
+60 magic ghostflame ticks with 38 frost. Combined output represents one
+occurrence per listed component, not total cast damage; status buildup remains
+component-local.
+
+Shattering Crystal exposes three normal/charged per-hit profiles: initial
+crystals 127 magic, burst 60 magic, and fragments 51 magic. Ancient Dragons'
+Lightning Spear exposes 360/285/122 lightning profiles for spear impact,
+secondary strike, and repeated wave. Fortissax's Lightning Spear exposes two
+sets: 367/288/122 and 374/292/123 lightning. Repeated Bullet rows are not
+multiplied into guaranteed totals. Internal `Light Spear` names are normalized
+to their player-facing `Lightning Spear` names. Thirty-four spells are
+supported and 137 remain `catalog-only`.
+
+The initial buff catalog supports Golden Vow (aura, 80 seconds, ×1.15 all
+outgoing PvE damage) and Flame Grant Me Strength (body, 30 seconds, ×1.20
+physical/fire). `buffSpellIds` accepts at most one buff per slot and combines
+these two multiplicatively with existing talisman and armor modifiers.
+Scholar's Armament (90 seconds, 0.75 magic catalyst scaling), Black Flame Blade
+(7 seconds, 0.65 fire), Bloodflame Blade (60 seconds, 0.40 fire), and Electrify
+Armament (90 seconds, 0.75 lightning) are normalized weapon-buff records.
+Order's Blade adds 0.75 holy catalyst scaling for 90 seconds; its anti-undead
+behavior remains outside the current damage model. Vyke's Dragonbolt adds 0.75
+lightning scaling for 70 seconds; its equip-load bonus and lightning-defense
+penalty remain explicit limitations. Howl of Shabriri is a 40-second body buff
+with a 1.25 outgoing multiplier for all five damage types; its incoming-damage
+penalty is not part of the outgoing-damage calculation.
+Frozen Armament follows its hit-occurrence effect and adds 63 frost buildup per
+hit. Poison Armament similarly adds 70 poison buildup per hit. These values are
+returned as weapon-buff metadata; proc damage and accumulated status remain
+outside the stateless damage request.
+Weapon damage accepts one `weaponBuff` containing spell ID, catalyst weapon and
+variant IDs, and catalyst upgrade level. The backend verifies catalyst type,
+ownership, upgrade and attribute requirements plus target-weapon
+`EquipParamWeapon.isEnhance`. Catalyst scaling multiplied by 0.75/0.65/0.40/0.75
+is added as magic/fire/fire/lightning attack rating before motion values.
+Bloodflame delayed bleed and Black Flame percentage DoT remain explicit
+limitations. Forty-five spells have supported damage or buff profiles; 126
+remain `catalog-only`.
+
+Spell damage accepts up to four unique `talismanIds`. Permanent attribute
+bonuses are applied before catalyst scaling. General outgoing-damage,
+sorcery/incantation, and applicable charged-spell multipliers are then combined
+multiplicatively per damage type. Charged bonuses apply only when `charged` is
+true. Conditional HP, successive-hit, event, or equipment-specific effects
+remain inactive without authoritative combat state. Talisman response metadata
+preserves request order.
 
 ## Armor catalog
 

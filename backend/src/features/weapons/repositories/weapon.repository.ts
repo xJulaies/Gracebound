@@ -182,6 +182,7 @@ function toWeaponCalculationData(
     name: record.name,
     gameVersion: record.gameVersion,
     maxUpgradeLevel: record.maxUpgradeLevel,
+    canApplyWeaponBuff: record.canApplyWeaponBuff,
     reinforcementId: record.reinforcementId,
     requirements: { ...record.requirements },
     baseAttack: { ...record.baseAttack },

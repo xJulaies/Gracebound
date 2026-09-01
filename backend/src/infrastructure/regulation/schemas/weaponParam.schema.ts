@@ -40,6 +40,7 @@ export const weaponParamRowSchema = z.object({
   atkAttribute2: integerFromCsv.nonnegative(),
   enableMagic: integerFromCsv.min(0).max(1).default(0),
   enableMiracle: integerFromCsv.min(0).max(1).default(0),
+  isEnhance: integerFromCsv.min(0).max(1).default(0),
 });
 
 export const reinforceWeaponRowSchema = z.object({

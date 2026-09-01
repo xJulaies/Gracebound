@@ -30,6 +30,17 @@ const armorIdsSchema = z
   .max(4)
   .refine((ids) => new Set(ids).size === ids.length, { message: "Armor IDs must be unique" })
   .default([]);
+const buffSpellIdsSchema = z
+  .array(z.string().regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/))
+  .max(2)
+  .refine((ids) => new Set(ids).size === ids.length, { message: "Buff spell IDs must be unique" })
+  .default([]);
+const weaponBuffSchema = z.strictObject({
+  spellId: z.string().regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/),
+  catalystWeaponId: z.string().regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/),
+  catalystVariantId: z.string().regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/),
+  upgradeLevel: z.number().int().min(0).max(25),
+}).nullable().default(null);
 
 export const manualDamageSchema = z.strictObject({
   attackRating: damageTypesSchema,
@@ -51,6 +62,8 @@ const weaponDamageFields = {
   bossId: bossIdSchema,
   talismanIds: talismanIdsSchema,
   armorIds: armorIdsSchema,
+  buffSpellIds: buffSpellIdsSchema,
+  weaponBuff: weaponBuffSchema,
 };
 
 const spellDamageSchema = z.strictObject({
@@ -58,8 +71,11 @@ const spellDamageSchema = z.strictObject({
   catalystWeaponId: z.string().regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/),
   catalystVariantId: z.string().regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/),
   upgradeLevel: z.number().int().min(0).max(25),
+  charged: z.boolean().default(false),
   stats: weaponDamageFields.stats,
   bossId: bossIdSchema,
+  talismanIds: talismanIdsSchema,
+  buffSpellIds: buffSpellIdsSchema,
 });
 
 const attackIdSchema = z.string().regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/);

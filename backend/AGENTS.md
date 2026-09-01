@@ -1058,7 +1058,91 @@ Spell damage support starts with verified direct projectile profiles. Resolve
 Magic primary bullet references to Bullet and AtkParam_Pc, treat the attack's
 per-type attack values as spell motion values, and apply FinalDamageRateParam.
 Glintstone Pebble, Great Glintstone Shard, and Swift Glintstone Shard are
-currently `supported`; all other spells remain `catalog-only` until verified
-through the generic mapper.
+currently `supported`. Glintstone Cometshard and Comet additionally expose
+separate normal and charged projectile profiles. All other spells remain
+`catalog-only` until verified through the generic mapper.
+
+Glintstone Icecrag and Gravity Well are supported direct projectiles. Preserve
+per-hit status buildup separately from damage: Icecrag exposes 100 frost from
+its Bullet-linked SpEffect, while Gravity Well's pull effect is documented but
+must not be represented as damage or status buildup. Never infer a status proc
+without target resistance and accumulated combat state.
+
+Verified direct incantation profiles are mapped in homogeneous groups rather
+than through spell-specific services. Flame Sling, Wrath of Gold, and Frenzied
+Burst expose separate normal and charged profiles. Discus of Light and
+Lightning Spear currently expose their verified normal per-hit profiles.
+Frenzied Burst preserves 90/105 madness buildup for normal/charged hits. Do not
+mark a charged or chained profile supported when its primary Regulation attack
+only forwards to unresolved child behavior.
+
+Multi-projectile profiles expose verified per-hit values, not a guessed total.
+This applies to Glintblade Phalanx, Carian Phalanx, Greatblade Phalanx,
+Collapsing Stars, Bestial Sling, and Pest Threads. Collapsing Stars has equal
+normal/charged per-projectile motion values; charging may still affect behavior
+outside raw per-hit damage. Total cast damage requires authoritative hit counts
+and must not assume every projectile or repeated hit connects.
+
+Channeled spell profiles use `outputUnit: per-tick` and preserve their ongoing
+FP cost separately from charged FP cost. Crystal Barrage, Comet Azur, and
+Crystal Torrent expose verified per-tick motion values. Do not infer total
+channel damage, duration, tick count, or total FP consumption without an
+explicit channel-duration model.
+
+Explosion profiles must resolve the actual damaging Bullet. Cannon of Haima
+and Giantsflame Take Thee use their root Bullet's `HitBulletID`; the root attack
+is only a delivery/trigger record and must not be reported as spell damage.
+Greyoll's Roar has a directly damaging area profile. Follow hit bullets only
+for explicitly verified chains rather than assuming every `HitBulletID` is the
+sole damage component.
+
+Spread and wave attacks with verified normal/charged bullets expose per-
+projectile values. Crystal Burst, Scouring Black Flame, Beast Claw, and The
+Flame of Frenzy belong to this group. Preserve Frenzy's 21/28 madness buildup
+for normal/charged projectiles. Do not multiply by emitted projectile count or
+assume all projectiles connect.
+
+Verified multi-component spell profiles preserve each damaging phase with its
+own ID, label, output unit, motion values, and status buildup. Magma Shot,
+Roiling Magma, and Explosive Ghostflame use this model. The aggregate output may
+sum exactly one occurrence of each component only when it is labeled with
+`aggregateAssumption: one-occurrence-per-component`; it is not total cast
+damage. Multi-component responses expose status per component and set the
+top-level status buildup to null.
+
+Spell buffs use mutually exclusive `aura`, `body`, and `weapon` slots. Golden
+Vow and Flame Grant Me Strength may stack because they occupy different slots;
+apply their PvE outgoing multipliers after attack rating and before defense.
+Weapon buffs require a separate verified catalyst selection and a target weapon
+proven buffable from `EquipParamWeapon.isEnhance`. Add the selected catalyst's
+per-damage-type scaling multiplied by the Regulation coefficient to weapon
+attack rating before attack motion values. Never apply a weapon enchantment to
+an ineligible weapon.
+
+The verified offensive buff set also includes Order's Blade, Vyke's Dragonbolt,
+and Howl of Shabriri. Preserve their anti-undead, equip-load, and incoming-damage
+behaviors as explicit limitations until the corresponding combat-state and
+player-defense calculations exist; do not silently treat partial support as a
+complete simulation.
+
+Frozen Armament and Poison Armament resolve their flat per-hit buildup through
+`SpEffectParam.atkOccurrenceSpEffectId`. Expose 63 frost and 70 poison as added
+status buildup on the selected weapon buff. Do not calculate a status proc or
+merge it into direct damage without target resistance and accumulated combat
+state.
+
+Repeated Bullet chains must be normalized to distinct damage profiles rather
+than duplicating the same attack row for every emitted Bullet. Shattering
+Crystal and the Ancient Dragon lightning spear spells use this rule. Preserve
+each distinct per-hit phase, but do not infer how many repeated waves connect.
+Smithbox's internal `Light Spear` row names for Magic IDs 6940/6941 must be
+normalized to the player-facing `Lightning Spear` names.
+
+Spell damage requests accept up to four supported talisman IDs. Apply permanent
+attribute bonuses before catalyst scaling. Then multiply per damage type by
+general outgoing-damage modifiers, the matching sorcery or incantation
+multiplier, and—only for `charged: true`—the charged-spell multiplier. Do not
+activate HP-, event-, or other combat-state conditions without explicit
+authoritative state. Preserve request order and reject unsupported records.
 
 If a requested implementation conflicts with this document or `spec.md`, explicitly identify the conflict before changing the architecture.

@@ -54,6 +54,7 @@ const weaponSchema = new Schema<WeaponRecord>(
     sourceId: { type: Number, required: true, min: 1 },
     name: { type: String, required: true },
     maxUpgradeLevel: { type: Number, required: true, min: 0, max: 25 },
+    canApplyWeaponBuff: { type: Boolean, required: true, default: false },
     reinforcementId: { type: String, required: true },
     requirements: { type: attributesSchema, required: true },
     baseAttack: { type: damageTypesSchema, required: true },

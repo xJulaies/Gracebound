@@ -21,6 +21,8 @@ import { WeaponVariantModel } from "../weapons/models/weapon.model";
 import { WeaponCatalogModel } from "../weapons/models/weaponCatalog.model";
 import { BossModel } from "../bosses/models/boss.model";
 import { saveArmorCatalog } from "../../infrastructure/regulation/services/saveArmorCatalog";
+import { saveSpellCatalog } from "../../infrastructure/regulation/services/saveSpellCatalog";
+import type { SpellData, SpellBuffEffect } from "../spells/domain/spell.types";
 import { neutralArmorPassiveEffects, type ArmorData } from "../armor/domain/armor.types";
 
 const passThroughAuthentication: RequestHandler = (_req, _res, next) => {
@@ -56,6 +58,16 @@ beforeEach(async () => {
       gameVersion: REGULATION_TEST_GAME_VERSION,
       sourceHash: REGULATION_TEST_SOURCE_HASH,
     }),
+    saveSpellCatalog([
+      buffSpell("golden-vow", "Golden Vow", "incantation", auraBuff),
+      buffSpell("flame-grant-me-strength", "Flame Grant Me Strength", "incantation", bodyBuff),
+      buffSpell("test-body-buff", "Test Body Buff", "incantation", bodyBuff),
+      buffSpell("scholar-s-armament", "Scholar's Armament", "sorcery", weaponBuff),
+      buffSpell("frozen-armament", "Frozen Armament", "sorcery", frozenArmament),
+    ], {
+      gameVersion: REGULATION_TEST_GAME_VERSION,
+      sourceHash: REGULATION_TEST_SOURCE_HASH,
+    }),
   ]);
 });
 
@@ -71,6 +83,14 @@ const silverTearMask: ArmorData = {
   resistances: { poison: 0, rot: 0, bleed: 0, frost: 0, sleep: 0, madness: 0, deathBlight: 0 },
   sourceEffectIds: [6109000], hasUnresolvedPassiveEffects: false, passiveEffects: silverTearEffects,
 };
+
+const auraBuff = createBuffEffect("aura", 80, { physical: 1.15, magic: 1.15, fire: 1.15, lightning: 1.15, holy: 1.15 });
+const bodyBuff = createBuffEffect("body", 30, { physical: 1.2, magic: 1, fire: 1.2, lightning: 1, holy: 1 });
+const weaponBuff = createBuffEffect("weapon", 90, damageTypes(1), { physical: 0, magic: 0.75, fire: 0, lightning: 0, holy: 0 });
+const frozenArmament = createBuffEffect(
+  "weapon", 60, damageTypes(1), damageTypes(0),
+  { poison: 0, rot: 0, bleed: 0, frost: 63, sleep: 0, madness: 0, deathBlight: 0 },
+);
 
 const boss: BossData = {
   id: "test-boss",
@@ -448,7 +468,93 @@ function neutralSpecialDefenseEffects() {
   };
 }
 
+function createBuffEffect(
+  slot: SpellBuffEffect["slot"],
+  durationSeconds: number,
+  outgoingDamageMultipliers: SpellBuffEffect["outgoingDamageMultipliers"],
+  weaponAddedDamageScaling = damageTypes(0),
+  weaponAddedStatusBuildup: SpellBuffEffect["weaponAddedStatusBuildup"] = {
+    poison: 0, rot: 0, bleed: 0, frost: 0, sleep: 0, madness: 0, deathBlight: 0,
+  },
+): SpellBuffEffect {
+  return {
+    slot, durationSeconds, outgoingDamageMultipliers, weaponAddedDamageScaling,
+    weaponAddedStatusBuildup,
+    limitations: [],
+  };
+}
+
+function buffSpell(
+  id: string,
+  name: string,
+  type: SpellData["type"],
+  buffEffect: SpellBuffEffect,
+): SpellData {
+  return {
+    id, name, type, buffEffect, sourceMagicId: id.length, fpCost: 10,
+    chargedFpCost: null, sustainedFpCost: null, slotsRequired: 1,
+    requirements: { intelligence: type === "sorcery" ? 10 : 0, faith: type === "incantation" ? 10 : 0, arcane: 0 },
+    iconId: 1, calculationStatus: "supported", attack: null, chargedAttack: null,
+  };
+}
+
 describe("POST /api/damage/calculate with MongoDB weapon data", () => {
+  it("combines aura, body, and catalyst-scaled weapon buffs in calculation order", async () => {
+    const response = await request(app).post("/api/damage/calculate").send({
+      ...createWeaponDamageRequest("longsword", 10, undefined, "straight-sword-1h-light-1"),
+      buffSpellIds: ["golden-vow", "flame-grant-me-strength"],
+      weaponBuff: {
+        spellId: "scholar-s-armament", catalystWeaponId: "moonveil",
+        catalystVariantId: "moonveil", upgradeLevel: 10,
+      },
+    });
+    expect(response.status).toBe(200);
+    expect(response.body.data[0]).toMatchObject({
+      buffs: [{ id: "golden-vow", slot: "aura" }, { id: "flame-grant-me-strength", slot: "body" }],
+      weaponBuff: { id: "scholar-s-armament", addedDamage: { magic: 147 } },
+      attackRating: { physical: 251, magic: 567, total: 818 },
+      offensiveOutput: { physical: 346, magic: 652, total: 998 },
+    });
+  });
+
+  it("rejects a weapon buff on an ineligible weapon", async () => {
+    const response = await request(app).post("/api/damage/calculate").send({
+      ...createWeaponDamageRequest(),
+      weaponBuff: {
+        spellId: "scholar-s-armament", catalystWeaponId: "moonveil",
+        catalystVariantId: "moonveil", upgradeLevel: 10,
+      },
+    });
+    expect(response.status).toBe(400);
+  });
+
+  it("returns flat per-hit status buildup added by a weapon buff", async () => {
+    const response = await request(app).post("/api/damage/calculate").send({
+      ...createWeaponDamageRequest("longsword", 10, undefined, "straight-sword-1h-light-1"),
+      weaponBuff: {
+        spellId: "frozen-armament", catalystWeaponId: "moonveil",
+        catalystVariantId: "moonveil", upgradeLevel: 10,
+      },
+    });
+
+    expect(response.status).toBe(200);
+    expect(response.body.data[0].weaponBuff).toMatchObject({
+      id: "frozen-armament",
+      addedDamage: damageTypes(0),
+      addedStatusBuildup: { frost: 63 },
+    });
+  });
+
+  it("rejects two buffs that occupy the same slot", async () => {
+    const response = await request(app).post("/api/damage/calculate").send({
+      ...createWeaponDamageRequest("longsword", 10, undefined, "straight-sword-1h-light-1"),
+      buffSpellIds: ["flame-grant-me-strength", "test-body-buff"],
+    });
+
+    expect(response.status).toBe(400);
+    expect(response.body.data).toEqual([]);
+  });
+
   it("calculates attack rating from the active game version", async () => {
     const response = await request(app)
       .post("/api/damage/calculate")

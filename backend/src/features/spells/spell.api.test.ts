@@ -51,6 +51,7 @@ function spell(id: string, name: string, type: SpellData["type"]): SpellData {
   return {
     id, sourceMagicId: id.length, name, type, fpCost: 10, slotsRequired: 1,
     requirements: { intelligence: type === "sorcery" ? 10 : 0, faith: type === "incantation" ? 10 : 0, arcane: 0 },
-    iconId: 1, calculationStatus: "catalog-only", attack: null,
+    iconId: 1, calculationStatus: "catalog-only", buffEffect: null, attack: null,
+    chargedFpCost: null, sustainedFpCost: null, chargedAttack: null,
   };
 }

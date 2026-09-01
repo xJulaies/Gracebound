@@ -32,11 +32,13 @@ export function createRegulationWeaponCatalogFixture(): WeaponCatalogDataSet {
   });
 
   const moonveil = calculationData.weapons.moonveil!;
+  moonveil.canApplyWeaponBuff = false;
   calculationData.weapons.longsword = {
     ...structuredClone(moonveil),
     id: "longsword",
     sourceId: 1000000,
     name: "Longsword",
+    canApplyWeaponBuff: true,
   };
   calculationData.weapons["serpentbone-blade"] = {
     ...structuredClone(moonveil),

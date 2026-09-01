@@ -87,6 +87,7 @@ export function mapRegulationWeapon(
         name: weapon.Name,
         gameVersion,
         maxUpgradeLevel: reinforcementRows.length - 1,
+        canApplyWeaponBuff: weapon.isEnhance === 1,
         reinforcementId,
         requirements: mapAttributes(weapon, "proper", 1),
         baseAttack: mapDamageTypes(weapon, "attackBase", 1),

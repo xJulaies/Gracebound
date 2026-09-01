@@ -8,7 +8,13 @@ export const bulletParamRowSchema = z.object({
   ID: integerFromCsv.nonnegative(),
   Name: z.string(),
   atkId_Bullet: integerFromCsv,
+  HitBulletID: integerFromCsv.optional(),
   intervalCreateBulletId: integerFromCsv,
+  spEffectId0: integerFromCsv.optional(),
+  spEffectId1: integerFromCsv.optional(),
+  spEffectId2: integerFromCsv.optional(),
+  spEffectId3: integerFromCsv.optional(),
+  spEffectId4: integerFromCsv.optional(),
 });
 
 export const swordArtsParamRowSchema = z.object({

@@ -66,6 +66,7 @@ export const armorEffectRowSchema = z.object({
   changeMpEstusFlaskCorrectRate: multiplier,
   invocationConditionsStateChange1: z.coerce.number().int(),
   cycleOccurrenceSpEffectId: z.coerce.number().int(),
+  atkOccurrenceSpEffectId: z.coerce.number().int().default(-1),
   effectEndurance: finite,
   atkEnemyDmgCorrectRate_Physics: multiplier,
   atkEnemyDmgCorrectRate_Magic: multiplier,
@@ -78,6 +79,10 @@ export const armorEffectRowSchema = z.object({
   hearingSearchEnemyRate: multiplier,
   targetPriority: finite,
   physicsAttackPower: finite,
+  magicAttackPower: finite,
+  fireAttackPower: finite,
+  thunderAttackPower: finite,
+  darkAttackPower: finite,
   behaviorId: z.coerce.number().int(),
   physicsAttackRate: multiplier,
   magicAttackRate: multiplier,
@@ -86,6 +91,13 @@ export const armorEffectRowSchema = z.object({
   darkAttackRate: multiplier,
   physicsAttackPowerRate: multiplier,
   stateInfo: z.coerce.number().int(),
+  poizonAttackPower: finite,
+  diseaseAttackPower: finite,
+  bloodAttackPower: finite,
+  curseAttackPower: finite,
+  freezeAttackPower: finite,
+  sleepAttackPower: finite,
+  madnessAttackPower: finite,
 });
 
 export type ArmorEffectRow = z.infer<typeof armorEffectRowSchema>;
