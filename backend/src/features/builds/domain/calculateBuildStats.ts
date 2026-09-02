@@ -37,6 +37,10 @@ export function calculateBuildStats(
       (total, effect) => total + Math.round(effect.utilityEffects.itemDiscoveryRateBonus * 100),
       0,
     ),
+    staminaRecoverySpeedBonus: talismanEffects.reduce(
+      (total, effect) => total + effect.utilityEffects.staminaRecoverySpeedBonus,
+      0,
+    ),
     incomingDamageMultipliers: talismanEffects.reduce(
       (total, effect) => ({
         physical: multiply(total.physical, effect.incomingDamageMultipliers.physical),

@@ -13,6 +13,10 @@ import { useMongoMemoryServer } from "../../test/useMongoMemoryServer";
 import type { SpellData } from "../spells/domain/spell.types";
 import { saveTalismanCatalog } from "../../infrastructure/regulation/services/saveTalismanCatalog";
 import { createTalismanFixture } from "../../test/fixtures/talisman.fixture";
+import { GreatRuneModel } from "../greatRunes/models/greatRune.model";
+import { createGreatRuneRecordFixture } from "../../test/fixtures/greatRune.fixture";
+import { CrystalTearModel } from "../crystalTears/models/crystalTear.model";
+import { createCrystalTearRecordFixture } from "../../test/fixtures/crystalTear.fixture";
 
 const passThroughAuthentication: RequestHandler = (_request, _response, next) => next();
 const app = createApp({
@@ -59,6 +63,15 @@ beforeEach(async () => {
       gameVersion: REGULATION_TEST_GAME_VERSION,
       sourceHash: REGULATION_TEST_SOURCE_HASH,
     }),
+    GreatRuneModel.create([
+      createGreatRuneRecordFixture("godricks-great-rune"),
+      createGreatRuneRecordFixture("rykards-great-rune"),
+    ]),
+    CrystalTearModel.create([
+      createCrystalTearRecordFixture("magic-shrouding-cracked-tear"),
+      createCrystalTearRecordFixture("thorny-cracked-tear"),
+      createCrystalTearRecordFixture("cerulean-hidden-tear"),
+    ]),
   ]);
 });
 
@@ -67,6 +80,59 @@ const stats = {
 };
 
 describe("POST /api/damage/calculate spell damage", () => {
+  it("applies a matching Shrouding Tear to spell damage", async () => {
+    const response = await request(app).post("/api/damage/calculate").send({
+      spellId: "glintstone-pebble", catalystWeaponId: "moonveil",
+      catalystVariantId: "moonveil", upgradeLevel: 10, stats,
+      crystalTearIds: ["magic-shrouding-cracked-tear"],
+    });
+    expect(response.status).toBe(200);
+    expect(response.body.data[0]).toMatchObject({
+      crystalTears: [{ id: "magic-shrouding-cracked-tear" }],
+      offensiveOutput: { magic: 359, total: 359 },
+    });
+  });
+
+  it("applies Cerulean Hidden Tear to effective spell FP cost", async () => {
+    const response = await request(app).post("/api/damage/calculate").send({
+      spellId: "glintstone-pebble", catalystWeaponId: "moonveil",
+      catalystVariantId: "moonveil", upgradeLevel: 10, stats,
+      crystalTearIds: ["cerulean-hidden-tear"],
+    });
+    expect(response.status).toBe(200);
+    expect(response.body.data[0].attack.fpCost).toBe(0);
+  });
+  it("applies Godrick's Great Rune before catalyst and spell scaling", async () => {
+    const response = await request(app).post("/api/damage/calculate").send({
+      spellId: "glintstone-pebble",
+      catalystWeaponId: "moonveil",
+      catalystVariantId: "moonveil",
+      upgradeLevel: 10,
+      stats,
+      greatRuneId: "godricks-great-rune",
+    });
+
+    expect(response.status).toBe(200);
+    expect(response.body.data[0]).toMatchObject({
+      effectiveStats: { strength: 17, dexterity: 35, intelligence: 75, faith: 14, arcane: 14 },
+      greatRune: { id: "godricks-great-rune", name: "Godrick's Great Rune" },
+    });
+  });
+
+  it("rejects a catalog-only Great Rune for spell damage", async () => {
+    const response = await request(app).post("/api/damage/calculate").send({
+      spellId: "glintstone-pebble",
+      catalystWeaponId: "moonveil",
+      catalystVariantId: "moonveil",
+      upgradeLevel: 10,
+      stats,
+      greatRuneId: "rykards-great-rune",
+    });
+
+    expect(response.status).toBe(400);
+    expect(response.body.data).toEqual([]);
+  });
+
   it("calculates a selected spell from a saved owned build", async () => {
     const createResponse = await request(authenticatedApp)
       .post("/api/me/builds")
@@ -76,6 +142,7 @@ describe("POST /api/damage/calculate spell damage", () => {
         stats: { vigor: 50, mind: 30, endurance: 25, ...stats },
         spellIds: ["glintstone-pebble"],
         equipment: {
+          greatRuneId: "godricks-great-rune",
           catalyst: { weaponId: "moonveil", variantId: "moonveil", upgradeLevel: 10 },
         },
       });
@@ -88,9 +155,11 @@ describe("POST /api/damage/calculate spell damage", () => {
 
     expect(response.status).toBe(200);
     expect(response.body.data[0]).toMatchObject({
+      effectiveStats: { strength: 17, dexterity: 35, intelligence: 75, faith: 14, arcane: 14 },
+      greatRune: { id: "godricks-great-rune", name: "Godrick's Great Rune" },
       spell: { id: "glintstone-pebble" },
       catalyst: { weaponId: "moonveil", variantId: "moonveil", upgradeLevel: 10 },
-      offensiveOutput: { magic: 299, total: 299 },
+      offensiveOutput: { magic: 302, total: 302 },
     });
   });
 

@@ -53,6 +53,8 @@ const equipmentSchema = new Schema(
       default: null,
     },
     armor: { type: armorSchema, default: () => ({}) },
+    greatRuneId: { type: String, default: null },
+    crystalTearIds: { type: [String], default: () => [] },
     talismanIds: { type: [String], default: () => [] },
     buffSpellIds: { type: [String], default: () => [] },
     weaponBuff: {

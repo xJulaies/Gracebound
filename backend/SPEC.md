@@ -743,6 +743,11 @@ The initial buff catalog supports Golden Vow (aura, 80 seconds, ×1.15 all
 outgoing PvE damage) and Flame Grant Me Strength (body, 30 seconds, ×1.20
 physical/fire). `buffSpellIds` accepts at most one buff per slot and combines
 these two multiplicatively with existing talisman and armor modifiers.
+The shared buff rule domain preserves submitted order, rejects weapon-slot
+spells in the general aura/body selection, rejects duplicate active slots, and
+combines outgoing modifiers independently for all five damage types. Spell and
+Ash weapon buffs may coexist as saved choices but cannot be active together for
+one damage calculation.
 Scholar's Armament (90 seconds, 0.75 magic catalyst scaling), Black Flame Blade
 (7 seconds, 0.65 fire), Bloodflame Blade (60 seconds, 0.40 fire), and Electrify
 Armament (90 seconds, 0.75 lightning) are normalized weapon-buff records.
@@ -851,11 +856,72 @@ uses the final modified maximum equip load: `<30%` light, `<70%` medium, `<100%`
 heavy, otherwise overloaded. The response includes current load, maximum load,
 ratio, percentage, category, and selected weapon metadata.
 
+## Great Rune catalog
+
+The Regulation 1.17.0 base-game catalog contains seven Great Runes. Public list
+and detail routes expose normalized names, activation type, calculation status,
+limitations, icon references, and verified effects without leaking Regulation
+row IDs. Detail responses follow the project contract of a one-element or empty
+`data` array.
+
+Godrick's Great Rune exposes +5 to all eight attributes. Radahn's exposes 1.15
+multipliers for maximum HP, FP, and stamina. Morgott's exposes a 1.25 maximum-HP
+multiplier. Rykard's, Mohg's, and Malenia's are catalog-only because their
+effects require combat or multiplayer state. The Great Rune of the Unborn has
+no Rune Arc combat effect.
+
+`POST /api/builds/calculate-stats` accepts one optional `greatRuneId`. Supported
+attribute bonuses are applied before resource and protection curves; resource
+multipliers are applied afterward. Responses expose the selected rune's public
+ID and name. Unknown and catalog-only selections return 400. Saved builds store
+the same optional selection.
+
+Weapon and spell damage requests accept the same optional `greatRuneId`.
+Godrick's verified attribute bonuses are applied before weapon attack rating,
+catalyst scaling, spell requirements, and weapon-buff requirements. Saved-build
+damage forwards its selected rune. Radahn's and Morgott's resource-only effects
+do not alter offensive damage. Unknown and catalog-only selections return 400.
+
+## Flask of Wondrous Physick
+
+The Regulation 1.17.0 base-game catalog contains 32 Crystal Tears from
+`EquipParamGoods` and their referenced `SpEffectParam` rows. Public list and
+detail routes expose normalized catalog data and icons. Duplicate collectible
+Crimson, Cerulean, and Ruptured Tears retain separate stable IDs.
+
+Builds, build-stat previews, and weapon or spell damage requests accept up to
+two unique `crystalTearIds`. Twenty-two effects are currently supported: Crimsonspill,
+Greenspill, the Strength/Dexterity/Intelligence/Faith-knot Tears, and the four
+elemental Shrouding Tears, plus Spiked, Stonebarb, Opaline Hardtear, and
+Cerulean Hidden Tear, Greenburst, Winged, and Speckled Hardtear. Knot bonuses apply before requirements and scaling;
+resource multipliers apply after curves; Shrouding multipliers apply to the
+matching outgoing damage type. Selection order is preserved. Unknown,
+duplicate, excessive, and catalog-only selections are rejected.
+
+Spiked multiplies charged-attack output by 1.15 for all five damage types.
+Stonebarb exposes a 1.30 poise-damage multiplier for 30 seconds without
+guessing an absolute stance-damage value. Opaline Hardtear applies the
+Regulation PvE incoming-damage multiplier of 0.85 for all five types. Cerulean
+Hidden Tear reduces effective skill, sorcery, and incantation FP cost to zero
+for its ten-second duration.
+
+Greenburst adds 15 to stamina recovery speed for 180 seconds. Winged multiplies
+maximum equip load by 4.5 before the equipment-load category is determined.
+Speckled Hardtear adds 90 points to all seven status resistances for 180 seconds
+and separately reports its one-time cleanse of all seven accumulated status
+types. A cleanse is never modeled as a permanent resistance bonus.
+
+Both collectible Crimson Crystal Tears restore 50% maximum HP immediately;
+both Cerulean Crystal Tears restore 50% maximum FP immediately. Their separate
+stable IDs allow two copies to combine to 100%. Crimsonburst restores 7 HP per
+second for 180 seconds. Immediate recovery, regeneration, and maximum-resource
+multipliers remain separate response fields.
+
 ## Icon asset storage
 
-The active 1.17.0 catalogs reference 1,454 unique item icon IDs. Local
-layout-driven extraction produces 1,453 binary-distinct 160x160 WebP assets at
-quality 90, totaling 12,443,076 bytes. No icon is missing and no extracted game
+The active 1.17.0 catalogs reference 1,493 unique item icon IDs. Local
+layout-driven extraction produces 1,492 binary-distinct 160x160 WebP assets at
+quality 90, totaling 13,004,270 bytes. No icon is missing and no extracted game
 image belongs in Git.
 
 MongoDB stores the images in the `iconassets` collection, deduplicated by
@@ -869,7 +935,7 @@ binary with its exact content length, a strong checksum ETag, and
 `Cache-Control: public, max-age=86400, stale-while-revalidate=604800`. Matching
 `If-None-Match` requests return 304 without image bytes. Unknown IDs return 404
 and malformed non-numeric IDs return 400 through the standard error envelope.
-Weapon, armor, talisman, spell, and Ash of War catalog responses expose both
+Weapon, armor, talisman, spell, Ash of War, Great Rune, and Crystal Tear catalog responses expose both
 the numeric `iconId` and server-relative `iconUrl` in the form
 `/api/assets/icons/:iconId`. The URL is derived at response time and is not
 stored redundantly in MongoDB.
@@ -1287,6 +1353,10 @@ GET  /api/spells
 GET  /api/spells/:spellId
 GET  /api/ashes-of-war
 GET  /api/ashes-of-war/:ashOfWarId
+GET  /api/great-runes
+GET  /api/great-runes/:greatRuneId
+GET  /api/crystal-tears
+GET  /api/crystal-tears/:crystalTearId
 GET  /api/bosses
 GET  /api/bosses/:bossId
 GET  /api/character-classes

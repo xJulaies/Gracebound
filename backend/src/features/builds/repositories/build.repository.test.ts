@@ -46,6 +46,8 @@ describe("buildRepository", () => {
           armsId: null,
           legsId: null,
         },
+        greatRuneId: null,
+        crystalTearIds: [],
         talismanIds: [],
         buffSpellIds: [],
         weaponBuff: null,

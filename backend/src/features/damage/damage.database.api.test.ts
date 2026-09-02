@@ -24,6 +24,10 @@ import { saveArmorCatalog } from "../../infrastructure/regulation/services/saveA
 import { saveSpellCatalog } from "../../infrastructure/regulation/services/saveSpellCatalog";
 import type { SpellData, SpellBuffEffect } from "../spells/domain/spell.types";
 import { neutralArmorPassiveEffects, type ArmorData } from "../armor/domain/armor.types";
+import { GreatRuneModel } from "../greatRunes/models/greatRune.model";
+import { createGreatRuneRecordFixture } from "../../test/fixtures/greatRune.fixture";
+import { CrystalTearModel } from "../crystalTears/models/crystalTear.model";
+import { createCrystalTearRecordFixture } from "../../test/fixtures/crystalTear.fixture";
 
 const passThroughAuthentication: RequestHandler = (_req, _res, next) => {
   next();
@@ -72,6 +76,17 @@ beforeEach(async () => {
       gameVersion: REGULATION_TEST_GAME_VERSION,
       sourceHash: REGULATION_TEST_SOURCE_HASH,
     }),
+    GreatRuneModel.create([
+      createGreatRuneRecordFixture("godricks-great-rune"),
+      createGreatRuneRecordFixture("rykards-great-rune"),
+    ]),
+    CrystalTearModel.create([
+      createCrystalTearRecordFixture("strength-knot-crystal-tear"),
+      createCrystalTearRecordFixture("magic-shrouding-cracked-tear"),
+      createCrystalTearRecordFixture("thorny-cracked-tear"),
+      createCrystalTearRecordFixture("spiked-cracked-tear"),
+      createCrystalTearRecordFixture("stonebarb-cracked-tear"),
+    ]),
   ]);
 });
 
@@ -669,6 +684,68 @@ describe("POST /api/damage/calculate with MongoDB weapon data", () => {
     expect(response.body.data[0].attackRating.total).toBeGreaterThan(671);
   });
 
+  it("applies Godrick's Great Rune before weapon scaling", async () => {
+    const response = await request(app)
+      .post("/api/damage/calculate")
+      .send({
+        ...createWeaponDamageRequest(),
+        greatRuneId: "godricks-great-rune",
+      });
+
+    expect(response.status).toBe(200);
+    expect(response.body.data[0]).toMatchObject({
+      stats: { strength: 12, dexterity: 30, intelligence: 70, faith: 8, arcane: 8 },
+      effectiveStats: { strength: 17, dexterity: 35, intelligence: 75, faith: 13, arcane: 13 },
+      greatRune: { id: "godricks-great-rune", name: "Godrick's Great Rune" },
+    });
+    expect(response.body.data[0].attackRating.total).toBeGreaterThan(671);
+  });
+
+  it("combines Physick attribute and outgoing-damage Tears for weapon damage", async () => {
+    const response = await request(app).post("/api/damage/calculate").send({
+      ...createWeaponDamageRequest(),
+      crystalTearIds: ["strength-knot-crystal-tear", "magic-shrouding-cracked-tear"],
+    });
+    expect(response.status).toBe(200);
+    expect(response.body.data[0]).toMatchObject({
+      effectiveStats: { strength: 22 },
+      crystalTears: [
+        { id: "strength-knot-crystal-tear" }, { id: "magic-shrouding-cracked-tear" },
+      ],
+    });
+    expect(response.body.data[0].offensiveOutput.magic).toBeGreaterThan(525);
+  });
+
+  it("applies Spiked only to charged attacks and exposes Stonebarb poise scaling", async () => {
+    const [baseline, physick] = await Promise.all([
+      request(app).post("/api/damage/calculate").send(
+        createWeaponDamageRequest("moonveil", 10, undefined, "katana-1h-charged-heavy-1"),
+      ),
+      request(app).post("/api/damage/calculate").send({
+        ...createWeaponDamageRequest("moonveil", 10, undefined, "katana-1h-charged-heavy-1"),
+        crystalTearIds: ["spiked-cracked-tear", "stonebarb-cracked-tear"],
+      }),
+    ]);
+    expect(baseline.status).toBe(200);
+    expect(physick.status).toBe(200);
+    expect(physick.body.data[0].offensiveOutput.total).toBeGreaterThan(baseline.body.data[0].offensiveOutput.total);
+    expect(physick.body.data[0].poiseDamageMultiplier).toBe(1.3);
+  });
+
+  it("rejects unknown and catalog-only Great Runes for weapon damage", async () => {
+    const [unknown, unsupported] = await Promise.all([
+      request(app).post("/api/damage/calculate").send({
+        ...createWeaponDamageRequest(), greatRuneId: "unknown-rune",
+      }),
+      request(app).post("/api/damage/calculate").send({
+        ...createWeaponDamageRequest(), greatRuneId: "rykards-great-rune",
+      }),
+    ]);
+
+    expect(unknown.status).toBe(400);
+    expect(unsupported.status).toBe(400);
+  });
+
   it("rejects unknown or unsupported talisman selections", async () => {
     const response = await request(app)
       .post("/api/damage/calculate")
@@ -1047,6 +1124,7 @@ describe("saved build damage calculation", () => {
           dexterity: 80, intelligence: 80, faith: 80, arcane: 80,
         },
         equipment: {
+          greatRuneId: "godricks-great-rune",
           weaponSlots: {
             rightHand1: {
               weaponId: "longsword", variantId: "longsword", upgradeLevel: 10,
@@ -1069,6 +1147,7 @@ describe("saved build damage calculation", () => {
 
     expect(createResponse.status).toBe(201);
     expect(createResponse.body.data[0].equipment).toMatchObject({
+      greatRuneId: "godricks-great-rune",
       buffSpellIds: ["golden-vow"],
       weaponBuff: { spellId: "frozen-armament" },
       weaponSlots: {
@@ -1084,6 +1163,8 @@ describe("saved build damage calculation", () => {
 
     expect(damageResponse.status).toBe(200);
     expect(damageResponse.body.data[0]).toMatchObject({
+      effectiveStats: { strength: 85, dexterity: 85, intelligence: 85, faith: 85, arcane: 85 },
+      greatRune: { id: "godricks-great-rune", name: "Godrick's Great Rune" },
       buffs: [{ id: "golden-vow", slot: "aura" }],
       weaponBuff: {
         id: "frozen-armament",

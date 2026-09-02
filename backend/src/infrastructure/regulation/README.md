@@ -90,6 +90,33 @@ and Frenzied Burst are verified direct hit profiles. Glintstone Cometshard,
 Comet, Flame Sling, Wrath of Gold, and Frenzied Burst preserve distinct normal
 and charged profiles; unverified spells remain catalog-only.
 
+Import the seven base-game Great Runes from `EquipParamGoods.csv` and their
+Rune Arc effects from `SpEffectParam.csv` with:
+
+```powershell
+npm run data:import:great-runes -- --exports "C:\path\to\exports" --regulation "C:\path\to\regulation.bin"
+```
+
+Godrick's, Radahn's, and Morgott's Great Runes expose verified stat or resource
+modifiers. Rykard's, Mohg's, and Malenia's remain catalog-only because their
+effects require combat or multiplayer state. The Great Rune of the Unborn is
+cataloged but has no Rune Arc combat effect. Append `--dry-run` to validate
+without changing MongoDB.
+
+Import the 32 base-game Crystal Tears with:
+
+```powershell
+npm run data:import:crystal-tears -- --exports "C:\path\to\exports" --regulation "C:\path\to\regulation.bin"
+```
+
+Twenty-two Tears currently expose directly verified effects: Crimsonspill,
+Greenspill, the four attribute-knot Tears, and the four elemental Shrouding
+Tears, plus Spiked, Stonebarb, Opaline Hardtear, and Cerulean Hidden Tear. The
+supported utility set also includes Greenburst, Winged, and Speckled Hardtear.
+Immediate Crimson and Cerulean recovery plus Crimsonburst regeneration are
+also normalized. The remaining entries stay catalog-only until their combat
+rules are verified separately.
+
 Glintblade Phalanx, Carian Phalanx, Greatblade Phalanx, Collapsing Stars,
 Bestial Sling, and Pest Threads are mapped as per-projectile hit profiles. The
 import does not infer a total hit count.

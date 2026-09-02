@@ -16,9 +16,12 @@ import { calculateMemorySlots } from "../domain/calculateMemorySlots";
 import { validateSpellRequirements } from "../domain/validateSpellRequirements";
 import { calculateCatalystScaling } from "../../weapons/domain/calculateAttackRating";
 import type { SpellType } from "../../spells/domain/spell.types";
+import { findGreatRuneById } from "../../greatRunes/repositories/greatRune.repository";
+import { findCrystalTearsByIds } from "../../crystalTears/repositories/crystalTear.repository";
+import { combineCrystalTearEffects } from "../../crystalTears/domain/combineCrystalTearEffects";
 
 export async function calculateBuildStatsFromInput(input: CalculateBuildStatsInput) {
-  const [characterClass, progression, talismans, armor, weapons, spells, catalystCatalog, catalystData] = await Promise.all([
+  const [characterClass, progression, talismans, armor, weapons, spells, catalystCatalog, catalystData, greatRune, crystalTears] = await Promise.all([
     findCharacterClassById(input.characterClassId, settings.SUPPORTED_GAME_VERSION),
     findCharacterResourceCurves(settings.SUPPORTED_GAME_VERSION),
     findTalismansByIds(input.talismanIds, settings.SUPPORTED_GAME_VERSION),
@@ -31,6 +34,10 @@ export async function calculateBuildStatsFromInput(input: CalculateBuildStatsInp
     input.catalyst
       ? findWeaponCalculationData(input.catalyst.variantId, settings.SUPPORTED_GAME_VERSION)
       : null,
+    input.greatRuneId
+      ? findGreatRuneById(input.greatRuneId, settings.SUPPORTED_GAME_VERSION)
+      : null,
+    findCrystalTearsByIds(input.crystalTearIds, settings.SUPPORTED_GAME_VERSION),
   ]);
   if (!characterClass) throw createError(400, "Unknown character class");
   if (!progression) throw createError(500, "Character progression data is unavailable");
@@ -43,6 +50,12 @@ export async function calculateBuildStatsFromInput(input: CalculateBuildStatsInp
   if (armor.length !== input.armorIds.length) throw createError(400, "Unknown armor selection");
   if (weapons.length !== new Set(input.weaponIds).size) throw createError(400, "Unknown weapon selection");
   if (spells.length !== input.spellIds.length) throw createError(400, "Unknown spell selection");
+  if (input.greatRuneId && (!greatRune || !greatRune.effects)) {
+    throw createError(400, "Unsupported Great Rune selection");
+  }
+  if (crystalTears.length !== input.crystalTearIds.length || crystalTears.some(({ effects }) => !effects)) {
+    throw createError(400, "Unsupported Crystal Tear selection");
+  }
   const talismansById = new Map(talismans.map((talisman) => [talisman.id, talisman]));
   const selectedTalismans = input.talismanIds.map((id) => talismansById.get(id)!);
   const armorById = new Map(armor.map((item) => [item.id, item]));
@@ -51,6 +64,9 @@ export async function calculateBuildStatsFromInput(input: CalculateBuildStatsInp
   const selectedWeapons = input.weaponIds.map((id) => weaponsById.get(id)!);
   const spellsById = new Map(spells.map((spell) => [spell.id, spell]));
   const selectedSpells = input.spellIds.map((id) => spellsById.get(id)!);
+  const crystalTearsById = new Map(crystalTears.map((tear) => [tear.id, tear]));
+  const selectedCrystalTears = input.crystalTearIds.map((id) => crystalTearsById.get(id)!);
+  const physickEffects = combineCrystalTearEffects(selectedCrystalTears.map(({ effects }) => effects!));
   let armorStats: ReturnType<typeof calculateArmorStats>;
   try {
     armorStats = calculateArmorStats(selectedArmor);
@@ -73,10 +89,30 @@ export async function calculateBuildStatsFromInput(input: CalculateBuildStatsInp
     );
   const buildStats = {
     ...talismanBuildStats,
-    effectiveStats: applyAttributeBonuses(talismanBuildStats.effectiveStats, [armorStats.passiveEffects]),
-    resourceMultipliers: multiplyGroups(talismanBuildStats.resourceMultipliers, armorStats.passiveEffects.resourceMultipliers),
-    incomingDamageMultipliers: multiplyGroups(talismanBuildStats.incomingDamageMultipliers, armorStats.passiveEffects.incomingDamageMultipliers),
-    fpCostMultipliers: armorStats.passiveEffects.fpCostMultipliers,
+    effectiveStats: applyAttributeBonuses(talismanBuildStats.effectiveStats, [
+      armorStats.passiveEffects,
+      ...(greatRune?.effects ? [greatRune.effects] : []),
+      physickEffects,
+    ]),
+    resourceMultipliers: multiplyGroups(
+      multiplyGroups(
+        multiplyGroups(talismanBuildStats.resourceMultipliers, armorStats.passiveEffects.resourceMultipliers),
+        greatRuneResourceMultipliers(greatRune?.effects?.resourceMultipliers),
+      ),
+      {
+        maxHp: physickEffects.resourceMultipliers.maxHp,
+        maxFp: 1,
+        maxStamina: physickEffects.resourceMultipliers.maxStamina,
+        maxEquipLoad: physickEffects.resourceMultipliers.maxEquipLoad,
+      },
+    ),
+    incomingDamageMultipliers: multiplyGroups(
+      multiplyGroups(talismanBuildStats.incomingDamageMultipliers, armorStats.passiveEffects.incomingDamageMultipliers),
+      physickEffects.incomingDamageMultipliers,
+    ),
+    fpCostMultipliers: multiplyGroups(armorStats.passiveEffects.fpCostMultipliers, physickEffects.fpCostMultipliers),
+    statusResistanceBonuses: addGroups(talismanBuildStats.statusResistanceBonuses, physickEffects.statusResistanceBonuses),
+    staminaRecoverySpeedBonus: talismanBuildStats.staminaRecoverySpeedBonus + physickEffects.staminaRecoverySpeedBonus,
   };
   let catalyst: null | {
     weaponId: string;
@@ -187,6 +223,10 @@ export async function calculateBuildStatsFromInput(input: CalculateBuildStatsInp
       startingLevel: characterClass.level,
     },
     characterLevel,
+    greatRune: greatRune ? { id: greatRune.id, name: greatRune.name } : null,
+    crystalTears: selectedCrystalTears.map(({ id, name }) => ({ id, name })),
+    cleansesStatusBuildup: physickEffects.cleansesStatusBuildup,
+    physickRecovery: physickEffects.recovery,
     talismans: selectedTalismans.map(({ id, name }) => ({ id, name })),
     armor: selectedArmor.map(({ id, name, slot }) => ({ id, name, slot })),
     weapons: selectedWeapons.map(({ id, name }) => ({ id, name })),
@@ -196,8 +236,23 @@ export async function calculateBuildStatsFromInput(input: CalculateBuildStatsInp
   };
 }
 
+function greatRuneResourceMultipliers(
+  multipliers: { maxHp: number; maxFp: number; maxStamina: number } | undefined,
+) {
+  return {
+    maxHp: multipliers?.maxHp ?? 1,
+    maxFp: multipliers?.maxFp ?? 1,
+    maxStamina: multipliers?.maxStamina ?? 1,
+    maxEquipLoad: 1,
+  };
+}
+
 function multiplyGroups<T extends Record<string, number>>(left: T, right: T): T {
   return Object.fromEntries(
     (Object.keys(left) as Array<keyof T>).map((key) => [key, Number((left[key] * right[key]).toFixed(12))]),
   ) as T;
+}
+
+function addGroups<T extends Record<string, number>>(left: T, right: T): T {
+  return Object.fromEntries((Object.keys(left) as Array<keyof T>).map((key) => [key, left[key] + right[key]])) as T;
 }

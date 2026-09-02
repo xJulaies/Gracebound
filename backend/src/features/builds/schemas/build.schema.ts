@@ -77,6 +77,11 @@ const equipmentSchema = z
     weaponSlots: weaponSlotsSchema,
     catalyst: catalystSchema,
     armor: armorSchema,
+    greatRuneId: nullableEquipmentIdSchema.default(null),
+    crystalTearIds: z.array(equipmentIdSchema)
+      .max(2)
+      .refine((ids) => new Set(ids).size === ids.length, { message: "Crystal Tear IDs must be unique" })
+      .default([]),
     talismanIds: z
       .array(z.string().trim().min(1).max(100))
       .max(4)
@@ -122,6 +127,8 @@ export const createBuildSchema = z.strictObject({
     weaponSlots: emptyWeaponSlots,
     catalyst: null,
     armor: emptyArmor,
+    greatRuneId: null,
+    crystalTearIds: [],
     talismanIds: [],
     buffSpellIds: [],
     weaponBuff: null,

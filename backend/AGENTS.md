@@ -438,7 +438,7 @@ and deduplicate binary-identical files by SHA-256.
 MongoDB stores one `iconassets` document per unique image. The document owns
 all matching icon IDs, binary WebP data, dimensions, checksum, byte size, game
 version, source-manifest hash, and import timestamp. Keep image bytes out of
-weapon, armor, talisman, spell, and Ash of War documents. The compound indexes
+weapon, armor, talisman, spell, Ash of War, Great Rune, and Crystal Tear documents. The compound indexes
 on game version plus checksum and game version plus icon ID must remain unique.
 
 Icon imports must validate the complete manifest and every file before opening
@@ -493,6 +493,12 @@ GET /api/talismans/:talismanId
 GET /api/spells
 GET /api/spells/:spellId
 
+GET /api/great-runes
+GET /api/great-runes/:greatRuneId
+
+GET /api/crystal-tears
+GET /api/crystal-tears/:crystalTearId
+
 POST /api/builds/calculate-stats
 
 GET /api/character-classes
@@ -507,9 +513,41 @@ The public icon endpoint returns the active game version's WebP bytes directly,
 not the normal JSON response envelope. It must validate numeric icon IDs, return
 404 for unknown IDs, and emit the checksum as a strong ETag. Because the URL is
 not versioned, use a revalidating cache policy rather than `immutable` caching.
-Public weapon, armor, talisman, spell, and Ash of War response mappers must
+Public weapon, armor, talisman, spell, Ash of War, and Great Rune response mappers must
 derive a server-relative `iconUrl` from `iconId`; never persist deployment
 hostnames or duplicate the URL in catalog documents.
+
+The base-game Physick catalog contains exactly 32 Crystal Tear goods rows.
+Builds and calculation requests accept at most two unique supported Tear IDs.
+Preserve selection order. Apply knot attribute bonuses before requirements and
+scaling, resource multipliers after resource curves, and Shrouding outgoing
+damage multipliers after attack rating. Never activate catalog-only Tears or
+infer conditional combat behavior.
+Spiked applies its per-type multiplier only to charged attacks. Stonebarb
+exposes a poise-damage multiplier without inventing absolute stance damage.
+Opaline Hardtear contributes PvE incoming-damage multipliers. Cerulean Hidden
+multiplies effective skill, sorcery, and incantation FP costs by zero for its
+verified duration.
+Greenburst exposes its flat stamina-recovery-speed bonus. Winged multiplies
+maximum equip load before load-category calculation. Speckled Hardtear keeps
+its +90 resistance bonuses separate from its one-time cleanse of poison, rot,
+bleed, frost, sleep, madness, and death blight buildup.
+Keep Physick recovery typed by timing: Crimson and Cerulean restore a fraction
+of maximum HP or FP once, while Crimsonburst exposes HP per second and duration.
+Duplicate collectible Tears keep distinct IDs and their immediate recovery may
+combine. Never merge one-time recovery into maximum-resource multipliers.
+
+The Regulation 1.17.0 Great Rune catalog contains exactly seven base-game
+entries. Godrick's, Radahn's, and Morgott's expose verified permanent Rune Arc
+effects. Keep Rykard's, Mohg's, and Malenia's catalog-only until authoritative
+combat or multiplayer state exists. The Great Rune of the Unborn is
+`not-applicable` to Rune Arc combat calculations. Build-stat requests accept at
+most one Great Rune. Apply its attribute bonuses before resource and protection
+curves, then apply its HP/FP/stamina multipliers to the curve output. Saved
+builds retain the optional Great Rune ID. Weapon and spell damage requests use
+the same optional selection and apply verified attribute bonuses before weapon
+or catalyst scaling and all attribute-requirement checks. Never apply resource
+multipliers to offensive damage.
 
 The Regulation 1.17.0 base-game spell catalog contains 70 sorceries and 101
 incantations from `Magic.csv`. Exclude NPC-prefixed rows, IDs 4641/4642, the
@@ -1189,6 +1227,11 @@ top-level status buildup to null.
 Spell buffs use mutually exclusive `aura`, `body`, and `weapon` slots. Golden
 Vow and Flame Grant Me Strength may stack because they occupy different slots;
 apply their PvE outgoing multipliers after attack rating and before defense.
+Route build validation and both damage paths through the shared buff-domain
+rules so slot exclusivity and per-type multiplier composition cannot drift.
+Preserve request order in response metadata. A build may store both a spell
+weapon buff and an Ash of War, but one damage request must never activate both
+weapon-buff sources simultaneously.
 Weapon buffs require a separate verified catalyst selection and a target weapon
 proven buffable from `EquipParamWeapon.isEnhance`. Add the selected catalyst's
 per-damage-type scaling multiplied by the Regulation coefficient to weapon

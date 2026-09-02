@@ -8,6 +8,9 @@ import { findAshOfWarById } from "../../ashesOfWar/repositories/ashOfWar.reposit
 import { findArmorByIds } from "../../armor/repositories/armor.repository";
 import { findTalismansByIds } from "../../talismans/repositories/talisman.repository";
 import { calculateArmorStats } from "../domain/calculateArmorStats";
+import { findGreatRuneById } from "../../greatRunes/repositories/greatRune.repository";
+import { resolveGeneralBuffSelection } from "../../buffs/domain/buffRules";
+import { findCrystalTearsByIds } from "../../crystalTears/repositories/crystalTear.repository";
 
 export async function validateBuildBuffSelection(equipment: CreateBuildInput["equipment"]) {
   const requestedSpellIds = [
@@ -22,9 +25,10 @@ export async function validateBuildBuffSelection(equipment: CreateBuildInput["eq
   }
   const spellsById = new Map(spells.map((spell) => [spell.id, spell]));
   const generalBuffs = equipment.buffSpellIds.map((id) => spellsById.get(id)!);
-  if (generalBuffs.some(({ buffEffect }) => !buffEffect || buffEffect.slot === "weapon") ||
-      new Set(generalBuffs.map(({ buffEffect }) => buffEffect!.slot)).size !== generalBuffs.length) {
-    throw createError(400, "Invalid build buff slot combination");
+  try {
+    resolveGeneralBuffSelection(equipment.buffSpellIds, generalBuffs);
+  } catch (error) {
+    throw createError(400, error instanceof Error ? error.message : "Invalid build buff slot combination");
   }
 
   if (!equipment.weaponBuff) return;
@@ -52,6 +56,8 @@ export async function validateBuildCatalogSelections(input: CreateBuildInput) {
     const result = await calculateBuildStatsFromInput({
       characterClassId: input.characterClassId,
       stats: input.stats,
+      greatRuneId: input.equipment.greatRuneId,
+      crystalTearIds: input.equipment.crystalTearIds,
       memoryStoneCount: input.memoryStoneCount,
       talismanIds: input.equipment.talismanIds,
       armorIds: Object.values(input.equipment.armor).filter((id): id is string => id !== null),
@@ -64,15 +70,25 @@ export async function validateBuildCatalogSelections(input: CreateBuildInput) {
     }
   } else {
     const armorIds = Object.values(input.equipment.armor).filter((id): id is string => id !== null);
-    const [spells, armor, talismans] = await Promise.all([
+    const [spells, armor, talismans, greatRune, crystalTears] = await Promise.all([
       findSpellsByIds(input.spellIds, settings.SUPPORTED_GAME_VERSION),
       findArmorByIds(armorIds, settings.SUPPORTED_GAME_VERSION),
       findTalismansByIds(input.equipment.talismanIds, settings.SUPPORTED_GAME_VERSION),
+      input.equipment.greatRuneId
+        ? findGreatRuneById(input.equipment.greatRuneId, settings.SUPPORTED_GAME_VERSION)
+        : null,
+      findCrystalTearsByIds(input.equipment.crystalTearIds, settings.SUPPORTED_GAME_VERSION),
     ]);
     if (spells.length !== input.spellIds.length) throw createError(400, "Unknown build spell selection");
     if (armor.length !== armorIds.length) throw createError(400, "Unknown build armor selection");
     if (talismans.length !== input.equipment.talismanIds.length || talismans.some(({ effects }) => !effects)) {
       throw createError(400, "Unsupported build talisman selection");
+    }
+    if (input.equipment.greatRuneId && (!greatRune || !greatRune.effects)) {
+      throw createError(400, "Unsupported build Great Rune selection");
+    }
+    if (crystalTears.length !== input.equipment.crystalTearIds.length || crystalTears.some(({ effects }) => !effects)) {
+      throw createError(400, "Unsupported build Crystal Tear selection");
     }
     try {
       const byId = new Map(armor.map((item) => [item.id, item]));

@@ -22,6 +22,14 @@ import type {
   SpellDamageInput,
 } from "../schemas/damage.schema";
 import { findSpellById, findSpellsByIds } from "../../spells/repositories/spell.repository";
+import { findGreatRuneById } from "../../greatRunes/repositories/greatRune.repository";
+import {
+  applyOutgoingBuffMultipliers,
+  resolveGeneralBuffSelection,
+  validateWeaponBuffExclusivity,
+} from "../../buffs/domain/buffRules";
+import { findCrystalTearsByIds } from "../../crystalTears/repositories/crystalTear.repository";
+import { combineCrystalTearEffects } from "../../crystalTears/domain/combineCrystalTearEffects";
 
 export async function calculateDamageFromInput(input: CalculateDamageInput) {
   const target = input.bossId
@@ -46,12 +54,14 @@ async function calculateSpellDamage(
   input: SpellDamageInput,
   target?: Awaited<ReturnType<typeof findDamageTarget>>,
 ) {
-  const [spell, catalystCatalog, catalystData, talismans, buffs] = await Promise.all([
+  const [spell, catalystCatalog, catalystData, talismans, buffs, greatRune, crystalTears] = await Promise.all([
     findSpellById(input.spellId, settings.SUPPORTED_GAME_VERSION),
     findWeaponCatalogById(input.catalystWeaponId, settings.SUPPORTED_GAME_VERSION),
     findWeaponCalculationData(input.catalystVariantId, settings.SUPPORTED_GAME_VERSION),
     findTalismansByIds(input.talismanIds, settings.SUPPORTED_GAME_VERSION),
     findSpellsByIds(input.buffSpellIds, settings.SUPPORTED_GAME_VERSION),
+    loadSelectedGreatRune(input.greatRuneId),
+    loadSelectedCrystalTears(input.crystalTearIds),
   ]);
   if (!spell?.attack || spell.calculationStatus !== "supported") {
     throw createError(400, "Unsupported spell damage calculation");
@@ -65,7 +75,8 @@ async function calculateSpellDamage(
   }
   const talismansById = new Map(talismans.map((talisman) => [talisman.id, talisman]));
   const selectedTalismans = input.talismanIds.map((id) => talismansById.get(id)!);
-  const selectedBuffs = validateGeneralBuffs(input.buffSpellIds, buffs);
+  const selectedBuffs = resolveGeneralBuffs(input.buffSpellIds, buffs);
+  const physickEffects = combineCrystalTearEffects(crystalTears.map(({ effects }) => effects!));
   if (!catalystCatalog.variants.some(({ id }) => id === input.catalystVariantId)) {
     throw createError(400, "Catalyst variant does not belong to selected weapon");
   }
@@ -74,7 +85,11 @@ async function calculateSpellDamage(
   }
   const { weapon, dataSet } = catalystData;
   if (input.upgradeLevel > weapon.maxUpgradeLevel) throw createError(400, "Invalid catalyst upgrade level");
-  const effectiveStats = applyAttributeBonuses(input.stats, selectedTalismans.map(({ effects }) => effects!));
+  const effectiveStats = applyAttributeBonuses(input.stats, [
+    ...selectedTalismans.map(({ effects }) => effects!),
+    ...(greatRune?.effects ? [greatRune.effects] : []),
+    physickEffects,
+  ]);
   if (Object.entries(weapon.requirements).some(([attribute, requirement]) =>
     effectiveStats[attribute as keyof typeof effectiveStats] < requirement)) {
     throw createError(400, `Attribute requirements not met for ${weapon.name}`);
@@ -103,7 +118,12 @@ async function calculateSpellDamage(
           : 1),
     ])) as typeof total;
   }, unitDamageTypes());
-  const damageMultipliers = applyBuffMultipliers(talismanMultipliers, selectedBuffs);
+  const damageMultipliers = multiplyDamageTypes(
+    applyOutgoingBuffMultipliers(talismanMultipliers, selectedBuffs),
+    input.charged
+      ? multiplyDamageTypes(physickEffects.outgoingDamageMultipliers, physickEffects.chargedAttackDamageMultipliers)
+      : physickEffects.outgoingDamageMultipliers,
+  );
   const calculation = calculateAttackOutput(catalystScaling, {
     id: input.charged ? `${spell.id}-charged` : spell.id,
     name: input.charged ? `${spell.name} (Charged)` : spell.name,
@@ -135,11 +155,15 @@ async function calculateSpellDamage(
     },
     stats: input.stats,
     effectiveStats,
+    greatRune: greatRune ? { id: greatRune.id, name: greatRune.name } : null,
+    crystalTears: crystalTears.map(({ id, name }) => ({ id, name })),
+    physickRecovery: physickEffects.recovery,
     talismans: selectedTalismans.map(({ id, name }) => ({ id, name })),
     buffs: selectedBuffs.map(({ id, name, buffEffect }) => ({
       id, name, slot: buffEffect!.slot, durationSeconds: buffEffect!.durationSeconds,
     })),
     ...calculation,
+    attack: { ...calculation.attack, fpCost: Math.floor(calculation.attack.fpCost * physickEffects.fpCostMultipliers[spell.type]) },
     components: calculatedComponents,
     outputUnit: hasMultipleComponents ? "per-component" as const : selectedAttack.outputUnit,
     statusBuildup: hasMultipleComponents ? null : selectedAttack.statusBuildup,
@@ -156,7 +180,7 @@ async function calculateWeaponDamage(
   input: WeaponDamageInput,
   target?: Awaited<ReturnType<typeof findDamageTarget>>,
 ) {
-  const [calculationData, weaponCatalog, attack, talismans, armor, buffs] = await Promise.all([
+  const [calculationData, weaponCatalog, attack, talismans, armor, buffs, greatRune, crystalTears] = await Promise.all([
     findWeaponCalculationData(
       input.weaponVariantId,
       settings.SUPPORTED_GAME_VERSION,
@@ -166,6 +190,8 @@ async function calculateWeaponDamage(
     findTalismansByIds(input.talismanIds, settings.SUPPORTED_GAME_VERSION),
     findArmorByIds(input.armorIds, settings.SUPPORTED_GAME_VERSION),
     findSpellsByIds(input.buffSpellIds, settings.SUPPORTED_GAME_VERSION),
+    loadSelectedGreatRune(input.greatRuneId),
+    loadSelectedCrystalTears(input.crystalTearIds),
   ]);
 
   if (!calculationData || !weaponCatalog) {
@@ -182,7 +208,8 @@ async function calculateWeaponDamage(
     throw createError(400, "Unsupported talisman selection");
   }
   if (armor.length !== input.armorIds.length) throw createError(400, "Unknown armor selection");
-  const selectedBuffs = validateGeneralBuffs(input.buffSpellIds, buffs);
+  const selectedBuffs = resolveGeneralBuffs(input.buffSpellIds, buffs);
+  const physickEffects = combineCrystalTearEffects(crystalTears.map(({ effects }) => effects!));
   let armorStats: ReturnType<typeof calculateArmorStats>;
   try {
     const byId = new Map(armor.map((item) => [item.id, item]));
@@ -199,7 +226,11 @@ async function calculateWeaponDamage(
 
   const effectiveStats = applyAttributeBonuses(
     applyAttributeBonuses(input.stats, talismans.map(({ effects }) => effects!)),
-    [armorStats.passiveEffects],
+    [
+      armorStats.passiveEffects,
+      ...(greatRune?.effects ? [greatRune.effects] : []),
+      physickEffects,
+    ],
   );
   const baseAttackRating = calculateAttackRating(
     weapon,
@@ -209,9 +240,7 @@ async function calculateWeaponDamage(
   );
   const appliedWeaponBuff = await resolveWeaponBuff(input.weaponBuff, weapon.canApplyWeaponBuff === true, effectiveStats);
   const appliedSkillBuff = await resolveSkillBuff(input);
-  if (appliedWeaponBuff && appliedSkillBuff) {
-    throw createError(400, "Spell and skill weapon buffs cannot be active together");
-  }
+  assertWeaponBuffExclusivity(Boolean(appliedWeaponBuff), Boolean(appliedSkillBuff));
   const skillAdjustedAttackRating = appliedSkillBuff
     ? addDamageTypes(
       multiplyAttackRating(baseAttackRating, appliedSkillBuff.effect.attackPowerMultipliers),
@@ -254,11 +283,20 @@ async function calculateWeaponDamage(
         outgoingDamageMultipliers,
       )
       : outgoingDamageMultipliers;
-  const appliedDamageMultipliers = multiplyDamageTypes(applyBuffMultipliers(applySupportedArmorDamageMultipliers(
-    talismanDamageMultipliers,
-    armorStats.passiveEffects.scopedDamageBoosts,
-    "attackId" in input && input.attackId.includes("jumping"),
-  ), selectedBuffs), appliedSkillBuff?.effect.outgoingDamageMultipliers ?? unitDamageTypes());
+  const physickDamageMultipliers = "attackId" in input && input.attackId.includes("charged-heavy")
+    ? multiplyDamageTypes(physickEffects.outgoingDamageMultipliers, physickEffects.chargedAttackDamageMultipliers)
+    : physickEffects.outgoingDamageMultipliers;
+  const appliedDamageMultipliers = multiplyDamageTypes(
+    multiplyDamageTypes(
+      applyOutgoingBuffMultipliers(applySupportedArmorDamageMultipliers(
+        talismanDamageMultipliers,
+        armorStats.passiveEffects.scopedDamageBoosts,
+        "attackId" in input && input.attackId.includes("jumping"),
+      ), selectedBuffs),
+      physickDamageMultipliers,
+    ),
+    appliedSkillBuff?.effect.outgoingDamageMultipliers ?? unitDamageTypes(),
+  );
   const calculation = calculateAttackOutput(
     attackRating,
     attack,
@@ -276,6 +314,9 @@ async function calculateWeaponDamage(
     },
     stats: input.stats,
     effectiveStats,
+    greatRune: greatRune ? { id: greatRune.id, name: greatRune.name } : null,
+    crystalTears: crystalTears.map(({ id, name }) => ({ id, name })),
+    physickRecovery: physickEffects.recovery,
     talismans: talismans.map(({ id, name }) => ({ id, name })),
     armor: armor.map(({ id, name, slot }) => ({ id, name, slot })),
     buffs: selectedBuffs.map(({ id, name, buffEffect }) => ({
@@ -287,12 +328,33 @@ async function calculateWeaponDamage(
       ...appliedSkillBuff.effect,
     } : null,
     ...calculation,
+    attack: {
+      ...calculation.attack,
+      fpCost: Math.floor(calculation.attack.fpCost * physickEffects.fpCostMultipliers.skill),
+    },
+    poiseDamageMultiplier: physickEffects.poiseDamageMultiplier,
     limitations: [
       ...(appliedWeaponBuff?.metadata.limitations ?? []),
       ...(appliedSkillBuff?.effect.limitations ?? []),
       "Unmodeled status effects and special mechanics are not included.",
     ],
   };
+}
+
+async function loadSelectedGreatRune(greatRuneId: string | null) {
+  if (!greatRuneId) return null;
+  const greatRune = await findGreatRuneById(greatRuneId, settings.SUPPORTED_GAME_VERSION);
+  if (!greatRune?.effects) throw createError(400, "Unsupported Great Rune selection");
+  return greatRune;
+}
+
+async function loadSelectedCrystalTears(ids: string[]) {
+  const tears = await findCrystalTearsByIds(ids, settings.SUPPORTED_GAME_VERSION);
+  if (tears.length !== ids.length || tears.some(({ effects }) => !effects)) {
+    throw createError(400, "Unsupported Crystal Tear selection");
+  }
+  const byId = new Map(tears.map((tear) => [tear.id, tear]));
+  return ids.map((id) => byId.get(id)!);
 }
 
 async function resolveSkillBuff(input: WeaponDamageInput) {
@@ -382,35 +444,23 @@ function multiplyAttackRating(left: ReturnType<typeof unitDamageTypes>, right: R
   ])) as ReturnType<typeof unitDamageTypes>;
 }
 
-function validateGeneralBuffs<T extends { id: string; name: string; buffEffect: { slot: string; durationSeconds: number; outgoingDamageMultipliers: ReturnType<typeof unitDamageTypes> } | null }>(
+function resolveGeneralBuffs<T extends { id: string; name: string; buffEffect: { slot: string; durationSeconds: number; outgoingDamageMultipliers: ReturnType<typeof unitDamageTypes> } | null }>(
   requestedIds: string[],
   buffs: T[],
 ) {
-  if (buffs.length !== requestedIds.length || buffs.some(({ buffEffect }) => !buffEffect)) {
-    throw createError(400, "Unsupported buff spell selection");
+  try {
+    return resolveGeneralBuffSelection(requestedIds, buffs);
+  } catch (error) {
+    throw createError(400, error instanceof Error ? error.message : "Invalid buff selection");
   }
-  const byId = new Map(buffs.map((buff) => [buff.id, buff]));
-  const selected = requestedIds.map((id) => byId.get(id)!);
-  if (selected.some(({ buffEffect }) => buffEffect!.slot === "weapon")) {
-    throw createError(400, "Weapon buff spells require a catalyst selection");
-  }
-  if (new Set(selected.map(({ buffEffect }) => buffEffect!.slot)).size !== selected.length) {
-    throw createError(400, "Only one active buff per slot is allowed");
-  }
-  return selected;
 }
 
-function applyBuffMultipliers<T extends { buffEffect: { outgoingDamageMultipliers: ReturnType<typeof unitDamageTypes> } | null }>(
-  multipliers: ReturnType<typeof unitDamageTypes>,
-  buffs: T[],
-) {
-  return buffs.reduce((total, { buffEffect }) => ({
-    physical: total.physical * buffEffect!.outgoingDamageMultipliers.physical,
-    magic: total.magic * buffEffect!.outgoingDamageMultipliers.magic,
-    fire: total.fire * buffEffect!.outgoingDamageMultipliers.fire,
-    lightning: total.lightning * buffEffect!.outgoingDamageMultipliers.lightning,
-    holy: total.holy * buffEffect!.outgoingDamageMultipliers.holy,
-  }), multipliers);
+function assertWeaponBuffExclusivity(hasSpellWeaponBuff: boolean, hasSkillWeaponBuff: boolean) {
+  try {
+    validateWeaponBuffExclusivity(hasSpellWeaponBuff, hasSkillWeaponBuff);
+  } catch (error) {
+    throw createError(400, error instanceof Error ? error.message : "Invalid weapon buff selection");
+  }
 }
 
 function applySupportedArmorDamageMultipliers(

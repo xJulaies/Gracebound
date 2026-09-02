@@ -17,6 +17,10 @@ import { saveWeaponCatalog } from "../../infrastructure/regulation/services/save
 import { createRegulationWeaponCatalogFixture } from "../../test/fixtures/regulationWeaponCatalog.fixture";
 import { saveSpellCatalog } from "../../infrastructure/regulation/services/saveSpellCatalog";
 import type { SpellData } from "../spells/domain/spell.types";
+import { saveGreatRuneCatalog } from "../../infrastructure/regulation/services/saveGreatRuneCatalog";
+import type { GreatRuneData } from "../greatRunes/domain/greatRune.types";
+import { CrystalTearModel } from "../crystalTears/models/crystalTear.model";
+import { createCrystalTearRecordFixture } from "../../test/fixtures/crystalTear.fixture";
 
 const passThroughAuthentication: RequestHandler = (_request, _response, next) => next();
 const app = createApp({
@@ -72,7 +76,23 @@ beforeEach(async () => {
   saveWeaponCatalog(createRegulationWeaponCatalogFixture(), {
     gameVersion: REGULATION_TEST_GAME_VERSION,
     sourceHash: REGULATION_TEST_SOURCE_HASH,
-  })]);
+  }), saveGreatRuneCatalog(greatRunes, {
+    gameVersion: REGULATION_TEST_GAME_VERSION,
+    sourceHash: REGULATION_TEST_SOURCE_HASH,
+  }), CrystalTearModel.create([
+    createCrystalTearRecordFixture("crimsonspill-crystal-tear"),
+    createCrystalTearRecordFixture("strength-knot-crystal-tear"),
+    createCrystalTearRecordFixture("thorny-cracked-tear"),
+    createCrystalTearRecordFixture("opaline-hardtear"),
+    createCrystalTearRecordFixture("cerulean-hidden-tear"),
+    createCrystalTearRecordFixture("greenburst-crystal-tear"),
+    createCrystalTearRecordFixture("winged-crystal-tear"),
+    createCrystalTearRecordFixture("speckled-hardtear"),
+    createCrystalTearRecordFixture("crimson-crystal-tear-1"),
+    createCrystalTearRecordFixture("crimson-crystal-tear-2"),
+    createCrystalTearRecordFixture("cerulean-crystal-tear-1"),
+    createCrystalTearRecordFixture("crimsonburst-crystal-tear"),
+  ])]);
 });
 
 const stats = {
@@ -93,6 +113,8 @@ describe("saved build catalog validation", () => {
         memoryStoneCount: 1,
         spellIds: ["glintstone-pebble"],
         equipment: {
+          greatRuneId: "godricks-great-rune",
+          crystalTearIds: ["strength-knot-crystal-tear"],
           weaponSlots: {
             rightHand1: { weaponId: "moonveil", variantId: "moonveil", upgradeLevel: 10 },
           },
@@ -105,6 +127,10 @@ describe("saved build catalog validation", () => {
       level: 156,
       memoryStoneCount: 1,
       spellIds: ["glintstone-pebble"],
+      equipment: {
+        greatRuneId: "godricks-great-rune",
+        crystalTearIds: ["strength-knot-crystal-tear"],
+      },
     });
   });
 
@@ -122,6 +148,131 @@ describe("saved build catalog validation", () => {
 });
 
 describe("POST /api/builds/calculate-stats", () => {
+  it("combines two supported Crystal Tears in the Physick", async () => {
+    const response = await request(app).post("/api/builds/calculate-stats").send({
+      characterClassId: "astrologer", stats,
+      crystalTearIds: ["strength-knot-crystal-tear", "crimsonspill-crystal-tear"],
+    });
+    expect(response.status).toBe(200);
+    expect(response.body.data[0]).toMatchObject({
+      effectiveStats: { strength: 22 },
+      resourceMultipliers: { maxHp: 1.1 },
+      resources: { maxHp: 1874 },
+      crystalTears: [
+        { id: "strength-knot-crystal-tear" }, { id: "crimsonspill-crystal-tear" },
+      ],
+    });
+  });
+
+  it("rejects catalog-only Crystal Tears", async () => {
+    const response = await request(app).post("/api/builds/calculate-stats").send({
+      characterClassId: "astrologer", stats, crystalTearIds: ["thorny-cracked-tear"],
+    });
+    expect(response.status).toBe(400);
+  });
+
+  it("exposes supported defensive and FP-cost Physick effects", async () => {
+    const response = await request(app).post("/api/builds/calculate-stats").send({
+      characterClassId: "astrologer", stats,
+      crystalTearIds: ["opaline-hardtear", "cerulean-hidden-tear"],
+    });
+    expect(response.status).toBe(200);
+    expect(response.body.data[0]).toMatchObject({
+      incomingDamageMultipliers: { physical: 0.85, magic: 0.85, fire: 0.85, lightning: 0.85, holy: 0.85 },
+      fpCostMultipliers: { skill: 0, sorcery: 0, incantation: 0 },
+    });
+  });
+
+  it("applies recovery, equip-load, resistance, and cleanse Physick effects", async () => {
+    const [utility, speckled] = await Promise.all([
+      request(app).post("/api/builds/calculate-stats").send({
+        characterClassId: "astrologer", stats,
+        crystalTearIds: ["greenburst-crystal-tear", "winged-crystal-tear"],
+      }),
+      request(app).post("/api/builds/calculate-stats").send({
+        characterClassId: "astrologer", stats, crystalTearIds: ["speckled-hardtear"],
+      }),
+    ]);
+    expect(utility.status).toBe(200);
+    expect(utility.body.data[0]).toMatchObject({
+      staminaRecoverySpeedBonus: 15,
+      resources: { maxEquipLoad: 324 },
+    });
+    expect(speckled.status).toBe(200);
+    expect(speckled.body.data[0].statusResistances).toMatchObject({ poison: 200, rot: 200, bleed: 200, frost: 200, sleep: 200, madness: 200, deathBlight: 200 });
+    expect(speckled.body.data[0].cleansesStatusBuildup).toEqual(["poison", "rot", "bleed", "frost", "sleep", "madness", "deathBlight"]);
+  });
+
+  it("reports immediate and timed Physick recovery separately", async () => {
+    const [instant, regeneration] = await Promise.all([
+      request(app).post("/api/builds/calculate-stats").send({
+        characterClassId: "astrologer", stats,
+        crystalTearIds: ["crimson-crystal-tear-1", "crimson-crystal-tear-2"],
+      }),
+      request(app).post("/api/builds/calculate-stats").send({
+        characterClassId: "astrologer", stats,
+        crystalTearIds: ["cerulean-crystal-tear-1", "crimsonburst-crystal-tear"],
+      }),
+    ]);
+    expect(instant.status).toBe(200);
+    expect(instant.body.data[0].physickRecovery).toMatchObject({ instantMaxHpPercent: 1 });
+    expect(regeneration.status).toBe(200);
+    expect(regeneration.body.data[0].physickRecovery).toEqual({
+      instantMaxHpPercent: 0,
+      instantMaxFpPercent: 0.5,
+      hpPerSecond: 7,
+      hpRegenerationDurationSeconds: 180,
+    });
+  });
+  it("applies supported Great Rune attributes before curves and resources afterward", async () => {
+    const [godrick, radahn] = await Promise.all([
+      request(app).post("/api/builds/calculate-stats").send({
+        characterClassId: "astrologer",
+        stats,
+        greatRuneId: "godricks-great-rune",
+      }),
+      request(app).post("/api/builds/calculate-stats").send({
+        characterClassId: "astrologer",
+        stats,
+        greatRuneId: "radahns-great-rune",
+      }),
+    ]);
+
+    expect(godrick.status).toBe(200);
+    expect(godrick.body.data[0]).toMatchObject({
+      effectiveStats: {
+        vigor: 55, mind: 35, endurance: 30, strength: 17,
+        dexterity: 35, intelligence: 75, faith: 14, arcane: 14,
+      },
+      greatRune: { id: "godricks-great-rune", name: "Godrick's Great Rune" },
+    });
+    expect(radahn.status).toBe(200);
+    expect(radahn.body.data[0]).toMatchObject({
+      effectiveStats: stats,
+      resourceMultipliers: {
+        maxHp: 1.15, maxFp: 1.15, maxStamina: 1.15, maxEquipLoad: 1,
+      },
+      resources: { maxHp: 1959, maxFp: 198, maxStamina: 139, maxEquipLoad: 72 },
+      greatRune: { id: "radahns-great-rune", name: "Radahn's Great Rune" },
+    });
+  });
+
+  it("rejects unknown and catalog-only Great Runes", async () => {
+    const [unknown, unsupported] = await Promise.all([
+      request(app).post("/api/builds/calculate-stats").send({
+        characterClassId: "astrologer", stats, greatRuneId: "unknown-rune",
+      }),
+      request(app).post("/api/builds/calculate-stats").send({
+        characterClassId: "astrologer", stats, greatRuneId: "rykards-great-rune",
+      }),
+    ]);
+
+    expect(unknown.status).toBe(400);
+    expect(unknown.body.data).toEqual([]);
+    expect(unsupported.status).toBe(400);
+    expect(unsupported.body.data).toEqual([]);
+  });
+
   it("calculates aggregate build stats from supported talismans", async () => {
     const response = await request(app).post("/api/builds/calculate-stats").send({
       characterClassId: "astrologer",
@@ -361,6 +512,60 @@ const characterClasses = Array.from({ length: 10 }, (_, index) => ({
     ? { vigor: 9, mind: 15, endurance: 9, strength: 8, dexterity: 12, intelligence: 16, faith: 7, arcane: 9 }
     : { vigor: 10, mind: 10, endurance: 10, strength: 10, dexterity: 10, intelligence: 10, faith: 10, arcane: 10 },
 }));
+
+const greatRunesByName = [
+  "Godrick's Great Rune", "Radahn's Great Rune", "Morgott's Great Rune",
+  "Rykard's Great Rune", "Mohg's Great Rune", "Malenia's Great Rune",
+  "Great Rune of the Unborn",
+];
+
+const greatRunes: GreatRuneData[] = [
+  greatRune("godricks-great-rune", "Godrick's Great Rune", {
+    attributeBonuses: {
+      vigor: 5, mind: 5, endurance: 5, strength: 5,
+      dexterity: 5, intelligence: 5, faith: 5, arcane: 5,
+    },
+    resourceMultipliers: { maxHp: 1, maxFp: 1, maxStamina: 1 },
+  }),
+  greatRune("radahns-great-rune", "Radahn's Great Rune", {
+    attributeBonuses: neutralStats(),
+    resourceMultipliers: { maxHp: 1.15, maxFp: 1.15, maxStamina: 1.15 },
+  }),
+  greatRune("morgotts-great-rune", "Morgott's Great Rune", {
+    attributeBonuses: neutralStats(),
+    resourceMultipliers: { maxHp: 1.25, maxFp: 1, maxStamina: 1 },
+  }),
+  greatRune("rykards-great-rune", "Rykard's Great Rune", null),
+  greatRune("mohgs-great-rune", "Mohg's Great Rune", null),
+  greatRune("malenias-great-rune", "Malenia's Great Rune", null),
+  greatRune("great-rune-of-the-unborn", "Great Rune of the Unborn", null),
+];
+
+function greatRune(
+  id: string,
+  name: string,
+  effects: GreatRuneData["effects"],
+): GreatRuneData {
+  const index = greatRunesByName.indexOf(name);
+  return {
+    id,
+    name,
+    sourceGoodsId: index === 6 ? 10080 : 191 + index,
+    sourceEffectId: effects ? 600 + index * 10 : null,
+    iconId: 3200 + index,
+    activation: index === 6 ? "not-applicable" : "rune-arc",
+    calculationStatus: effects ? "supported" : "catalog-only",
+    effects,
+    limitations: effects ? [] : ["Requires unsupported state."],
+  };
+}
+
+function neutralStats() {
+  return {
+    vigor: 0, mind: 0, endurance: 0, strength: 0,
+    dexterity: 0, intelligence: 0, faith: 0, arcane: 0,
+  };
+}
 
 function armor(id: string, slot: ArmorSlot, negation: number, weight: number, poise: number, passive: boolean): ArmorData {
   const passiveEffects = neutralArmorPassiveEffects();

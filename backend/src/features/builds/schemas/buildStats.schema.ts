@@ -4,6 +4,15 @@ import { statsSchema } from "./build.schema";
 export const calculateBuildStatsSchema = z.strictObject({
   characterClassId: z.string().regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/),
   stats: statsSchema,
+  greatRuneId: z
+    .string()
+    .regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/)
+    .nullable()
+    .default(null),
+  crystalTearIds: z.array(z.string().regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/))
+    .max(2)
+    .refine((ids) => new Set(ids).size === ids.length, { message: "Crystal Tear IDs must be unique" })
+    .default([]),
   memoryStoneCount: z.number().int().min(0).max(8).default(0),
   talismanIds: z
     .array(z.string().regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/))

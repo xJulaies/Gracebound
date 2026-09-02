@@ -72,6 +72,8 @@ describe("createBuildSchema", () => {
         armsId: null,
         legsId: null,
       },
+      greatRuneId: null,
+      crystalTearIds: [],
       talismanIds: [],
       buffSpellIds: [],
       weaponBuff: null,

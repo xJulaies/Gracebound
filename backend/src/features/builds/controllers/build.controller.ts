@@ -142,6 +142,8 @@ export const calculateOwnedBuildDamage: RequestHandler = async (_request, respon
         arcane: build.stats.arcane,
       },
       talismanIds: equipment.talismanIds,
+      greatRuneId: equipment.greatRuneId ?? null,
+      crystalTearIds: equipment.crystalTearIds ?? [],
       buffSpellIds: equipment.buffSpellIds,
       ...(selection.bossId ? { bossId: selection.bossId } : {}),
     });
@@ -165,6 +167,8 @@ export const calculateOwnedBuildDamage: RequestHandler = async (_request, respon
       arcane: build.stats.arcane,
     },
     talismanIds: equipment.talismanIds,
+    greatRuneId: equipment.greatRuneId ?? null,
+    crystalTearIds: equipment.crystalTearIds ?? [],
     armorIds,
     buffSpellIds: equipment.buffSpellIds,
     weaponBuff: equipment.weaponBuff ?? null,

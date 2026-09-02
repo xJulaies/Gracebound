@@ -31,6 +31,8 @@ describe("BuildModel", () => {
       null, null, null, null, null, null,
     ]);
     expect(build.equipment.talismanIds).toEqual([]);
+    expect(build.equipment.greatRuneId).toBeNull();
+    expect(build.equipment.crystalTearIds).toEqual([]);
     expect(build.equipment.buffSpellIds).toEqual([]);
     expect(build.equipment.catalyst).toBeNull();
     expect(build.equipment.weaponBuff).toBeNull();

@@ -30,6 +30,16 @@ const armorIdsSchema = z
   .max(4)
   .refine((ids) => new Set(ids).size === ids.length, { message: "Armor IDs must be unique" })
   .default([]);
+const greatRuneIdSchema = z
+  .string()
+  .regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/)
+  .nullable()
+  .default(null);
+const crystalTearIdsSchema = z
+  .array(z.string().regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/))
+  .max(2)
+  .refine((ids) => new Set(ids).size === ids.length, { message: "Crystal Tear IDs must be unique" })
+  .default([]);
 const buffSpellIdsSchema = z
   .array(z.string().regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/))
   .max(2)
@@ -63,6 +73,8 @@ const weaponDamageFields = {
   bossId: bossIdSchema,
   talismanIds: talismanIdsSchema,
   armorIds: armorIdsSchema,
+  greatRuneId: greatRuneIdSchema,
+  crystalTearIds: crystalTearIdsSchema,
   buffSpellIds: buffSpellIdsSchema,
   weaponBuff: weaponBuffSchema,
   skillBuffAshOfWarId: z.string().regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/).nullable().default(null),
@@ -77,6 +89,8 @@ const spellDamageSchema = z.strictObject({
   stats: weaponDamageFields.stats,
   bossId: bossIdSchema,
   talismanIds: talismanIdsSchema,
+  greatRuneId: greatRuneIdSchema,
+  crystalTearIds: crystalTearIdsSchema,
   buffSpellIds: buffSpellIdsSchema,
 });
 
