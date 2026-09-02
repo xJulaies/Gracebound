@@ -136,6 +136,22 @@ export const standardAshOfWarSkillDefinitions = [
     },
   },
   {
+    sourceGemId: 21600,
+    definition: {
+      id: "thunderbolt",
+      swordArtId: 216,
+      behaviorVariationId: 0,
+      attacks: [
+        {
+          id: "thunderbolt",
+          name: "Thunderbolt",
+          fpCostField: "useMagicPoint_L2",
+          components: [{ kind: "projectile", sourceBehaviorId: 300000350, behaviorJudgeId: 350 }],
+        },
+      ],
+    },
+  },
+  {
     sourceGemId: 11400,
     definition: {
       id: "unsheathe",

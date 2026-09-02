@@ -5,6 +5,7 @@ import { flameOfTheRedmanesSkillDefinition } from "../data/flameOfTheRedmanesSki
 import { squareOffSkillDefinition } from "../data/squareOffSkillDefinition";
 import { standardAshOfWarSkillDefinitions } from "../data/standardAshOfWarSkillDefinitions";
 import { wildStrikesSkillDefinitions } from "../data/wildStrikesSkillDefinitions";
+import { prayerfulStrikeSkillDefinitions } from "../data/prayerfulStrikeSkillDefinitions";
 import type { WeaponParamRow } from "../schemas/weaponParam.schema";
 import type { EquipParamGemRow } from "../schemas/weaponSkillParam.schema";
 import type { ArmorEffectRow } from "../schemas/armor.schema";
@@ -40,23 +41,29 @@ export function mapVerifiedAshesOfWar(
     .map((gem) => {
     const definition = verifiedAshes.get(gem.ID);
     const buffEffect = mapSkillBuffEffect(gem.ID, effects);
-    const skillVariants = gem.ID === 11000
-      ? wildStrikesSkillDefinitions.map(({ weaponType, motionCategoryId, definition: variantDefinition }) => ({
+    const variantDefinitions = gem.ID === 11000
+      ? wildStrikesSkillDefinitions
+      : gem.ID === 20800
+        ? prayerfulStrikeSkillDefinitions
+        : [];
+    const skillVariants = variantDefinitions.map(
+      ({ weaponType, motionCategoryId, definition: variantDefinition }) => ({
         weaponTypes: [weaponType],
         skill: mapRegulationWeaponSkill(
           findReferenceWeapon(weapons, motionCategoryId),
           variantDefinition,
           tables,
         ),
-      }))
-      : [];
+      }),
+    );
 
     if (definition && gem.swordArtsParamId !== definition.swordArtId) {
       throw new Error(`Ash of War ${gem.ID} has unexpected SwordArtsParam ${gem.swordArtsParamId}`);
     }
 
-    if (skillVariants.length > 0 && gem.swordArtsParamId !== 110) {
-      throw new Error(`Wild Strikes ${gem.ID} has unexpected SwordArtsParam ${gem.swordArtsParamId}`);
+    const variantSwordArtId = variantDefinitions[0]?.definition.swordArtId;
+    if (variantSwordArtId !== undefined && gem.swordArtsParamId !== variantSwordArtId) {
+      throw new Error(`Ash of War ${gem.ID} has unexpected SwordArtsParam ${gem.swordArtsParamId}`);
     }
 
     return {

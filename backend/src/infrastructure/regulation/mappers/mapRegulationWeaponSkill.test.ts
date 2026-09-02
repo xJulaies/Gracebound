@@ -93,6 +93,7 @@ describe("mapRegulationWeaponSkill", () => {
         { ...behavior(300000890, 890, 0, 300000891), variationId: 0 },
         { ...behavior(300000891, 891, 0, 300000892), variationId: 0 },
         { ...behavior(300000150, 150, 0, 301700910), variationId: 0 },
+        { ...behavior(300000350, 350, 1, 2080), variationId: 0 },
         { ...behavior(300000560, 560, 0, 300000560), variationId: 0 },
         { ...behavior(300000565, 565, 0, 300000565), variationId: 0 },
       ],
@@ -110,6 +111,7 @@ describe("mapRegulationWeaponSkill", () => {
         attack(300000891, 92, 0, 0, 0, 10000),
         attack(300000892, 112, 0, 0, 0, 10000),
         attack(301700910, 220, 0, 1, 0, 10000),
+        { ...attack(301600840, 0, 0, 3, 1, 10000), atkThun: 120 },
         attack(300000560, 190, 0, 253, 0, 10000),
         attack(300000565, 245, 0, 253, 0, 10000),
       ],
@@ -121,7 +123,12 @@ describe("mapRegulationWeaponSkill", () => {
         swordArt(106, "Stamp (Upward Cut)", 5, 8),
         swordArt(107, "Stamp (Sweep)", 5, 8),
         swordArt(116, "Giant Hunt", 16, -1),
+        swordArt(216, "Thunderbolt", 10, 10),
         swordArt(114, "Unsheathe", 0, 15, 10),
+      ],
+      bullets: [
+        ...tables.bullets,
+        { ID: 2080, Name: "Thunderbolt", atkId_Bullet: 301600840, intervalCreateBulletId: -1 },
       ],
     };
 
@@ -137,6 +144,7 @@ describe("mapRegulationWeaponSkill", () => {
       "stamp-upward-cut",
       "stamp-sweep",
       "giant-hunt",
+      "thunderbolt",
       "unsheathe",
     ]);
     expect(skills.flatMap(({ attacks: skillAttacks }) => skillAttacks)).toMatchObject([
@@ -160,6 +168,10 @@ describe("mapRegulationWeaponSkill", () => {
         ],
       },
       { fpCost: 16, components: [{ motionValues: allDamage(220) }] },
+      {
+        fpCost: 10,
+        components: [{ kind: "projectile", sourceBulletId: 2080, addedDamage: { lightning: 120 } }],
+      },
       { fpCost: 10, components: [{ motionValues: allDamage(190) }] },
       { fpCost: 15, components: [{ motionValues: allDamage(245) }] },
     ]);

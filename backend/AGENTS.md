@@ -793,10 +793,16 @@ resolves the selected attack only within the selected weapon.
 Skill definitions declare their components explicitly. The mapper must support
 pure weapon-hit, pure projectile, and mixed attacks without inserting empty
 placeholder components. Square Off, Lion's Claw, Impaling Thrust, Piercing
-Fang, both Stamp variants, and Giant Hunt are verified weapon-hit cases; Flame
+Fang, both Stamp variants, Giant Hunt, and Prayerful Strike are verified
+weapon-hit cases; Flame
 of the Redmanes is the projectile case, and Transient Moonlight covers the
 mixed form. Charge Forth verifies full and early-release sequences; Unsheathe
-verifies stance follow-ups with separate FP costs.
+verifies stance follow-ups with separate FP costs. Prayerful Strike uses
+`BehaviorParam_PC` 300000102 and `AtkParam_Pc` 301200820 with a 235 motion value
+and 20 FP cost. Its healing is outside the stateless damage calculation and
+must not be inferred as calculated healing. Its skill variants must preserve
+the inherited physical attack type for axe, greataxe, hammer, great-hammer,
+flail, and colossal-weapon selections.
 
 The public Ash-of-War catalog uses `EquipParamGem` playable rows, not their
 broad template rows. Compatibility comes from verified `canMountWep_*` flags.
@@ -824,10 +830,15 @@ case. Do not reuse one reference weapon's profile across incompatible classes.
 
 The completed MVP Ash-of-War calculation set is: Square Off, Flame of the
 Redmanes, Lion's Claw, Impaling Thrust, Piercing Fang, Stamp (Upward Cut), Stamp
-(Sweep), Giant Hunt, Wild Strikes, Charge Forth, and Unsheathe. Treat this as
+(Sweep), Giant Hunt, Wild Strikes, Charge Forth, Unsheathe, Prayerful Strike,
+and Thunderbolt. Treat this as
 the canonical supported list. All other catalog Ashes remain `catalog-only`
 until their complete behavior chain is explicitly verified. Transient Moonlight
 is a fixed weapon skill and does not belong to this list.
+
+Thunderbolt is the verified pure-projectile reference for BehaviorParam_PC
+300000350, Bullet 2080, and AtkParam_Pc 301600840. Preserve its 120 added
+lightning damage and 10 FP cost; do not add an unverified weapon-hit component.
 
 Buff-only Ashes use a typed `buffEffect` rather than fake damage components.
 The verified initial set is Sacred Blade, Flaming Strike, Lightning Slash,
@@ -905,11 +916,11 @@ Not required for MVP:
 - complete combo simulation
 - status-effect proc damage
 - bleed proc damage
-- poison
+- poison and other status proc damage
 - frost proc damage
 - full buff systems
-- spell damage
-- a complete Ash of War catalog
+- damage for `catalog-only` spells
+- complete Ash-of-War and fixed weapon-skill calculation coverage
 - PvP-specific calculations
 - complete talisman modifier support
 
@@ -1103,8 +1114,9 @@ Before modifying the backend:
 Build stats accepts up to ten unique spell IDs. Validate them against the
 active Regulation version and return catalog metadata. Available memory slots
 are two base slots plus zero to eight submitted Memory Stones and supported
-talisman bonuses. Reject selections exceeding that capacity. FP use, catalyst
-scaling, and spell damage remain deferred. Validate Intelligence, Faith, and
+talisman bonuses. Reject selections exceeding that capacity. This endpoint does
+not calculate FP consumption or spell damage; verified spell profiles use the
+damage endpoint. Validate Intelligence, Faith, and
 Arcane requirements against effective stats after supported equipment bonuses.
 
 Identify catalysts only through `EquipParamWeapon.enableMagic` and
@@ -1118,13 +1130,13 @@ ID, calculation-variant ID, and upgrade level. Verify variant ownership,
 supported casting types, upgrade bounds, and effective attribute requirements.
 Return Regulation-derived scaling for all five damage types.
 
-Spell damage support starts with verified direct projectile profiles. Resolve
+Spell damage uses verified direct, area, spread, channelled, multi-projectile,
+and multi-component profiles. Resolve
 Magic primary bullet references to Bullet and AtkParam_Pc, treat the attack's
 per-type attack values as spell motion values, and apply FinalDamageRateParam.
-Glintstone Pebble, Great Glintstone Shard, and Swift Glintstone Shard are
-currently `supported`. Glintstone Cometshard and Comet additionally expose
-separate normal and charged projectile profiles. All other spells remain
-`catalog-only` until verified through the generic mapper.
+The canonical current total is 34 supported spells and 137 `catalog-only`
+spells. Only profiles produced by the verified mapper may become `supported`;
+all others remain `catalog-only`.
 
 Glintstone Icecrag and Gravity Well are supported direct projectiles. Preserve
 per-hit status buildup separately from damage: Icecrag exposes 100 frost from

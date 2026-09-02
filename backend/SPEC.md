@@ -642,7 +642,7 @@ Equipment references should use stable application game-data identifiers.
 Regulation-derived base-game spells: 70 sorceries and 101 incantations. The
 list route may filter by `type=sorcery` or `type=incantation`. Entries include
 base FP cost, memory-slot cost, Intelligence/Faith/Arcane requirements, icon,
-and `catalog-only` calculation status. NPC rows, unused Carian Retaliation
+and an explicit `supported` or `catalog-only` calculation status. NPC rows, unused Carian Retaliation
 variants, duplicate Briars casting rows, and DLC IDs are excluded. Death
 Lightning and Night Maiden's Mist use their actual player-facing spell types
 rather than their mismatched internal casting prefixes.
@@ -656,8 +656,9 @@ The build-stats endpoint accepts up to ten unique spell IDs and validates them
 against the active Regulation version. `memoryStoneCount` accepts zero through
 eight. Available slots are two base slots plus Memory Stones and supported
 talisman bonuses. The response exposes available, used, and remaining slots;
-over-capacity selections are rejected. FP use, catalyst scaling, and spell
-damage remain outside this step. Intelligence, Faith, and Arcane requirements
+over-capacity selections are rejected. FP consumption and spell damage are not
+calculated by this build-stats endpoint; verified spell profiles are calculated
+through `POST /api/damage/calculate`. Intelligence, Faith, and Arcane requirements
 are validated against effective stats after supported armor and talisman
 bonuses. Spell entries without a verified combat profile remain `catalog-only`.
 
@@ -1031,13 +1032,19 @@ weapon; interchangeable skills are selected through the standalone Ash-of-War
 catalog.
 
 The standalone Ash-of-War catalog contains all 116 playable Regulation 1.17.0
-`EquipParamGem` rows. It stores compatible weapon types and affinities. Eighteen
-entries are currently `supported`. Eleven expose verified damage actions:
+`EquipParamGem` rows. It stores compatible weapon types and affinities. Twenty
+entries are currently `supported`. Thirteen expose verified damage actions:
 Square Off, Flame of the Redmanes, Lion's
 Claw, Impaling Thrust, Piercing Fang, Stamp (Upward Cut), Stamp (Sweep), and
-Giant Hunt, Wild Strikes, Charge Forth, and Unsheathe. Wild Strikes stores
+Giant Hunt, Wild Strikes, Charge Forth, Unsheathe, Prayerful Strike, and
+Thunderbolt. Wild Strikes stores
 separate profiles for each compatible weapon type so the backend resolves the
-correct class-specific motion values. The remaining entries are `catalog-only`
+correct class-specific motion values. Prayerful Strike damage is supported with
+its Regulation 235 motion value and 20 FP cost, resolving the inherited physical
+attack type per compatible weapon class; its healing remains an explicit
+stateless-calculator limitation. Thunderbolt follows Behavior 300000350 through
+Bullet 2080 to AtkParam 301600840 and exposes 120 added lightning damage at a 10
+FP cost. The remaining entries are `catalog-only`
 until their damage components or buff effects are verified. Seven additional
 entries expose verified buff effects: Sacred Blade (+90 holy, 40 seconds),
 Flaming Strike (+90 fire, 40 seconds), Lightning Slash (+85 lightning, 40
@@ -1086,9 +1093,31 @@ or incompatible combination is rejected.
 
 ---
 
-# Damage Response
+# Damage Response Contract
 
-Conceptual example:
+All JSON endpoints use the envelope:
+
+```json
+{
+  "status": 200,
+  "message": "Damage calculated",
+  "data": []
+}
+```
+
+`data` is always an array. Successful single-resource and calculation responses
+contain one object; list responses contain zero or more objects; error and
+not-found responses contain an empty array. The icon-asset endpoint is the only
+current exception because it returns binary WebP data directly.
+
+Damage calculations return their result as the only entry in `data`. A direct
+weapon, Ash-of-War, or spell calculation contains the selected source metadata,
+submitted and effective stats where applicable, applied equipment and buffs,
+attack rating, attack metadata, component results, combined offensive output,
+and `accuracy: "estimated"`. Each component retains its kind, source attack ID,
+and boss-independent `offensiveOutput` per damage type plus a total.
+
+Example result object, abbreviated:
 
 ```json
 {
@@ -1111,9 +1140,13 @@ Conceptual example:
 }
 ```
 
-Without a boss, `damage` is omitted and the response represents offensive
-output. With a boss, `damage` contains per-component and combined estimates.
-The final field structure may evolve as calculation research is validated.
+Without a boss, `target` and `damage` are omitted and the response represents
+boss-independent offensive output. With a boss, `target` identifies the stored
+boss and every component plus the combined result includes estimated `damage`
+after defense and absorption. Multi-projectile, spread, channelled, and
+multi-component spells additionally expose their verified output unit,
+status-per-component, aggregation assumption, and explicit limitations; the API
+does not infer total hit counts or duration.
 
 ---
 
@@ -1204,20 +1237,21 @@ Included:
 
 ---
 
-# Out of Scope for Initial Damage MVP
+# Current Damage Support Boundaries
 
-Not required:
+The following remain intentionally unsupported unless a verified profile says
+otherwise:
 
 - DPS
 - full combo simulation
 - bleed proc damage
-- poison
+- poison and other status proc damage
 - frost proc damage
 - complete status-effect system
 - full buff system
 - PvP-specific calculations
-- spell damage
-- complete Ash of War coverage
+- damage for the 137 `catalog-only` spells
+- the 96 `catalog-only` Ashes of War and unverified fixed weapon skills
 - complete talisman damage modifiers
 
 ---
@@ -1239,21 +1273,39 @@ Invalid requests return appropriate 4xx responses.
 
 # REST API
 
-Initial public resource areas:
+Current public routes:
 
 ```text
-/api/weapons
-/api/armor
-/api/talismans
-/api/bosses
-/api/builds
-/api/damage
+GET  /api/health
+GET  /api/weapons
+GET  /api/weapons/:weaponId
+GET  /api/armor
+GET  /api/armor/:armorId
+GET  /api/talismans
+GET  /api/talismans/:talismanId
+GET  /api/spells
+GET  /api/spells/:spellId
+GET  /api/ashes-of-war
+GET  /api/ashes-of-war/:ashOfWarId
+GET  /api/bosses
+GET  /api/bosses/:bossId
+GET  /api/character-classes
+GET  /api/builds
+GET  /api/builds/:buildId
+POST /api/builds/calculate-stats
+POST /api/damage/calculate
+GET  /api/assets/icons/:iconId
 ```
 
-Protected authenticated-user area:
+Protected authenticated-user routes:
 
 ```text
-/api/me/builds
+GET    /api/me/builds
+POST   /api/me/builds
+GET    /api/me/builds/:buildId
+PATCH  /api/me/builds/:buildId
+DELETE /api/me/builds/:buildId
+POST   /api/me/builds/:buildId/calculate-damage
 ```
 
 API design should remain resource-oriented.
@@ -1262,7 +1314,17 @@ API design should remain resource-oriented.
 
 # Pagination, Search, Filtering, and Sorting
 
-Compendium endpoints should support relevant combinations of:
+Compendium endpoints add only the query behavior required by their current UI
+contract. Weapons support `page`, `limit`, `search`, and `affinity`, return the
+matching total through `X-Total-Count`, and use a stable server-owned sort.
+Spells and Ashes of War support their documented filters. Other
+catalog routes currently return their complete base-game arrays.
+
+Before a complete catalog becomes a demonstrated performance problem, do not
+add speculative pagination abstractions. If pagination is introduced, preserve
+the array response contract and expose the total through `X-Total-Count`.
+
+Future query capabilities may include:
 
 - pagination
 - search
@@ -1420,11 +1482,9 @@ Not required:
 
 The following implementation details remain open:
 
-1. final response field structure for boss-independent and boss-specific results
-2. verified calculation order for added skill damage and final-damage rates
-3. user-facing labels for regulation behavior and attack identifiers
-4. which talisman and equipment effects are supported by the MVP calculator
-5. exact deployment platform
+1. user-facing labels for remaining Regulation behavior and attack identifiers
+2. whether further catalog routes need pagination after frontend measurements
+3. exact deployment platform and its operational configuration
 
 These decisions should be resolved explicitly and documented rather than guessed during implementation.
 

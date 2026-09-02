@@ -28,6 +28,57 @@ describe("mapVerifiedAshesOfWar skill buffs", () => {
       } },
     ]);
   });
+
+  it("maps Prayerful Strike with weapon-class-specific physical attack types", () => {
+    const prayerfulStrike = mapVerifiedAshesOfWar(
+      [gem(20800, "Prayerful Strike", 208)],
+      [
+        longsword,
+        referenceWeapon(30, 3), referenceWeapon(32, 0),
+        referenceWeapon(33, 1), referenceWeapon(35, 1),
+        referenceWeapon(34, 1), referenceWeapon(31, 1),
+      ],
+      {
+        behaviors: [{
+          ID: 300000102, Name: "Prayerful Strike", variationId: 0,
+          behaviorJudgeId: 102, refType: 0, refId: 301200820,
+        }],
+        attacks: [{
+          ID: 301200820, Name: "Prayerful Strike",
+          atkPhysCorrection: 235, atkMagCorrection: 235, atkFireCorrection: 235,
+          atkThunCorrection: 235, atkDarkCorrection: 235,
+          atkPhys: 0, atkMag: 0, atkFire: 0, atkThun: 0, atkDark: 0,
+          atkAttribute: 253, isAddBaseAtk: 0, finalDamageRateId: 10000,
+        }],
+        bullets: [],
+        swordArts: [{
+          ID: 208, Name: "Prayerful Strike", useMagicPoint_L1: -1,
+          useMagicPoint_L2: 20, useMagicPoint_R1: -1, useMagicPoint_R2: -1,
+        }],
+        finalDamageRates: [{
+          ID: 10000, Name: "", physRate: 1, magRate: 1,
+          fireRate: 1, thunRate: 1, darkRate: 1,
+        }],
+      },
+    )[0]!;
+
+    expect(prayerfulStrike.calculationStatus).toBe("supported");
+    expect(prayerfulStrike.skill).toBeNull();
+    expect(prayerfulStrike.skillVariants).toHaveLength(6);
+    expect(prayerfulStrike.skillVariants.map(({ weaponTypes, skill }) => ({
+      weaponType: weaponTypes[0],
+      fpCost: skill.attacks[0]?.fpCost,
+      motionValue: skill.attacks[0]?.components[0]?.motionValues.physical,
+      physicalAttackType: skill.attacks[0]?.components[0]?.physicalAttackType,
+    }))).toEqual([
+      { weaponType: "axe", fpCost: 20, motionValue: 235, physicalAttackType: "pierce" },
+      { weaponType: "greataxe", fpCost: 20, motionValue: 235, physicalAttackType: "standard" },
+      { weaponType: "hammer", fpCost: 20, motionValue: 235, physicalAttackType: "strike" },
+      { weaponType: "great-hammer", fpCost: 20, motionValue: 235, physicalAttackType: "strike" },
+      { weaponType: "flail", fpCost: 20, motionValue: 235, physicalAttackType: "strike" },
+      { weaponType: "colossal-weapon", fpCost: 20, motionValue: 235, physicalAttackType: "strike" },
+    ]);
+  });
 });
 
 function gem(ID: number, name: string, swordArtsParamId: number): EquipParamGemRow {
@@ -37,6 +88,13 @@ function gem(ID: number, name: string, swordArtsParamId: number): EquipParamGemR
 const longsword = {
   ID: 1000000, Name: "Longsword", originEquipWep: 1000000, wepmotionCategory: 20,
 } as WeaponParamRow;
+
+function referenceWeapon(wepmotionCategory: number, atkAttribute: number): WeaponParamRow {
+  return {
+    ID: wepmotionCategory, Name: `Reference ${wepmotionCategory}`,
+    originEquipWep: wepmotionCategory, wepmotionCategory, atkAttribute,
+  } as WeaponParamRow;
+}
 
 const emptySkillTables = { behaviors: [], attacks: [], bullets: [], swordArts: [], finalDamageRates: [] };
 

@@ -24,17 +24,20 @@ The importer also reads `SwordArtsParam.csv`, `Bullet.csv`, and
 Moonlight attacks into separate projectile and weapon-hit components.
 
 The generic mapper is additionally verified against pure weapon-hit, pure
-projectile, mixed, and weapon-class-dependent definitions. Eleven standalone
+projectile, mixed, and weapon-class-dependent definitions. Thirteen standalone
 Ashes currently have verified damage profiles: Square Off, Flame of the
 Redmanes, Lion's Claw, Impaling Thrust, Piercing Fang, Stamp (Upward Cut), Stamp
-(Sweep), Giant Hunt, Wild Strikes, Charge Forth, and Unsheathe. Wild Strikes
+(Sweep), Giant Hunt, Wild Strikes, Charge Forth, Unsheathe, Prayerful Strike,
+and Thunderbolt. Wild Strikes
 keeps separate Regulation-derived skill profiles for all nine compatible weapon
-types.
+types. Prayerful Strike retains class-specific physical attack types; its
+healing effect remains outside the stateless damage calculation. Thunderbolt is
+a verified pure projectile with 120 added lightning damage and a 10 FP cost.
 
 Regulation 1.17.0 contributes 116 playable Ash-of-War rows. Every entry exposes
 weapon-type and affinity compatibility. Unverified entries are imported as
 `catalog-only` with no damage or buff profile; only `supported` entries may be
-used by the damage endpoint. Eighteen are supported: eleven damage profiles and
+used by the damage endpoint. Twenty are supported: thirteen damage profiles and
 seven verified weapon-buff profiles. Buff values come from their named
 `SpEffectParam` rows, including duration, next-hit consumption, attack-power and
 outgoing multipliers, flat added damage, status buildup, and poise damage.
