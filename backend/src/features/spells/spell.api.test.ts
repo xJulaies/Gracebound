@@ -26,6 +26,7 @@ describe("public spell API", () => {
     ]);
     expect(all.status).toBe(200);
     expect(all.body.data).toHaveLength(2);
+    expect(all.body.data[0].iconUrl).toBe("/api/assets/icons/1");
     expect(sorceries.status).toBe(200);
     expect(sorceries.body.data).toEqual([expect.objectContaining({ id: "glintstone-pebble", type: "sorcery" })]);
     expect(all.body.data[0]).not.toHaveProperty("sourceMagicId");

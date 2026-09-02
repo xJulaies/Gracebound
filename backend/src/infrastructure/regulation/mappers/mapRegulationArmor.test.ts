@@ -13,9 +13,10 @@ describe("mapBaseGameArmor", () => {
     });
   });
 
-  it("excludes placeholders and DLC rows", () => {
+  it("excludes placeholders, unavailable cut content, and DLC rows", () => {
     expect(mapBaseGameArmor([
       { ...row(), ID: 10_000, Name: "Head" },
+      { ...row(), ID: 920_000, Name: "Grass Hair Ornament", iconIdM: 14_520 },
       { ...row(), ID: 5_000_000, Name: "Oathseeker Knight Helm" },
     ])).toEqual([]);
   });

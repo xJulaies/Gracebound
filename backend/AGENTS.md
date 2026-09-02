@@ -428,6 +428,27 @@ The exact schema depends on the finalized regulation mapping.
 Do not store raw regulation or ERDB records if normalized application models
 are more appropriate.
 
+## Icon assets
+
+Game icons are extracted locally from the UXM-unpacked `menu/hi` atlases and
+must never be committed. Use the layout-defined `iconId` mapping, convert only
+IDs referenced by the active game-data catalogs to 160x160 WebP at quality 90,
+and deduplicate binary-identical files by SHA-256.
+
+MongoDB stores one `iconassets` document per unique image. The document owns
+all matching icon IDs, binary WebP data, dimensions, checksum, byte size, game
+version, source-manifest hash, and import timestamp. Keep image bytes out of
+weapon, armor, talisman, spell, and Ash of War documents. The compound indexes
+on game version plus checksum and game version plus icon ID must remain unique.
+
+Icon imports must validate the complete manifest and every file before opening
+MongoDB, enforce the 150 MiB asset budget, and replace one game-version dataset
+transactionally. For spells, join `Magic` to the same-ID `EquipParamGoods` row
+and use the Goods icon ID; `Magic.iconId` is only a spreadsheet reference.
+After catalog or icon imports, audit the active catalog icon IDs against the
+stored assets. Missing referenced icons must fail the audit; unreferenced stored
+icons must be reported so dataset drift remains visible.
+
 ---
 
 # Domain Models
@@ -478,7 +499,17 @@ GET /api/character-classes
 
 GET /api/bosses
 GET /api/bosses/:bossId
+
+GET /api/assets/icons/:iconId
 ```
+
+The public icon endpoint returns the active game version's WebP bytes directly,
+not the normal JSON response envelope. It must validate numeric icon IDs, return
+404 for unknown IDs, and emit the checksum as a strong ETag. Because the URL is
+not versioned, use a revalidating cache policy rather than `immutable` caching.
+Public weapon, armor, talisman, spell, and Ash of War response mappers must
+derive a server-relative `iconUrl` from `iconId`; never persist deployment
+hostnames or duplicate the URL in catalog documents.
 
 The Regulation 1.17.0 base-game spell catalog contains 70 sorceries and 101
 incantations from `Magic.csv`. Exclude NPC-prefixed rows, IDs 4641/4642, the
@@ -497,9 +528,10 @@ data. Talisman effects remain `catalog-only` until their complete conditions and
 modifiers are verified from `SpEffectParam`; never infer support from the
 talisman name alone.
 
-The armor catalog uses the 587 uniquely named base-game `EquipParamProtector`
+The armor catalog uses the 586 obtainable, uniquely named base-game `EquipParamProtector`
 rows below ID 5000000 in the four wearable categories. Exclude the internal
-zero-weight `Head`, `Body`, `Arms`, and `Legs` placeholders. Convert
+zero-weight `Head`, `Body`, `Arms`, and `Legs` placeholders and the unavailable
+cut-content `Grass Hair Ornament` (row 920000). Convert
 `*DamageCutRate` multipliers to normalized negation decimals with `1 - rate`,
 map `toughnessCorrectRate * 1000` as poise, and preserve all seven resistance
 point values. Negative damage negation is valid for equipment that increases

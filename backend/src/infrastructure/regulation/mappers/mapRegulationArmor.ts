@@ -2,6 +2,7 @@ import type { ArmorData, ArmorRegenerationEffect, ArmorScopedDamageBoost, ArmorS
 import type { ArmorBehaviorRow, ArmorBulletRow, ArmorEffectRow, ArmorParamRow } from "../schemas/armor.schema";
 
 const FIRST_DLC_PROTECTOR_ID = 5_000_000;
+const CUT_CONTENT_PROTECTOR_IDS = new Set([920_000]);
 const PLACEHOLDER_NAMES = new Set(["Head", "Body", "Arms", "Legs"]);
 const SLOTS: Record<number, ArmorSlot> = { 0: "head", 1: "body", 2: "arms", 3: "legs" };
 const SCOPED_EFFECTS = new Map<number, ArmorData["passiveEffects"]["scopedDamageBoosts"][number]["scope"]>([
@@ -26,7 +27,11 @@ export function mapBaseGameArmor(
   const behaviorsById = new Map((supportingRows.behaviors ?? []).map((row) => [row.ID, row]));
   const bulletsById = new Map((supportingRows.bullets ?? []).map((row) => [row.ID, row]));
   const armor = rows
-    .filter((row) => row.ID < FIRST_DLC_PROTECTOR_ID && row.Name.trim() !== "" && SLOTS[row.protectorCategory] && !PLACEHOLDER_NAMES.has(row.Name))
+    .filter((row) => row.ID < FIRST_DLC_PROTECTOR_ID
+      && !CUT_CONTENT_PROTECTOR_IDS.has(row.ID)
+      && row.Name.trim() !== ""
+      && SLOTS[row.protectorCategory]
+      && !PLACEHOLDER_NAMES.has(row.Name))
     .map((row) => ({
       id: slugify(row.Name),
       sourceProtectorId: row.ID,

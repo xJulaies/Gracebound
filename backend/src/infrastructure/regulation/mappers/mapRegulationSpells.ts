@@ -3,6 +3,7 @@ import type { MagicParamRow } from "../schemas/magic.schema";
 import type { AttackParamRow } from "../schemas/weaponAttackParam.schema";
 import type { BulletParamRow, FinalDamageRateRow } from "../schemas/weaponSkillParam.schema";
 import type { ArmorEffectRow } from "../schemas/armor.schema";
+import type { GoodsIconRow } from "../schemas/goodsIcon.schema";
 
 const FIRST_DLC_MAGIC_ID = 2_000_000;
 const EXCLUDED_MAGIC_IDS = new Set([4641, 4642, 8000, 8001]);
@@ -45,7 +46,14 @@ export interface SpellCombatTables {
   effects: ArmorEffectRow[];
 }
 
-export function mapBaseGameSpells(rows: MagicParamRow[], combatTables?: SpellCombatTables): SpellData[] {
+export function mapBaseGameSpells(
+  rows: MagicParamRow[],
+  combatTables?: SpellCombatTables,
+  goodsIcons?: GoodsIconRow[],
+): SpellData[] {
+  const knowledgeIcons = goodsIcons
+    ? new Map(goodsIcons.map(({ ID, iconId }) => [ID, iconId]))
+    : null;
   const spells = rows.flatMap((row) => {
     if (row.ID >= FIRST_DLC_MAGIC_ID || EXCLUDED_MAGIC_IDS.has(row.ID)) return [];
     const parsedName = parsePlayerSpellName(row.Name);
@@ -76,7 +84,7 @@ export function mapBaseGameSpells(rows: MagicParamRow[], combatTables?: SpellCom
         faith: row.requirementFaith,
         arcane: row.requirementLuck,
       },
-      iconId: row.iconId,
+      iconId: resolveIconId(row, knowledgeIcons),
       calculationStatus: attack || buffEffect ? "supported" as const : "catalog-only" as const,
       buffEffect,
       attack,
@@ -85,6 +93,13 @@ export function mapBaseGameSpells(rows: MagicParamRow[], combatTables?: SpellCom
   });
   if (new Set(spells.map(({ id }) => id)).size !== spells.length) throw new Error("Spell catalog contains duplicate IDs");
   return spells;
+}
+
+function resolveIconId(row: MagicParamRow, knowledgeIcons: Map<number, number> | null): number {
+  if (!knowledgeIcons) return row.iconId;
+  const iconId = knowledgeIcons.get(row.ID);
+  if (iconId === undefined) throw new Error(`Missing EquipParamGoods icon for ${row.Name}`);
+  return iconId;
 }
 
 function mapBuffEffect(magicId: number, name: string, tables?: SpellCombatTables) {

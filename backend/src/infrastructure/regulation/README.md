@@ -70,7 +70,8 @@ Dress ally regeneration:
 npm run data:import:armor -- --exports "C:\path\to\exports" --regulation "C:\path\to\regulation.bin"
 ```
 
-Regulation 1.17.0 must produce exactly 587 wearable base-game armor pieces.
+Regulation 1.17.0 must produce exactly 586 obtainable base-game armor pieces.
+The unavailable cut-content `Grass Hair Ornament` is excluded explicitly.
 
 Import the normalized spell catalog from `Magic.csv`:
 

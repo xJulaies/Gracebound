@@ -22,8 +22,8 @@ async function importRegulationArmorData() {
     behaviors: parseArmorBehaviorCsv(behaviorCsv),
     bullets: parseArmorBulletCsv(bulletCsv),
   });
-  if (settings.SUPPORTED_GAME_VERSION === "1.17.0" && armor.length !== 587) {
-    throw new Error(`Incomplete 1.17.0 armor catalog: expected 587, mapped ${armor.length}`);
+  if (settings.SUPPORTED_GAME_VERSION === "1.17.0" && armor.length !== 586) {
+    throw new Error(`Incomplete 1.17.0 armor catalog: expected 586, mapped ${armor.length}`);
   }
   if (settings.SUPPORTED_GAME_VERSION === "1.17.0") validateKnownArmorEffects(armor);
   const unresolvedArmor = armor.filter(({ hasUnresolvedPassiveEffects }) => hasUnresolvedPassiveEffects);

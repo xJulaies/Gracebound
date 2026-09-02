@@ -1,4 +1,5 @@
 import type { WeaponCatalogRecord } from "../models/weaponCatalog.model";
+import { createIconUrl } from "../../../shared/http/createIconUrl";
 
 export function mapWeaponResponse(record: WeaponCatalogRecord) {
   return {
@@ -9,6 +10,7 @@ export function mapWeaponResponse(record: WeaponCatalogRecord) {
     weaponType: record.weaponType,
     weight: record.weight,
     iconId: record.iconId,
+    iconUrl: createIconUrl(record.iconId),
     swordArtId: record.swordArtId,
     canChangeAffinity: record.canChangeAffinity,
     castingTypes: record.castingTypes,

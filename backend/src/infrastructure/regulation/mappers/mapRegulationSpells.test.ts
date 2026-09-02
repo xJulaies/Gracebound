@@ -5,6 +5,15 @@ import type { SpellData } from "../../../features/spells/domain/spell.types";
 import { mapBaseGameSpells } from "./mapRegulationSpells";
 
 describe("mapBaseGameSpells", () => {
+  it("uses the matching goods icon as the stable item asset ID", () => {
+    const [spell] = mapBaseGameSpells(
+      [row(4000, "[Sorcery] Glintstone Pebble")],
+      undefined,
+      [{ ID: 4000, iconId: 6000 }],
+    );
+
+    expect(spell.iconId).toBe(6000);
+  });
   it("normalizes playable spell selection data", () => {
     expect(mapBaseGameSpells([row(4000, "[Sorcery] Glintstone Pebble")])).toEqual([{
       id: "glintstone-pebble", sourceMagicId: 4000, name: "Glintstone Pebble",

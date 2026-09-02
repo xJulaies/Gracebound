@@ -9,17 +9,19 @@ import { parseMagicParamCsv } from "../infrastructure/regulation/parsers/parseMa
 import { parseAttackParamCsv } from "../infrastructure/regulation/parsers/parseWeaponAttackCsv";
 import { parseBulletParamCsv, parseFinalDamageRateCsv } from "../infrastructure/regulation/parsers/parseWeaponSkillCsv";
 import { parseArmorEffectCsv } from "../infrastructure/regulation/parsers/parseArmorParamCsv";
+import { parseGoodsIconCsv } from "../infrastructure/regulation/parsers/parseGoodsIconCsv";
 import { saveSpellCatalog } from "../infrastructure/regulation/services/saveSpellCatalog";
 
 async function importRegulationSpellData() {
   const exportDirectory = requiredArgument("--exports");
   const regulationFile = requiredArgument("--regulation");
-  const [csv, bulletsCsv, attacksCsv, finalRatesCsv, effectsCsv, sourceHash] = await Promise.all([
+  const [csv, bulletsCsv, attacksCsv, finalRatesCsv, effectsCsv, goodsCsv, sourceHash] = await Promise.all([
     readFile(path.join(exportDirectory, "Magic.csv"), "utf8"),
     readFile(path.join(exportDirectory, "Bullet.csv"), "utf8"),
     readFile(path.join(exportDirectory, "AtkParam_Pc.csv"), "utf8"),
     readFile(path.join(exportDirectory, "FinalDamageRateParam.csv"), "utf8"),
     readFile(path.join(exportDirectory, "SpEffectParam.csv"), "utf8"),
+    readFile(path.join(exportDirectory, "EquipParamGoods.csv"), "utf8"),
     sha256(regulationFile),
   ]);
   const spells = mapBaseGameSpells(parseMagicParamCsv(csv), {
@@ -27,7 +29,7 @@ async function importRegulationSpellData() {
     attacks: parseAttackParamCsv(attacksCsv),
     finalDamageRates: parseFinalDamageRateCsv(finalRatesCsv),
     effects: parseArmorEffectCsv(effectsCsv),
-  });
+  }, parseGoodsIconCsv(goodsCsv));
   if (settings.SUPPORTED_GAME_VERSION === "1.17.0") validateCatalog(spells);
   console.log(`Validated ${spells.length} base-game spells`);
   if (process.argv.includes("--dry-run")) {

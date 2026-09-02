@@ -1,4 +1,5 @@
 import type { SpellRecord } from "../models/spell.model";
+import { createIconUrl } from "../../../shared/http/createIconUrl";
 
 export function mapSpellResponse(spell: SpellRecord) {
   return {
@@ -11,6 +12,7 @@ export function mapSpellResponse(spell: SpellRecord) {
     slotsRequired: spell.slotsRequired,
     requirements: spell.requirements,
     iconId: spell.iconId,
+    iconUrl: createIconUrl(spell.iconId),
     calculationStatus: spell.calculationStatus,
     buffEffect: spell.buffEffect,
     attack: spell.attack ? {

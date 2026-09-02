@@ -27,6 +27,7 @@ describe("public Ash of War API", () => {
     expect(response.body.data).toHaveLength(3);
     expect(response.body.data[0]).toMatchObject({
       id: "flame-of-the-redmanes",
+      iconUrl: "/api/assets/icons/50500",
       compatibleWeaponTypes: ["straight-sword", "greatsword"],
       attacks: [{ id: "flame-of-the-redmanes", fpCost: 14 }],
     });

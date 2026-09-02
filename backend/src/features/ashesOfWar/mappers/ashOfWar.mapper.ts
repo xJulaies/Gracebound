@@ -1,4 +1,5 @@
 import type { AshOfWarRecord } from "../models/ashOfWar.model";
+import { createIconUrl } from "../../../shared/http/createIconUrl";
 
 export function mapAshOfWarResponse(record: AshOfWarRecord) {
   const attacks = [
@@ -12,6 +13,7 @@ export function mapAshOfWarResponse(record: AshOfWarRecord) {
     id: record.id,
     name: record.name,
     iconId: record.iconId,
+    iconUrl: createIconUrl(record.iconId),
     compatibleWeaponTypes: [...record.compatibleWeaponTypes],
     compatibleAffinities: [...record.compatibleAffinities],
     calculationStatus: record.calculationStatus,

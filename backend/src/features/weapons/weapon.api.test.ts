@@ -46,6 +46,9 @@ describe("public weapon API", () => {
     });
     expect(response.body.data[0]).not.toHaveProperty("_id");
     expect(response.body.data[0]).not.toHaveProperty("sourceHash");
+    expect(response.body.data[0].iconUrl).toBe(
+      `/api/assets/icons/${response.body.data[0].iconId}`,
+    );
     expect(response.body.data[0].variants[0]).not.toHaveProperty("sourceId");
   });
 

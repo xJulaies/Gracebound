@@ -29,6 +29,7 @@ describe("public talisman API", () => {
     ]);
     expect(response.body.data[1]).toMatchObject({
       name: "Shard of Alexander",
+      iconUrl: "/api/assets/icons/1231",
       weight: 0.9,
       calculationStatus: "catalog-only",
       gameVersion: REGULATION_TEST_GAME_VERSION,

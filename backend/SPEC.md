@@ -798,7 +798,7 @@ preserves request order.
 
 ## Armor catalog
 
-`GET /api/armor` and `GET /api/armor/:armorId` expose 587 Regulation-derived
+`GET /api/armor` and `GET /api/armor/:armorId` expose 586 obtainable Regulation-derived
 base-game armor pieces. Each entry includes slot, weight, poise, eight physical
 or elemental damage-negation values, seven status-resistance values, normalized
 supported passive effects, and whether unresolved passive behavior remains.
@@ -849,6 +849,29 @@ equipment load includes armor, supported talismans, and weapons. Load category
 uses the final modified maximum equip load: `<30%` light, `<70%` medium, `<100%`
 heavy, otherwise overloaded. The response includes current load, maximum load,
 ratio, percentage, category, and selected weapon metadata.
+
+## Icon asset storage
+
+The active 1.17.0 catalogs reference 1,454 unique item icon IDs. Local
+layout-driven extraction produces 1,453 binary-distinct 160x160 WebP assets at
+quality 90, totaling 12,443,076 bytes. No icon is missing and no extracted game
+image belongs in Git.
+
+MongoDB stores the images in the `iconassets` collection, deduplicated by
+SHA-256. Each document maps one or more icon IDs to one binary image and records
+its MIME type, dimensions, byte size, game version, manifest hash, and import
+timestamp. The importer verifies every file and replaces the selected version
+transactionally. Catalog documents retain only `iconId`.
+
+`GET /api/assets/icons/:iconId` returns the active version's `image/webp`
+binary with its exact content length, a strong checksum ETag, and
+`Cache-Control: public, max-age=86400, stale-while-revalidate=604800`. Matching
+`If-None-Match` requests return 304 without image bytes. Unknown IDs return 404
+and malformed non-numeric IDs return 400 through the standard error envelope.
+Weapon, armor, talisman, spell, and Ash of War catalog responses expose both
+the numeric `iconId` and server-relative `iconUrl` in the form
+`/api/assets/icons/:iconId`. The URL is derived at response time and is not
+stored redundantly in MongoDB.
 
 ---
 

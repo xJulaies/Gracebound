@@ -25,6 +25,7 @@ describe("public armor API", () => {
     expect(response.body.data).toHaveLength(2);
     expect(response.body.data[0]).toMatchObject({
       id: "vagabond-knight-armor", slot: "body",
+      iconId: 1, iconUrl: "/api/assets/icons/1",
       hasPassiveEffects: false, hasUnresolvedPassiveEffects: false,
     });
     expect(response.body.data[0]).not.toHaveProperty("sourceProtectorId");

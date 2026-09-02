@@ -1,4 +1,5 @@
 import type { ArmorRecord } from "../models/armor.model";
+import { createIconUrl } from "../../../shared/http/createIconUrl";
 
 export function mapArmorResponse(armor: ArmorRecord) {
   return {
@@ -6,6 +7,7 @@ export function mapArmorResponse(armor: ArmorRecord) {
     name: armor.name,
     slot: armor.slot,
     iconId: armor.iconId,
+    iconUrl: createIconUrl(armor.iconId),
     weight: armor.weight,
     poise: armor.poise,
     damageNegation: armor.damageNegation,
