@@ -26,6 +26,7 @@
     "data:icons:extract": "tsx src/scripts/extractGameIcons.ts",
     "data:icons:import": "tsx src/scripts/importIconAssets.ts",
     "data:icons:audit": "tsx src/scripts/auditIconAssets.ts",
+    "data:class-images:import": "tsx src/scripts/importCharacterClassImageAssets.ts",
     "test": "vitest run",
     "test:watch": "vitest"
   },

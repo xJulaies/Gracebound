@@ -1,6 +1,6 @@
 # Elden Ring Companion — Frontend Specification
 
-Version: 0.2
+Version: 0.3
 
 ---
 
@@ -275,16 +275,21 @@ The frontend must not send or choose a user ID to determine ownership.
 
 Authenticated users can create builds.
 
-A build contains at minimum:
+A build can contain:
 
 - name
 - description
-- character level
+- starting character class
+- character level derived from the starting class and allocated attributes
 - character attributes
-- primary weapon
-- weapon upgrade level
-- armor
-- talismans
+- up to six weapon slots including variant, upgrade level, and optional Ash of War
+- catalyst
+- four armor slots
+- up to four talismans
+- Great Rune
+- up to two Crystal Tears
+- spells and memory stones
+- supported body, aura, and weapon buffs
 - visibility
 
 Potential character stats:
@@ -299,6 +304,106 @@ Potential character stats:
 - Arcane
 
 Build inputs must be validated with Zod.
+
+## Build Editor MVP Contract
+
+The editor is implemented in vertical slices. Visual design and concrete component composition are decided before UI implementation and are not prescribed by this contract.
+
+### Slice 1: Character foundation
+
+Required inputs:
+
+- starting character class
+- Vigor
+- Mind
+- Endurance
+- Strength
+- Dexterity
+- Intelligence
+- Faith
+- Arcane
+
+Rules:
+
+- A stat cannot be lower than the selected class's starting value.
+- A stat cannot exceed the hard cap of 99.
+- Character level is calculated by the backend from the starting class and allocated stats.
+- Resource, defense, resistance, and item-discovery values come from the backend calculation response.
+- Softcap behavior comes from imported game progression and scaling curves.
+- The frontend must not reproduce level, resource, protection, weapon-scaling, or softcap formulas.
+- A future softcap hint may compare backend-calculated outcomes for adjacent values; it must remain explanatory and must not become a second calculation authority.
+
+Performance behavior:
+
+- Input controls update locally without waiting for the backend.
+- Changed build stats are sent after 350 milliseconds without another change.
+- Several rapid changes are combined into one calculation request.
+- The previous valid calculation remains available while a new result is loading.
+- Obsolete in-flight preview requests are aborted.
+- Saving a build remains a separate explicit operation.
+
+Backend integration:
+
+```text
+GET  /api/character-classes
+POST /api/builds/calculate-stats
+```
+
+#### Character-class selection experience
+
+Creating a build starts with an atmospheric character-class selection before the compact stat editor is shown.
+
+The agreed interaction is a carousel:
+
+- The active class is centered and uses a large class image as its visual background.
+- The active card shows the class name, starting level, and highlighted starting stats.
+- The previous and next classes remain visible at the sides primarily through their darkened images.
+- Clicking a side card moves that class into the center without immediately confirming it.
+- A separate explicit action confirms the centered class.
+- The carousel supports visible controls, keyboard navigation, and touch gestures.
+- Class name and controls remain available as text and semantic controls; the image is not the only means of identification.
+- Text over images requires a strong readability gradient and sufficient contrast.
+
+After confirmation, the selection area becomes a compact class summary and the stat editor is revealed. A `Change class` action can reopen the carousel. The exact behavior for preserving or resetting an already edited build after a class change must be agreed before implementation.
+
+The resulting editor follows a hybrid presentation:
+
+- Character stats and calculated values use a compact, data-oriented layout.
+- Equipment, talismans, spells, and similar selections use richer icon-based presentation.
+- Desktop character editing places controls and live results side by side.
+- Narrow viewports stack the calculated results below the controls.
+- Precise stat controls use decrement, increment, and direct numeric input instead of an imprecise slider.
+
+Large class images must not be added to the public repository. Before implementing the carousel, the available local game assets must be checked for suitable class artwork and integrated through the existing private asset strategy where legally and technically appropriate.
+
+### Slice 2: Equipment and loadout
+
+The editor progressively adds:
+
+- weapon slots, variants, reinforcement levels, and compatible Ashes of War
+- armor slots
+- talismans
+- Great Rune
+- Crystal Tears
+- spells, catalyst, and memory stones
+- supported buffs
+
+Selection dependencies must be respected. For example, a weapon variant belongs to one weapon, an Ash of War must be compatible with the selected weapon, and selected spells must be compatible with the catalyst and available memory slots.
+
+`POST /api/builds/calculate-stats` remains the authority for effective attributes, equipment load, resources, defenses, resistances, catalyst scaling, memory slots, and validation of supported catalog selections.
+
+### Slice 3: Damage evaluation
+
+The editor can calculate supported weapon, skill, and spell output with or without a selected boss. The backend remains responsible for attack rating, motion values, buffs, defense, absorption, and final estimated damage.
+
+Backend integration:
+
+```text
+POST /api/damage/calculate
+POST /api/me/builds/:buildId/calculate-damage
+```
+
+Saving, editing, and deleting builds remain authenticated operations under `/api/me/builds`.
 
 ---
 
@@ -346,9 +451,11 @@ Users should be able to select:
 
 - character stats or an existing owned build
 - weapon
+- weapon variant or infusion
 - weapon upgrade level
 - target enemy or boss
-- supported attack type if required by the MVP calculation
+- supported normal attack, Ash of War attack, or spell
+- supported talismans, armor effects, Great Rune, Crystal Tears, and buffs
 
 The backend performs the actual damage calculation.
 
@@ -408,11 +515,8 @@ Not required for MVP:
 - bleed proc calculations
 - poison damage
 - frost proc damage
-- complete buff systems
 - PvP-specific calculations
-- spell damage
-- Ash of War damage
-- full talisman modifier support
+- complete support for every exceptional weapon skill, spell, buff, or status mechanic
 
 ---
 
@@ -582,9 +686,6 @@ Not required initially:
 - PvP simulation
 - DPS simulation
 - full status-effect simulation
-- full buff system
-- spell damage
-- Ash of War damage
 - complete Elden Ring mechanic coverage
 
 ---
@@ -596,9 +697,6 @@ Possible stretch goals:
 - favorite builds
 - build ratings
 - build sharing
-- spells
-- incantations
-- Ashes of War
 - weapon comparison
 - stat optimization
 - multiple weapon damage comparison

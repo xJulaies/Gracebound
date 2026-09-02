@@ -449,6 +449,15 @@ After catalog or icon imports, audit the active catalog icon IDs against the
 stored assets. Missing referenced icons must fail the audit; unreferenced stored
 icons must be reported so dataset drift remains visible.
 
+Character-class carousel images are locally captured source artifacts and must
+not be committed. Store the ten optimized 520x624 WebP images in the dedicated
+`characterclassimageassets` collection, one document per playable base-game
+class and game version. Validate the complete manifest, image dimensions,
+format, byte size, and SHA-256 checksum before opening MongoDB. Replace one
+game-version image set transactionally. Character-class catalog responses
+derive `imageUrl` from the class ID; image bytes remain separate from class
+documents.
+
 ---
 
 # Domain Models
@@ -507,6 +516,7 @@ GET /api/bosses
 GET /api/bosses/:bossId
 
 GET /api/assets/icons/:iconId
+GET /api/assets/character-classes/:classId
 ```
 
 The public icon endpoint returns the active game version's WebP bytes directly,

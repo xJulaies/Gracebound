@@ -311,8 +311,12 @@ Examples:
 - scaling calculations
 - defense calculations
 - absorption calculations
+- character-level calculations
+- progression curves and softcap behavior
 
 The frontend may format or visualize calculation results but should not duplicate backend damage formulas.
+
+Softcap indicators must be derived from backend-calculated outcomes or explicit backend metadata. Do not maintain a separate frontend table of gameplay caps as a second source of truth.
 
 ---
 

@@ -25,7 +25,12 @@ describe("GET /api/character-classes", () => {
     const response = await request(app).get("/api/character-classes");
     expect(response.status).toBe(200);
     expect(response.body.data).toHaveLength(10);
-    expect(response.body.data[0]).toMatchObject({ id: "wretch", level: 1, stats: baseStats });
+    expect(response.body.data[0]).toMatchObject({
+      id: "wretch",
+      imageUrl: "/api/assets/character-classes/wretch",
+      level: 1,
+      stats: baseStats,
+    });
     expect(response.body.data[0]).not.toHaveProperty("sourceHash");
   });
 });

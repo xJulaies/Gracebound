@@ -1365,6 +1365,7 @@ GET  /api/builds/:buildId
 POST /api/builds/calculate-stats
 POST /api/damage/calculate
 GET  /api/assets/icons/:iconId
+GET  /api/assets/character-classes/:classId
 ```
 
 Protected authenticated-user routes:

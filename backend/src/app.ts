@@ -11,6 +11,7 @@ import { createCharacterClassRouter } from "./features/characterClasses/routes/c
 import { createArmorRouter } from "./features/armor/routes/armor.routes";
 import { createSpellRouter } from "./features/spells/routes/spell.routes";
 import { createIconAssetRouter } from "./features/assets/routes/iconAsset.routes";
+import { createCharacterClassImageAssetRouter } from "./features/assets/routes/characterClassImageAsset.routes";
 import { createGreatRuneRouter } from "./features/greatRunes/routes/greatRune.routes";
 import { createCrystalTearRouter } from "./features/crystalTears/routes/crystalTear.routes";
 import type { Authentication } from "./shared/auth/authentication.types";
@@ -36,6 +37,7 @@ export function createApp(authentication: Authentication) {
 
   app.use("/api", createBuildRouter(authentication.getAuthenticatedUserId));
   app.use("/api", createIconAssetRouter());
+  app.use("/api", createCharacterClassImageAssetRouter());
   app.use("/api", createGreatRuneRouter());
   app.use("/api", createCrystalTearRouter());
   app.use("/api", createCharacterClassRouter());
