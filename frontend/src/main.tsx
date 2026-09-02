@@ -4,7 +4,10 @@ import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
 import { App } from "./app/App";
 import { getClerkPublishableKey } from "./shared/config/environment";
+import { initializeTheme } from "./shared/theme/theme";
 import "./styles.css";
+
+initializeTheme();
 
 const queryClient = new QueryClient();
 const publishableKey = getClerkPublishableKey();

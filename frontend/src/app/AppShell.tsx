@@ -1,5 +1,6 @@
 import { Link, Outlet } from "@tanstack/react-router";
 import { AuthControls } from "../features/auth/components/AuthControls";
+import { ThemeToggle } from "../shared/ui/ThemeToggle";
 
 export function AppShell() {
   return (
@@ -9,7 +10,10 @@ export function AppShell() {
           <span className="eyebrow">Elden Ring companion</span>
           <span className="brand-name">Gracebound</span>
         </Link>
-        <AuthControls />
+        <div className="header-actions">
+          <ThemeToggle />
+          <AuthControls />
+        </div>
       </header>
 
       <nav aria-label="Main navigation">

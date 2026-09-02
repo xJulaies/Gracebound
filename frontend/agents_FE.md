@@ -322,11 +322,13 @@ Softcap indicators must be derived from backend-calculated outcomes or explicit 
 
 # Styling
 
-Use Tailwind CSS.
+Use Tailwind CSS and application-owned components. Do not introduce a component
+library without a demonstrated requirement.
 
-Use HeroUI where it provides useful components.
-
-Avoid mixing multiple component libraries without a clear reason.
+React components must use semantic theme utilities. Do not place literal hex,
+RGB, or HSL colors in components, duplicate theme values with arbitrary
+Tailwind classes, or scatter component styling across unrelated CSS files.
+Concrete theme values belong in the central theme definition.
 
 The visual direction should feel:
 - dark

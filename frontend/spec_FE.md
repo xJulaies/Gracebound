@@ -52,7 +52,6 @@ No npm workspaces, Nx, or Turborepo are required.
 - TanStack Form
 - Zod
 - Tailwind CSS
-- HeroUI
 - Clerk
 - Vitest
 - React Testing Library
@@ -113,6 +112,76 @@ Damage Calculator
 
 Account
 ```
+
+## Public Layout
+
+The public application pages are nested below a pathless TanStack Router layout
+route. The root route remains UI-neutral and renders only its child outlet. The
+public layout surrounds its outlet with the shared public header, navigation,
+and footer without adding a URL segment.
+
+Initial route hierarchy:
+
+```text
+rootRoute
+└── publicLayoutRoute
+    ├── indexRoute
+    ├── weaponsRoute
+    ├── bossesRoute
+    ├── buildsRoute
+    └── damageCalculatorRoute
+```
+
+The public layout uses a full-height flex structure. The content area grows so
+the footer remains at the bottom of short pages. Header and footer may span the
+viewport while their readable content remains constrained to the application
+width.
+
+The public header contains:
+
+- the Gracebound brand link
+- the main navigation on desktop
+- the theme toggle
+- Clerk sign-in or account controls
+- a mobile menu button
+
+On narrow viewports, the link list is replaced by a side drawer. The theme
+toggle remains directly accessible in the header, while navigation links and
+authentication controls are available inside the drawer. The drawer opens from
+the right and must:
+
+- show the public Home, Weapons, Bosses, Builds, and Damage Calculator links
+- preserve the active-route indication
+- close after route selection
+- close through its explicit close button, backdrop interaction, or Escape
+- prevent background scrolling while open
+- move focus into the drawer and restore it to the menu button when closed
+- use semantic controls and visible focus states
+- respect `prefers-reduced-motion`
+
+Application-level layout components use local Atomic Design where their
+responsibilities justify it:
+
+```text
+src/app/layouts/public/
+  PublicLayout.tsx
+  components/
+    atoms/
+      MenuButton.tsx
+      DrawerBackdrop.tsx
+    molecules/
+      BrandLink.tsx
+      MainNavigation.tsx
+    organisms/
+      PublicHeader.tsx
+      MobileNavigationDrawer.tsx
+      PublicFooter.tsx
+```
+
+Public pages that contain individually protected actions may remain below the
+public layout. A separate authenticated layout can be added later for pages
+whose complete route content requires authentication; it is not required until
+such a route exists.
 
 ---
 
@@ -364,7 +433,7 @@ The agreed interaction is a carousel:
 - Class name and controls remain available as text and semantic controls; the image is not the only means of identification.
 - Text over images requires a strong readability gradient and sufficient contrast.
 
-After confirmation, the selection area becomes a compact class summary and the stat editor is revealed. A `Change class` action can reopen the carousel. The exact behavior for preserving or resetting an already edited build after a class change must be agreed before implementation.
+After confirmation, the selection area becomes a compact class summary and the stat editor is revealed. A `Change class` action can reopen the carousel. When changing class, existing target stats are preserved. A value below the new class's starting value is raised to that starting value, and the backend recalculates the resulting character level. Equipment selections remain unchanged unless backend validation identifies an incompatible selection.
 
 The resulting editor follows a hybrid presentation:
 
@@ -582,6 +651,10 @@ Primary frontend architecture:
 
 ```text
 src/
+  app/
+    layouts/
+      public/
+
   features/
     auth/
     compendium/
@@ -622,6 +695,28 @@ The interface should feel:
 The application may be inspired by Elden Ring's atmosphere without directly reproducing the game's interface.
 
 Usability is more important than visual imitation.
+
+## Theme System
+
+The frontend uses Tailwind CSS with application-owned components. No external
+component library is required by default.
+
+Components consume semantic theme utilities such as `background`, `surface`,
+`foreground`, `border`, `accent`, and `focus`. Concrete color values belong in
+the central theme definition, not in React components or scattered CSS files.
+Avoid inline styling, repeated literal colors, and arbitrary Tailwind values
+when a shared theme token is appropriate.
+
+Gracebound supports two atmospheric themes:
+
+- `grace`: warm charcoal and parchment surfaces with stronger golden accents
+- `night`: midnight-blue surfaces with muted moon-blue details and gold as the
+  shared Grace accent
+
+Neither theme uses a generic bright-white application surface. Both themes
+must preserve readable contrast, visible focus states, and consistent semantic
+meaning. Theme selection will be stored locally and applied before rendering to
+avoid a visible theme flash.
 
 ---
 

@@ -1,5 +1,6 @@
 import { BuildIntegrationPanel } from "../../builds/components/BuildIntegrationPanel";
 import { useHealthQuery } from "../../../shared/hooks/useHealthQuery";
+import { CharacterClassCarousel } from "../../character-classes/components/organisms/CharacterClassCarousel";
 
 export function HomePage() {
   const health = useHealthQuery();
@@ -16,6 +17,8 @@ export function HomePage() {
       </section>
 
       <BuildIntegrationPanel />
+
+      <CharacterClassCarousel />
     </main>
   );
 }
