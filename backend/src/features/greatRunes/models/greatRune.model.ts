@@ -20,6 +20,8 @@ const greatRuneSchema = new Schema<GreatRuneRecord>({
   sourceGoodsId: { type: Number, required: true, min: 1 },
   sourceEffectId: { type: Number, min: 0, default: null },
   name: { type: String, required: true },
+  summary: { type: String, default: null },
+  description: { type: String, default: null },
   iconId: { type: Number, required: true, min: 0 },
   activation: { type: String, required: true, enum: ["rune-arc", "not-applicable"] },
   calculationStatus: { type: String, required: true, enum: ["supported", "catalog-only"] },

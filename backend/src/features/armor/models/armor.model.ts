@@ -98,6 +98,8 @@ const armorSchema = new Schema<ArmorRecord>({
   id: { type: String, required: true },
   sourceProtectorId: { type: Number, required: true, min: 1 },
   name: { type: String, required: true },
+  summary: { type: String, default: null },
+  description: { type: String, default: null },
   slot: { type: String, required: true, enum: ["head", "body", "arms", "legs"] },
   iconId: { type: Number, required: true, min: 0 },
   weight: { type: Number, required: true, min: 0 },

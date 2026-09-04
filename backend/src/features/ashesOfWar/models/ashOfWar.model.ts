@@ -23,6 +23,8 @@ const ashOfWarSchema = new Schema<AshOfWarRecord>(
     id: { type: String, required: true },
     sourceGemId: { type: Number, required: true, min: 1 },
     name: { type: String, required: true },
+    summary: { type: String, default: null },
+    description: { type: String, default: null },
     iconId: { type: Number, required: true, min: 0 },
     sourceSwordArtId: { type: Number, required: true, min: 0 },
     compatibleWeaponTypes: { type: [String], required: true },

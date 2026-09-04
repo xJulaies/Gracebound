@@ -2,6 +2,7 @@ import type { WeaponDataSet } from "./weapon.types";
 import type { WeaponAttackProfile } from "./weaponAttack.types";
 import type { WeaponSkillProfile } from "./weaponSkill.types";
 import type { SpellType } from "../../spells/domain/spell.types";
+import type { ItemText } from "../../../shared/domain/itemText.types";
 
 export const WEAPON_AFFINITIES = [
   "standard",
@@ -27,7 +28,7 @@ export interface WeaponVariantReference {
   affinity: WeaponAffinity;
 }
 
-export interface WeaponCatalogEntry {
+export interface WeaponCatalogEntry extends ItemText {
   id: string;
   sourceId: number;
   name: string;

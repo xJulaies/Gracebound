@@ -1,4 +1,6 @@
-export interface TalismanData {
+import type { ItemText } from "../../../shared/domain/itemText.types";
+
+export interface TalismanData extends ItemText {
   id: string;
   sourceAccessoryId: number;
   name: string;

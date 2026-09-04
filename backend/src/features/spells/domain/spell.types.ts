@@ -1,4 +1,5 @@
 import type { DamageTypes } from "../../damage/domain/damage.types";
+import type { ItemText } from "../../../shared/domain/itemText.types";
 
 export type SpellType = "sorcery" | "incantation";
 
@@ -36,7 +37,7 @@ export interface SpellAttackProfile extends SpellAttackComponent {
   additionalComponents: SpellAttackComponent[];
 }
 
-export interface SpellData {
+export interface SpellData extends ItemText {
   id: string;
   sourceMagicId: number;
   name: string;

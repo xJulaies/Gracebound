@@ -36,8 +36,8 @@ The backend has its own:
 - `package.json`
 - `package-lock.json`
 - dependencies
-- `agents.md`
-- `spec.md`
+- `AGENTS.md`
+- `SPEC.md`
 
 No npm workspaces, Nx, or Turborepo are required.
 
@@ -939,6 +939,12 @@ Weapon, armor, talisman, spell, Ash of War, Great Rune, and Crystal Tear catalog
 the numeric `iconId` and server-relative `iconUrl` in the form
 `/api/assets/icons/:iconId`. The URL is derived at response time and is not
 stored redundantly in MongoDB.
+
+The same catalog responses expose English `summary` and `description` fields.
+The values are imported by ID from Smithbox's FMG text export; missing fields
+are returned as `null`. Base FMG files and their later patch layers are merged,
+but the importer updates only records that already exist in the selected
+base-game catalog.
 
 ---
 

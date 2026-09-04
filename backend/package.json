@@ -27,6 +27,8 @@
     "data:icons:import": "tsx src/scripts/importIconAssets.ts",
     "data:icons:audit": "tsx src/scripts/auditIconAssets.ts",
     "data:class-images:import": "tsx src/scripts/importCharacterClassImageAssets.ts",
+    "data:branding-image:import": "tsx src/scripts/importBrandingImageAsset.ts",
+    "data:texts:import": "tsx src/scripts/importItemTexts.ts",
     "test": "vitest run",
     "test:watch": "vitest"
   },

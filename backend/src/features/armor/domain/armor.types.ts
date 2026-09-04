@@ -1,6 +1,8 @@
 export type ArmorSlot = "head" | "body" | "arms" | "legs";
 
-export interface ArmorData {
+import type { ItemText } from "../../../shared/domain/itemText.types";
+
+export interface ArmorData extends ItemText {
   id: string;
   sourceProtectorId: number;
   name: string;

@@ -5,6 +5,8 @@ export function mapArmorResponse(armor: ArmorRecord) {
   return {
     id: armor.id,
     name: armor.name,
+    summary: armor.summary ?? null,
+    description: armor.description ?? null,
     slot: armor.slot,
     iconId: armor.iconId,
     iconUrl: createIconUrl(armor.iconId),

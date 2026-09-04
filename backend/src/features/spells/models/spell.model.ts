@@ -34,6 +34,8 @@ const spellSchema = new Schema<SpellRecord>({
   id: { type: String, required: true },
   sourceMagicId: { type: Number, required: true, min: 0 },
   name: { type: String, required: true },
+  summary: { type: String, default: null },
+  description: { type: String, default: null },
   type: { type: String, required: true, enum: ["sorcery", "incantation"] },
   fpCost: { type: Number, required: true, min: 0 },
   chargedFpCost: { type: Number, min: 0, default: null },

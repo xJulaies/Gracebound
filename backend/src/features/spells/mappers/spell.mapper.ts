@@ -5,6 +5,8 @@ export function mapSpellResponse(spell: SpellRecord) {
   return {
     id: spell.id,
     name: spell.name,
+    summary: spell.summary ?? null,
+    description: spell.description ?? null,
     type: spell.type,
     fpCost: spell.fpCost,
     chargedFpCost: spell.chargedFpCost,

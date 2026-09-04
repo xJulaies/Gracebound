@@ -11,6 +11,7 @@ const damage = { physical: Number, magic: Number, fire: Number, lightning: Numbe
 const crystalTearSchema = new Schema<CrystalTearRecord>({
   id: { type: String, required: true }, sourceGoodsId: { type: Number, required: true },
   sourceEffectId: { type: Number, required: true }, name: { type: String, required: true },
+  summary: { type: String, default: null }, description: { type: String, default: null },
   iconId: { type: Number, required: true },
   calculationStatus: { type: String, required: true, enum: ["supported", "catalog-only"] },
   effects: { type: new Schema({

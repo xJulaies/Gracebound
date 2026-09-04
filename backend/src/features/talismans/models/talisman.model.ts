@@ -33,6 +33,8 @@ const talismanSchema = new Schema<TalismanRecord>(
     id: { type: String, required: true },
     sourceAccessoryId: { type: Number, required: true, min: 1 },
     name: { type: String, required: true },
+    summary: { type: String, default: null },
+    description: { type: String, default: null },
     iconId: { type: Number, required: true, min: 0 },
     weight: { type: Number, required: true, min: 0 },
     sourceEffectId: { type: Number, required: true, min: 0 },

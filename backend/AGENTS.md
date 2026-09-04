@@ -393,6 +393,14 @@ Imported game data is treated as read-only application data.
 
 The imported dataset should record the supported Elden Ring game version where practical.
 
+English item text comes from a complete Smithbox `English -> Item` container
+JSON export. Parse the base FMG files together with their `_dlc01` and `_dlc02`
+patch layers in that order; later layers may contain patched base-game text as
+well as DLC entries. Only IDs already present in the selected game-version
+catalog may be updated, so text imports must never create DLC or raw FMG
+records. Store normalized `summary` and `description` fields on catalog
+documents, expose missing values as `null`, and keep the raw JSON outside Git.
+
 The existing weapon import uses the official ERDB API container
 `ghcr.io/eldenringdatabase/erdb-api:0.4.0` locally. The importer requests only
 `armaments`, `reinforcements`, `correction-attack`, and `correction-graph` for
@@ -458,6 +466,13 @@ game-version image set transactionally. Character-class catalog responses
 derive `imageUrl` from the class ID; image bytes remain separate from class
 documents.
 
+Branding artwork is also a local source artifact and must not be committed.
+Convert the Gracebound home hero to WebP before storage, enforce the 2 MiB
+asset limit, and serve it through `/api/assets/branding/:assetId` with cache
+validation metadata. The supported branding assets are the experimental home
+hero and the compact navbar logo. Keep source images and generated image bytes
+out of the repository.
+
 ---
 
 # Domain Models
@@ -517,6 +532,9 @@ GET /api/bosses/:bossId
 
 GET /api/assets/icons/:iconId
 GET /api/assets/character-classes/:classId
+GET /api/assets/branding/gracebound-hero
+GET /api/assets/branding/gracebound-hero-desktop
+GET /api/assets/branding/gracebound-navbar-logo
 ```
 
 The public icon endpoint returns the active game version's WebP bytes directly,
@@ -1274,4 +1292,4 @@ multiplier, and—only for `charged: true`—the charged-spell multiplier. Do no
 activate HP-, event-, or other combat-state conditions without explicit
 authoritative state. Preserve request order and reject unsupported records.
 
-If a requested implementation conflicts with this document or `spec.md`, explicitly identify the conflict before changing the architecture.
+If a requested implementation conflicts with this document or `SPEC.md`, explicitly identify the conflict before changing the architecture.

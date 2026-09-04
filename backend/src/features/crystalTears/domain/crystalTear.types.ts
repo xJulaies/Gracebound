@@ -21,7 +21,9 @@ export interface CrystalTearEffects {
   };
 }
 
-export interface CrystalTearData {
+import type { ItemText } from "../../../shared/domain/itemText.types";
+
+export interface CrystalTearData extends ItemText {
   id: string;
   sourceGoodsId: number;
   sourceEffectId: number;

@@ -2,6 +2,7 @@ import type { WeaponSkillProfile } from "../../weapons/domain/weaponSkill.types"
 import type { WeaponAffinity } from "../../weapons/domain/weaponCatalog.types";
 import type { DamageTypes } from "../../damage/domain/damage.types";
 import type { StatusBuildup } from "../../spells/domain/spell.types";
+import type { ItemText } from "../../../shared/domain/itemText.types";
 
 export interface SkillBuffEffect {
   durationSeconds: number;
@@ -14,7 +15,7 @@ export interface SkillBuffEffect {
   limitations: string[];
 }
 
-export interface AshOfWarData {
+export interface AshOfWarData extends ItemText {
   id: string;
   sourceGemId: number;
   name: string;

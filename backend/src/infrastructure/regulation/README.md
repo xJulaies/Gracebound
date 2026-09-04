@@ -4,6 +4,19 @@ Raw Smithbox CSV exports and `regulation.bin` remain local and must not be
 committed. The weapon importer validates and maps the complete catalog before
 opening a MongoDB connection.
 
+Export `English -> Item` from Smithbox's Text Editor as JSON to a directory
+outside the repository. Import names, summaries, and descriptions into the
+existing versioned catalogs with:
+
+```powershell
+npm run data:texts:import -- --texts "C:\path\to\item-texts.json" --dry-run
+npm run data:texts:import -- --texts "C:\path\to\item-texts.json"
+```
+
+The importer merges base and patch-layer FMGs, filters invalid text, and only
+updates existing weapon, armor, talisman, spell, Ash of War, Great Rune, and
+Crystal Tear records. It never creates catalog entries from text files.
+
 `EquipParamWeapon.csv` must include the `enableMagic` and `enableMiracle`
 columns. They identify sorcery staffs and sacred seals without relying on names
 or hard-coded weapon lists. Catalyst scaling reuses the imported reinforcement,

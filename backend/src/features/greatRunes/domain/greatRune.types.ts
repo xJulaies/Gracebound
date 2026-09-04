@@ -1,4 +1,5 @@
 import type { CharacterStats } from "../../builds/domain/buildStats.types";
+import type { ItemText } from "../../../shared/domain/itemText.types";
 
 export interface GreatRuneEffects {
   attributeBonuses: CharacterStats;
@@ -9,7 +10,7 @@ export interface GreatRuneEffects {
   };
 }
 
-export interface GreatRuneData {
+export interface GreatRuneData extends ItemText {
   id: string;
   sourceGoodsId: number;
   sourceEffectId: number | null;

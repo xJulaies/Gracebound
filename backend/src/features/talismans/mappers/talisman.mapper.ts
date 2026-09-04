@@ -5,6 +5,8 @@ export function mapTalismanResponse(record: TalismanRecord) {
   return {
     id: record.id,
     name: record.name,
+    summary: record.summary ?? null,
+    description: record.description ?? null,
     iconId: record.iconId,
     iconUrl: createIconUrl(record.iconId),
     weight: record.weight,
