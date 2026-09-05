@@ -40,8 +40,20 @@ describe("public weapon API", () => {
       name: "Grafted Blade Greatsword",
       gameVersion: REGULATION_TEST_GAME_VERSION,
       castingTypes: [],
+      requirements: {
+        strength: 40,
+        dexterity: 14,
+        intelligence: 0,
+        faith: 0,
+        arcane: 0,
+      },
+      statusBuildup: null,
       variants: [
-        { id: "grafted-blade-greatsword", affinity: "standard" },
+        {
+          id: "grafted-blade-greatsword",
+          affinity: "standard",
+          maxUpgradeLevel: 10,
+        },
       ],
     });
     expect(response.body.data[0]).not.toHaveProperty("_id");
@@ -52,12 +64,40 @@ describe("public weapon API", () => {
     expect(response.body.data[0].variants[0]).not.toHaveProperty("sourceId");
   });
 
+  it("returns innate status buildup only when the weapon has one", async () => {
+    const [serpentbone, longsword] = await Promise.all([
+      request(app).get("/api/weapons/serpentbone-blade"),
+      request(app).get("/api/weapons/longsword"),
+    ]);
+
+    expect(serpentbone.body.data[0].statusBuildup).toEqual({
+      poison: 66,
+      rot: 0,
+      bleed: 0,
+      frost: 0,
+      sleep: 0,
+      madness: 0,
+      deathBlight: 0,
+    });
+    expect(longsword.body.data[0].statusBuildup).toBeNull();
+  });
+
   it("searches weapons by name", async () => {
     const response = await request(app).get("/api/weapons?search=moon");
 
     expect(response.status).toBe(200);
     expect(response.body.data.map(({ id }: { id: string }) => id)).toEqual([
       "moonveil",
+    ]);
+  });
+
+  it("filters weapons by their normalized weapon type", async () => {
+    const response = await request(app).get("/api/weapons?weaponType=katana");
+
+    expect(response.status).toBe(200);
+    expect(response.body.data.map(({ id }: { id: string }) => id)).toEqual([
+      "moonveil",
+      "serpentbone-blade",
     ]);
   });
 

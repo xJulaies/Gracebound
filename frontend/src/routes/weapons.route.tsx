@@ -1,9 +1,16 @@
-import { createRoute } from "@tanstack/react-router";
-import { WeaponsPage } from "../features/weapons/pages/WeaponsPage";
-import { rootRoute } from "./root.route";
+import { createRoute, Navigate } from "@tanstack/react-router";
+import { publicLayoutRoute } from "./publicLayout.route";
 
 export const weaponsRoute = createRoute({
-  getParentRoute: () => rootRoute,
+  getParentRoute: () => publicLayoutRoute,
   path: "/weapons",
-  component: WeaponsPage,
+  component: function LegacyWeaponsRedirect() {
+    return (
+      <Navigate
+        replace
+        search={{ category: "armaments", search: "" }}
+        to="/equipment"
+      />
+    );
+  },
 });

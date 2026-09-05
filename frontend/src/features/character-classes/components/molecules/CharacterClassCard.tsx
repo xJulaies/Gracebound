@@ -14,9 +14,11 @@ export function CharacterClassCard({
 }) {
   return (
     <article
-      aria-live="polite"
       className="carousel-focus-card relative z-10 col-span-1 m-0 overflow-hidden rounded-panel border border-accent bg-surface-elevated p-0 shadow-2xl shadow-background sm:col-span-3"
     >
+      <span aria-live="polite" className="sr-only">
+        Showing {characterClass.name}, class {activeIndex + 1} of {classCount}
+      </span>
       <div className="relative aspect-class-card overflow-hidden">
         <img
           alt={`${characterClass.name} starting class`}

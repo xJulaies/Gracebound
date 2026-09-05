@@ -10,6 +10,7 @@ export const weaponListQuerySchema = z.strictObject({
   limit: z.coerce.number().int().min(1).max(100).default(50),
   search: z.string().trim().min(1).max(100).optional(),
   affinity: z.enum(WEAPON_AFFINITIES).optional(),
+  weaponType: z.string().regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/).max(80).optional(),
 });
 
 export type WeaponListQuery = z.infer<typeof weaponListQuerySchema>;

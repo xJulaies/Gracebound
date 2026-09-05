@@ -8,6 +8,8 @@ import {
 import { wrapCarouselIndex } from "../domain/wrapCarouselIndex";
 import type { CharacterClass } from "../types/characterClass.types";
 
+const DEFAULT_ROOT_FONT_SIZE = 16;
+
 export function useCharacterClassCarousel(classes: CharacterClass[]) {
   const initialClass = classes.find(({ id }) => id === "vagabond") ?? classes[0]!;
   const [activeClassId, setActiveClassId] = useState(initialClass.id);
@@ -30,12 +32,14 @@ export function useCharacterClassCarousel(classes: CharacterClass[]) {
   const dragDirection = dragOffset < 0 ? "next" : "previous";
   const previewClass = dragDirection === "next" ? nextClass : previousClass;
   const dragProgress = Math.min(Math.abs(dragOffset) / carouselWidth, 1);
+  const rootFontSize = getRootFontSize();
   const swipeStyle = {
-    "--swipe-offset": `${dragOffset}px`,
+    "--swipe-offset": toRem(dragOffset, rootFontSize),
     "--swipe-scale": 1 - dragProgress * 0.12,
-    "--preview-offset": `${
-      (dragDirection === "next" ? carouselWidth : -carouselWidth) + dragOffset
-    }px`,
+    "--preview-offset": toRem(
+      (dragDirection === "next" ? carouselWidth : -carouselWidth) + dragOffset,
+      rootFontSize,
+    ),
     "--preview-scale": 0.88 + dragProgress * 0.12,
   } as CSSProperties;
 
@@ -119,4 +123,17 @@ export function useCharacterClassCarousel(classes: CharacterClass[]) {
     showPrevious,
     swipeStyle,
   };
+}
+
+function getRootFontSize() {
+  if (typeof window === "undefined") return DEFAULT_ROOT_FONT_SIZE;
+
+  const rootFontSize = Number.parseFloat(
+    window.getComputedStyle(document.documentElement).fontSize,
+  );
+  return rootFontSize || DEFAULT_ROOT_FONT_SIZE;
+}
+
+function toRem(value: number, rootFontSize: number) {
+  return `${value / rootFontSize}rem`;
 }

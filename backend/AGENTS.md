@@ -532,6 +532,7 @@ GET /api/bosses/:bossId
 
 GET /api/assets/icons/:iconId
 GET /api/assets/character-classes/:classId
+GET /api/assets/ui/:assetId
 GET /api/assets/branding/gracebound-hero
 GET /api/assets/branding/gracebound-hero-desktop
 GET /api/assets/branding/gracebound-navbar-logo

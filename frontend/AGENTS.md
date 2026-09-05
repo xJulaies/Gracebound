@@ -116,6 +116,39 @@ src/shared/ui/
 
 Move a component into `shared/ui` only when it is genuinely reusable across multiple features.
 
+The build editor must remain a feature-owned workspace assembled from focused
+parts rather than one large component. Slot primitives, slot groups, item
+pickers, attribute controls, buff indicators, calculated-stat summaries, and
+mobile tab navigation should be separated when they have distinct behavior.
+Keep selection and draft orchestration in feature hooks or form state; do not
+hide domain rules inside visual slot components.
+
+Atomic Design is mandatory for the build editor because its interface is
+composed from many repeating controls. Use the following responsibility levels:
+
+- atoms: icon, slot frame, label, badge, increment/decrement button, numeric input, and status indicator
+- molecules: equipment slot, attribute control, buff chip, stat row, spell-memory slot, and picker result item
+- organisms: weapon-hand group, armor group, talisman group, spell-memory panel, buff bar, item picker, attribute panel, calculated-stat summary, and damage-test panel
+
+Pages and editor layout components compose organisms and own only page-level
+arrangement. Hooks or form state coordinate the selected build draft. Domain
+helpers validate and transform data. Atoms and molecules must not fetch data,
+know route details, or perform build calculations. Reuse a component when its
+contract genuinely repeats; do not create one-line wrapper components merely
+to satisfy an Atomic Design label.
+
+Design the editor mobile-first. Mobile uses task-focused tabs and a full-height
+item-selection sheet; desktop may use a multi-region workspace, side panel,
+sticky summary, and optional decorative character silhouette. Every slot must
+remain identifiable by text or accessible labeling without relying on an icon
+or background image.
+
+Extracted Elden Ring menu frames, category icons, screenshots, and intermediate
+image files are local source artifacts and must not be committed. Serve approved
+optimized UI assets through the backend asset pipeline. Build the atmospheric
+background primarily from reusable theme tokens and CSS; decorative artwork
+must not determine the layout or reduce text contrast.
+
 ---
 
 # TypeScript
@@ -368,6 +401,54 @@ Requirements:
 
 Do not use clickable `<div>` elements where a semantic button or link is appropriate.
 
+Accessibility is part of the definition of done for every new or changed UI
+feature. Do not postpone keyboard and screen-reader behavior as optional polish.
+
+For every interactive feature:
+
+- every action must be reachable and operable with the keyboard
+- native semantic elements are preferred over recreated ARIA widgets
+- icon-only controls require an accessible name
+- decorative images use empty alternative text; informative images require a
+  concise meaningful alternative
+- inputs and selects require programmatically associated labels
+- loading, error, empty, and important update states must be announced where
+  appropriate without creating noisy live regions
+- removing the browser focus outline is allowed only when an equally visible
+  `:focus-visible` treatment replaces it
+
+Modal dialogs, drawers, and full-screen pickers must:
+
+- expose `role="dialog"`, `aria-modal="true"`, and an accessible name
+- move focus to a useful control when opened
+- keep Tab and Shift+Tab focus inside while open
+- close with Escape unless the interaction explicitly requires otherwise
+- prevent interaction and background scrolling behind the overlay
+- restore focus to the element that opened them
+- preserve the underlying page scroll position
+- support explicit close and backdrop behavior where appropriate
+
+ARIA tab interfaces must implement the complete keyboard pattern: one tab in
+the normal tab order, Arrow Left/Right navigation, Home/End navigation,
+`aria-selected`, `aria-controls`, and a matching labelled `tabpanel`. If the UI
+only filters or changes a URL-backed category, prefer ordinary buttons with
+`aria-pressed` instead of presenting it as a tab interface.
+
+Grouped filters should use semantic `fieldset` and `legend` markup when they
+form one named control group. Dynamic catalog updates must preserve a logical
+focus position and must not unexpectedly move keyboard users when more results
+are appended.
+
+Meaningful tests should cover keyboard opening, focus containment, Escape,
+focus restoration, accessible names, and relevant state relationships. Static
+ARIA attributes alone are not considered sufficient verification.
+
+Reusable interactive patterns and important composed UI states must also pass
+an automated `axe-core` audit in Vitest. Keep behavioral keyboard tests because
+an automated audit does not verify interaction quality. The JSDOM audit excludes
+rules that require real layout and rendered colors; verify contrast and visual
+focus in a real browser.
+
 ---
 
 # Error and State Handling
@@ -395,6 +476,7 @@ Frontend testing stack:
 
 - Vitest
 - React Testing Library
+- axe-core for automated accessibility checks
 
 Prioritize tests for:
 - meaningful user interactions
@@ -537,4 +619,4 @@ Before implementing or modifying a feature:
 
 Do not rewrite working architecture without a concrete reason.
 
-If a requested change conflicts with this document or `spec.md`, explicitly identify the conflict before changing the architecture.
+If a requested change conflicts with this document or `SPEC.md`, explicitly identify the conflict before changing the architecture.

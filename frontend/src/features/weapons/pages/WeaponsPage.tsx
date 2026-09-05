@@ -1,8 +1,8 @@
 export function WeaponsPage() {
   return (
     <main>
-      <h1>Weapons</h1>
-      <p>Build the weapon overview for this route.</p>
+      <h1>Armaments</h1>
+      <p>Build the armament overview for this route.</p>
     </main>
   );
 }

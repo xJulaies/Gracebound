@@ -19,6 +19,7 @@ import type { SpellType } from "../../spells/domain/spell.types";
 import { findGreatRuneById } from "../../greatRunes/repositories/greatRune.repository";
 import { findCrystalTearsByIds } from "../../crystalTears/repositories/crystalTear.repository";
 import { combineCrystalTearEffects } from "../../crystalTears/domain/combineCrystalTearEffects";
+import { calculateRuneCosts } from "../domain/calculateRuneCosts";
 
 export async function calculateBuildStatsFromInput(input: CalculateBuildStatsInput) {
   const [characterClass, progression, talismans, armor, weapons, spells, catalystCatalog, catalystData, greatRune, crystalTears] = await Promise.all([
@@ -189,6 +190,7 @@ export async function calculateBuildStatsFromInput(input: CalculateBuildStatsInp
     buildStats.effectiveStats,
     progression.curves,
   );
+  const runeCosts = calculateRuneCosts(characterClass.level, characterLevel);
   const statusResistances = Object.fromEntries(
     Object.entries(protection.statusResistances).map(([name, value]) => [
       name,
@@ -223,6 +225,7 @@ export async function calculateBuildStatsFromInput(input: CalculateBuildStatsInp
       startingLevel: characterClass.level,
     },
     characterLevel,
+    ...runeCosts,
     greatRune: greatRune ? { id: greatRune.id, name: greatRune.name } : null,
     crystalTears: selectedCrystalTears.map(({ id, name }) => ({ id, name })),
     cleansesStatusBuildup: physickEffects.cleansesStatusBuildup,

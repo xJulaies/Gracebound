@@ -11,6 +11,19 @@ import type {
 } from "../domain/weaponSkill.types";
 import { damageTypesSchema } from "./gameData.schemas";
 
+const statusBuildupSchema = new Schema(
+  {
+    poison: { type: Number, required: true },
+    rot: { type: Number, required: true },
+    bleed: { type: Number, required: true },
+    frost: { type: Number, required: true },
+    sleep: { type: Number, required: true },
+    madness: { type: Number, required: true },
+    deathBlight: { type: Number, required: true },
+  },
+  { _id: false },
+);
+
 export type WeaponCatalogRecord = WeaponCatalogEntry & {
   source: "REGULATION";
   gameVersion: string;
@@ -81,6 +94,8 @@ export const weaponSkillSchema = new Schema<WeaponSkillProfile>(
   {
     id: { type: String, required: true },
     name: { type: String, required: true },
+    summary: { type: String, default: null },
+    description: { type: String, default: null },
     sourceSwordArtId: { type: Number, required: true, min: 0 },
     attacks: { type: [weaponSkillAttackSchema], required: true },
   },
@@ -107,6 +122,7 @@ const weaponCatalogSchema = new Schema<WeaponCatalogRecord>(
       default: [],
       enum: ["sorcery", "incantation"],
     },
+    statusBuildup: { type: statusBuildupSchema, default: null },
     variants: {
       type: [variantReferenceSchema],
       required: true,

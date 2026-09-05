@@ -10,6 +10,7 @@ import { mapRegulationWeapon } from "./mapRegulationWeaponData";
 import type { WeaponParamRow } from "../schemas/weaponParam.schema";
 import { addRegulationWeaponNames } from "../data/regulationWeaponNames";
 import { meleeWeaponClassDefinitions } from "../data/meleeWeaponClassDefinitions";
+import type { ArmorEffectRow } from "../schemas/armor.schema";
 
 const PLAYER_WEAPON_CATEGORIES = new Set([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]);
 
@@ -86,6 +87,7 @@ export function mapRegulationWeaponCatalog(
           : canonicalRow.swordArtsParamId,
       canChangeAffinity: variants.length > 1,
       castingTypes: mapCastingTypes(canonicalRow),
+      statusBuildup: mapStatusBuildup(canonicalRow, tables.effects ?? []),
       variants,
       attacks: [],
       skills: [],
@@ -107,6 +109,34 @@ export function mapRegulationWeaponCatalog(
       affinityCounts,
     },
   };
+}
+
+function mapStatusBuildup(
+  weapon: WeaponParamRow,
+  effects: ArmorEffectRow[],
+): WeaponCatalogDataSet["catalog"][string]["statusBuildup"] {
+  const effectIds = [
+    weapon.spEffectBehaviorId0,
+    weapon.spEffectBehaviorId1,
+    weapon.spEffectBehaviorId2,
+  ].filter((id) => id >= 0);
+  const linkedEffects = effectIds.map((id) => effects.find((effect) => effect.ID === id));
+  const statusBuildup = linkedEffects.reduce(
+    (total, effect) => ({
+      poison: total.poison + Math.max(0, effect?.poizonAttackPower ?? 0),
+      rot: total.rot + Math.max(0, effect?.diseaseAttackPower ?? 0),
+      bleed: total.bleed + Math.max(0, effect?.bloodAttackPower ?? 0),
+      frost: total.frost + Math.max(0, effect?.freezeAttackPower ?? 0),
+      sleep: total.sleep + Math.max(0, effect?.sleepAttackPower ?? 0),
+      madness: total.madness + Math.max(0, effect?.madnessAttackPower ?? 0),
+      deathBlight: total.deathBlight + Math.max(0, effect?.curseAttackPower ?? 0),
+    }),
+    { poison: 0, rot: 0, bleed: 0, frost: 0, sleep: 0, madness: 0, deathBlight: 0 },
+  );
+
+  return Object.values(statusBuildup).some((value) => value > 0)
+    ? statusBuildup
+    : null;
 }
 
 export function mapCastingTypes(row: Pick<WeaponParamRow, "enableMagic" | "enableMiracle">) {

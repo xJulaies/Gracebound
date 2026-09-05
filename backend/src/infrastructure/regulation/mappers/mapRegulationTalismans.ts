@@ -112,6 +112,9 @@ function mapPermanentEffect(
   const isDamageNegationTalisman = DAMAGE_NEGATION_TALISMAN_IDS.has(talisman.ID);
   const isSorceryDamageTalisman = SORCERY_DAMAGE_TALISMAN_IDS.has(talisman.ID);
   const isIncantationDamageTalisman = INCANTATION_DAMAGE_TALISMAN_IDS.has(talisman.ID);
+  const hasConditionallyScopedDamage =
+    CONDITIONAL_ATTACK_TALISMAN_IDS.has(talisman.ID) ||
+    HP_CONDITIONED_TALISMAN_IDS.has(talisman.ID);
   return {
     resourceMultipliers: {
       maxHp: effect.maxHpRate,
@@ -225,13 +228,9 @@ function mapPermanentEffect(
           ? effect.defEnemyDmgCorrectRate_Dark
           : effect.darkDamageCutRate,
     },
-    outgoingDamageMultipliers: {
-      physical: effect.atkEnemyDmgCorrectRate_Physics,
-      magic: effect.atkEnemyDmgCorrectRate_Magic,
-      fire: effect.atkEnemyDmgCorrectRate_Fire,
-      lightning: effect.atkEnemyDmgCorrectRate_Thunder,
-      holy: effect.atkEnemyDmgCorrectRate_Dark,
-    },
+    outgoingDamageMultipliers: hasConditionallyScopedDamage
+      ? neutralDamageTypes()
+      : enemyDamageMultipliers(effect),
     skillDamageMultipliers: {
       physical: isSkillDamageTalisman ? effect.physicsAttackRate : 1,
       magic: isSkillDamageTalisman ? effect.magicAttackRate : 1,

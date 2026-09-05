@@ -31,7 +31,7 @@ describe("public talisman API", () => {
       name: "Shard of Alexander",
       iconUrl: "/api/assets/icons/1231",
       weight: 0.9,
-      calculationStatus: "catalog-only",
+      calculationStatus: "supported",
       gameVersion: REGULATION_TEST_GAME_VERSION,
     });
     expect(response.body.data[1]).not.toHaveProperty("sourceEffectId");
@@ -50,14 +50,49 @@ describe("public talisman API", () => {
     expect(invalid.status).toBe(400);
     expect(invalid.body.data).toEqual([]);
   });
+
+  it("searches and paginates talismans with a complete match count", async () => {
+    const response = await request(app).get("/api/talismans?search=a&page=2&limit=1");
+
+    expect(response.status).toBe(200);
+    expect(response.headers["x-total-count"]).toBe("2");
+    expect(response.body.data.map(({ id }: { id: string }) => id)).toEqual([
+      "shard-of-alexander",
+    ]);
+  });
+
+  it("filters talismans by calculation status", async () => {
+    const response = await request(app).get(
+      "/api/talismans?calculationStatus=supported",
+    );
+
+    expect(response.status).toBe(200);
+    expect(response.headers["x-total-count"]).toBe("1");
+    expect(response.body.data.map(({ id }: { id: string }) => id)).toEqual([
+      "shard-of-alexander",
+    ]);
+  });
+
+  it("rejects invalid talisman queries", async () => {
+    const response = await request(app).get("/api/talismans?limit=101");
+
+    expect(response.status).toBe(400);
+    expect(response.body.data).toEqual([]);
+  });
 });
 
 const talismans: TalismanData[] = [
-  talisman("shard-of-alexander", 1231, "Shard of Alexander", 0.9),
+  talisman("shard-of-alexander", 1231, "Shard of Alexander", 0.9, "supported"),
   talisman("axe-talisman", 2130, "Axe Talisman", 0.8),
 ];
 
-function talisman(id: string, sourceAccessoryId: number, name: string, weight: number): TalismanData {
+function talisman(
+  id: string,
+  sourceAccessoryId: number,
+  name: string,
+  weight: number,
+  calculationStatus: TalismanData["calculationStatus"] = "catalog-only",
+): TalismanData {
   return {
     id,
     sourceAccessoryId,
@@ -65,7 +100,7 @@ function talisman(id: string, sourceAccessoryId: number, name: string, weight: n
     iconId: sourceAccessoryId,
     weight,
     sourceEffectId: sourceAccessoryId + 300000,
-    calculationStatus: "catalog-only",
+    calculationStatus,
     effects: null,
   };
 }

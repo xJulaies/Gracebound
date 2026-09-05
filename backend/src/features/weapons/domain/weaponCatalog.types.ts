@@ -40,9 +40,20 @@ export interface WeaponCatalogEntry extends ItemText {
   swordArtId: number | null;
   canChangeAffinity: boolean;
   castingTypes: SpellType[];
+  statusBuildup: WeaponStatusBuildup | null;
   variants: WeaponVariantReference[];
   attacks: WeaponAttackProfile[];
   skills: WeaponSkillProfile[];
+}
+
+export interface WeaponStatusBuildup {
+  poison: number;
+  rot: number;
+  bleed: number;
+  frost: number;
+  sleep: number;
+  madness: number;
+  deathBlight: number;
 }
 
 export interface WeaponImportReport {

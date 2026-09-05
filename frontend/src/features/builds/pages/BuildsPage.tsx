@@ -1,8 +1,11 @@
+import { BuildCreationCallout } from "../components/molecules/BuildCreationCallout";
+import { PublicBuildGallery } from "../components/organisms/PublicBuildGallery";
+
 export function BuildsPage() {
   return (
-    <main>
-      <h1>Builds</h1>
-      <p>Build the public and authenticated build views for this route.</p>
+    <main className="app-shell">
+      <BuildCreationCallout />
+      <PublicBuildGallery />
     </main>
   );
 }

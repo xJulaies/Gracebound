@@ -52,6 +52,42 @@ describe("importItemTexts", () => {
     expect(await mongoose.connection.collection("talismans").findOne({ id: "axe-talisman" }))
       .not.toHaveProperty("description");
   });
+
+  it("enriches embedded unique weapon skills by SwordArtsParam ID", async () => {
+    await mongoose.connection.collection("weapons").insertOne({
+      id: "moonveil",
+      sourceId: 9060000,
+      gameVersion: "1.17.0",
+      skills: [{
+        id: "transient-moonlight",
+        name: "Transient Moonlight",
+        sourceSwordArtId: 1178,
+        attacks: [],
+      }],
+    });
+    const catalogs = emptyCatalogs();
+    catalogs.skills.set(1178, {
+      title: "Transient Moonlight",
+      summary: null,
+      description: "Sheathe blade, holding it at the hip.",
+    });
+
+    const result = await importItemTexts(catalogs, "1.17.0");
+    const weapon = await mongoose.connection.collection("weapons").findOne({
+      id: "moonveil",
+    });
+
+    expect(result[result.length - 1]).toMatchObject({
+      collection: "weaponSkills",
+      records: 1,
+      matched: 1,
+      withDescription: 1,
+    });
+    expect(weapon?.skills[0]).toMatchObject({
+      id: "transient-moonlight",
+      description: "Sheathe blade, holding it at the hip.",
+    });
+  });
 });
 
 function emptyCatalogs(): ItemTextCatalogs {
@@ -61,5 +97,6 @@ function emptyCatalogs(): ItemTextCatalogs {
     talismans: new Map(),
     goods: new Map(),
     ashesOfWar: new Map(),
+    skills: new Map(),
   };
 }

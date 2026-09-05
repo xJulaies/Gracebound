@@ -32,6 +32,7 @@ export async function importItemTexts(
   const prepared = await Promise.all(
     configurations.map((configuration) => prepareCatalog(configuration, gameVersion)),
   );
+  const preparedSkills = await prepareWeaponSkills(catalogs.skills, gameVersion);
 
   if (!dryRun) {
     const session = await mongoose.startSession();
@@ -45,13 +46,71 @@ export async function importItemTexts(
             );
           }
         }
+        if (preparedSkills.operations.length > 0) {
+          await mongoose.connection.collection("weapons").bulkWrite(
+            preparedSkills.operations,
+            { session },
+          );
+        }
       });
     } finally {
       await session.endSession();
     }
   }
 
-  return prepared.map(({ result }) => result);
+  return [...prepared.map(({ result }) => result), preparedSkills.result];
+}
+
+async function prepareWeaponSkills(
+  texts: Map<number, ItemTextEntry>,
+  gameVersion: string,
+) {
+  const collection = mongoose.connection.collection("weapons");
+  const records = await collection.find(
+    { gameVersion, "skills.0": { $exists: true } },
+    { projection: { _id: 1, skills: 1 } },
+  ).toArray();
+  let matched = 0;
+  let withSummary = 0;
+  let withDescription = 0;
+  const operations = records.flatMap((record) => {
+    if (!Array.isArray(record.skills)) return [];
+    let changed = false;
+    const skills = record.skills.map((skill: Record<string, unknown>) => {
+      const sourceSwordArtId = skill.sourceSwordArtId;
+      const text = typeof sourceSwordArtId === "number"
+        ? texts.get(sourceSwordArtId)
+        : undefined;
+      if (!text) return skill;
+      matched += 1;
+      if (text.summary) withSummary += 1;
+      if (text.description) withDescription += 1;
+      changed = changed || Boolean(text.summary || text.description);
+      return {
+        ...skill,
+        summary: text.summary,
+        description: text.description,
+      };
+    });
+
+    return changed
+      ? [{ updateOne: { filter: { _id: record._id }, update: { $set: { skills } } } }]
+      : [];
+  });
+
+  return {
+    operations,
+    result: {
+      collection: "weaponSkills",
+      records: records.reduce(
+        (total, record) => total + (Array.isArray(record.skills) ? record.skills.length : 0),
+        0,
+      ),
+      matched,
+      withSummary,
+      withDescription,
+    },
+  };
 }
 
 async function prepareCatalog(

@@ -86,4 +86,6 @@ export interface BuildStatsPreview {
     startingLevel: number;
   };
   characterLevel: number;
+  nextLevelRuneCost: number | null;
+  totalRuneCost: number;
 }

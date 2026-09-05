@@ -1,4 +1,5 @@
 import { apiRequest } from "../../../shared/api/apiClient";
+import { resolveApiAssetUrl } from "../../../shared/api/resolveApiAssetUrl";
 import type { Weapon } from "../types/weapon.types";
 
 export interface WeaponQuery {
@@ -6,9 +7,10 @@ export interface WeaponQuery {
   limit?: number;
   search?: string;
   affinity?: string;
+  weaponType?: string;
 }
 
-export function getWeapons(query: WeaponQuery = {}) {
+export async function getWeapons(query: WeaponQuery = {}) {
   const parameters = new URLSearchParams({
     page: String(query.page ?? 1),
     limit: String(query.limit ?? 100),
@@ -16,6 +18,15 @@ export function getWeapons(query: WeaponQuery = {}) {
 
   if (query.search) parameters.set("search", query.search);
   if (query.affinity) parameters.set("affinity", query.affinity);
+  if (query.weaponType) parameters.set("weaponType", query.weaponType);
 
-  return apiRequest<Weapon>(`/weapons?${parameters.toString()}`);
+  const response = await apiRequest<Weapon>(`/weapons?${parameters.toString()}`);
+
+  return {
+    ...response,
+    data: response.data.map((weapon) => ({
+      ...weapon,
+      iconUrl: resolveApiAssetUrl(weapon.iconUrl),
+    })),
+  };
 }

@@ -4,6 +4,7 @@ export interface ApiResponse<T> {
   status: number;
   message: string;
   data: T[];
+  totalCount?: number;
 }
 
 type GetToken = () => Promise<string | null>;
@@ -49,5 +50,12 @@ export async function apiRequest<T>(
     throw new ApiError(response.status, body.message || "Request failed");
   }
 
-  return body;
+  const totalCountHeader = response.headers.get("X-Total-Count");
+
+  return {
+    ...body,
+    ...(totalCountHeader !== null && {
+      totalCount: Number(totalCountHeader),
+    }),
+  };
 }

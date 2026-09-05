@@ -41,6 +41,9 @@ export const weaponParamRowSchema = z.object({
   enableMagic: integerFromCsv.min(0).max(1).default(0),
   enableMiracle: integerFromCsv.min(0).max(1).default(0),
   isEnhance: integerFromCsv.min(0).max(1).default(0),
+  spEffectBehaviorId0: integerFromCsv.default(-1),
+  spEffectBehaviorId1: integerFromCsv.default(-1),
+  spEffectBehaviorId2: integerFromCsv.default(-1),
 });
 
 export const reinforceWeaponRowSchema = z.object({

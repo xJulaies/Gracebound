@@ -12,6 +12,8 @@ describe("parseSmithboxTextExport", () => {
           { ID: 100, Text: "Patched description" },
           { ID: 300, Text: "DLC text" },
         ]),
+        wrapper("ArtsName.fmg", [{ ID: 1178, Text: "Transient Moonlight" }]),
+        wrapper("ArtsCaption.fmg", [{ ID: 1178, Text: "Sheathe blade, holding it at the hip." }]),
       ],
     }));
 
@@ -22,6 +24,11 @@ describe("parseSmithboxTextExport", () => {
     });
     expect(result.weapons.get(200)).toBeUndefined();
     expect(result.weapons.get(300)?.description).toBe("DLC text");
+    expect(result.skills.get(1178)).toEqual({
+      title: "Transient Moonlight",
+      summary: null,
+      description: "Sheathe blade, holding it at the hip.",
+    });
   });
 
   it("rejects malformed Smithbox exports", () => {

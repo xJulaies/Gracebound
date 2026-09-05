@@ -24,6 +24,7 @@ export interface ItemTextCatalogs {
   talismans: Map<number, ItemTextEntry>;
   goods: Map<number, ItemTextEntry>;
   ashesOfWar: Map<number, ItemTextEntry>;
+  skills: Map<number, ItemTextEntry>;
 }
 
 export function parseSmithboxTextExport(json: string): ItemTextCatalogs {
@@ -38,6 +39,7 @@ export function parseSmithboxTextExport(json: string): ItemTextCatalogs {
     talismans: combine(wrappers, "Accessory"),
     goods: combine(wrappers, "Goods"),
     ashesOfWar: combine(wrappers, "Gem"),
+    skills: combine(wrappers, "Arts"),
   };
 }
 

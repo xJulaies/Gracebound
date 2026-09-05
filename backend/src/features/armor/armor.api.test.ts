@@ -45,6 +45,41 @@ describe("public armor API", () => {
     expect(invalid.status).toBe(400);
     expect(invalid.body.data).toEqual([]);
   });
+
+  it("filters armor by slot and escaped name search", async () => {
+    const [head, search, invalid] = await Promise.all([
+      request(app).get("/api/armor?slot=head"),
+      request(app).get("/api/armor?search=knight%20armor"),
+      request(app).get("/api/armor?slot=shield"),
+    ]);
+
+    expect(head.status).toBe(200);
+    expect(head.body.data.map(({ id }: { id: string }) => id)).toEqual([
+      "vagabond-knight-helm",
+    ]);
+    expect(search.body.data.map(({ id }: { id: string }) => id)).toEqual([
+      "vagabond-knight-armor",
+    ]);
+    expect(invalid.status).toBe(400);
+    expect(invalid.body.data).toEqual([]);
+  });
+
+  it("paginates filtered armor and reports the complete match count", async () => {
+    const response = await request(app).get("/api/armor?search=vagabond&page=2&limit=1");
+
+    expect(response.status).toBe(200);
+    expect(response.headers["x-total-count"]).toBe("2");
+    expect(response.body.data.map(({ id }: { id: string }) => id)).toEqual([
+      "vagabond-knight-helm",
+    ]);
+  });
+
+  it("rejects invalid armor pagination", async () => {
+    const response = await request(app).get("/api/armor?page=0&limit=101");
+
+    expect(response.status).toBe(400);
+    expect(response.body.data).toEqual([]);
+  });
 });
 
 function armor(id: string, name: string, slot: ArmorSlot): ArmorData {

@@ -30,6 +30,7 @@ import {
 } from "../../buffs/domain/buffRules";
 import { findCrystalTearsByIds } from "../../crystalTears/repositories/crystalTear.repository";
 import { combineCrystalTearEffects } from "../../crystalTears/domain/combineCrystalTearEffects";
+import { calculateWeaponTalismanMultipliers } from "../domain/calculateWeaponTalismanMultipliers";
 
 export async function calculateDamageFromInput(input: CalculateDamageInput) {
   const target = input.bossId
@@ -250,39 +251,10 @@ async function calculateWeaponDamage(
   const attackRating = appliedWeaponBuff
     ? addDamageTypes(skillAdjustedAttackRating, appliedWeaponBuff.addedDamage)
     : skillAdjustedAttackRating;
-  const outgoingDamageMultipliers = talismans.reduce(
-    (multipliers, { effects }) => ({
-      physical: multipliers.physical * effects!.outgoingDamageMultipliers.physical,
-      magic: multipliers.magic * effects!.outgoingDamageMultipliers.magic,
-      fire: multipliers.fire * effects!.outgoingDamageMultipliers.fire,
-      lightning: multipliers.lightning * effects!.outgoingDamageMultipliers.lightning,
-      holy: multipliers.holy * effects!.outgoingDamageMultipliers.holy,
-    }),
-    unitDamageTypes(),
+  const talismanDamageMultipliers = calculateWeaponTalismanMultipliers(
+    talismans.map(({ effects }) => effects!),
+    input,
   );
-  const talismanDamageMultipliers = "skillAttackId" in input
-    ? talismans.reduce(
-      (multipliers, { effects }) => ({
-        physical: multipliers.physical * effects!.skillDamageMultipliers.physical,
-        magic: multipliers.magic * effects!.skillDamageMultipliers.magic,
-        fire: multipliers.fire * effects!.skillDamageMultipliers.fire,
-        lightning: multipliers.lightning * effects!.skillDamageMultipliers.lightning,
-        holy: multipliers.holy * effects!.skillDamageMultipliers.holy,
-      }),
-      outgoingDamageMultipliers,
-    )
-    : input.attackId.includes("charged-heavy")
-      ? talismans.reduce(
-        (multipliers, { effects }) => ({
-          physical: multipliers.physical * effects!.chargedAttackDamageMultipliers.physical,
-          magic: multipliers.magic * effects!.chargedAttackDamageMultipliers.magic,
-          fire: multipliers.fire * effects!.chargedAttackDamageMultipliers.fire,
-          lightning: multipliers.lightning * effects!.chargedAttackDamageMultipliers.lightning,
-          holy: multipliers.holy * effects!.chargedAttackDamageMultipliers.holy,
-        }),
-        outgoingDamageMultipliers,
-      )
-      : outgoingDamageMultipliers;
   const physickDamageMultipliers = "attackId" in input && input.attackId.includes("charged-heavy")
     ? multiplyDamageTypes(physickEffects.outgoingDamageMultipliers, physickEffects.chargedAttackDamageMultipliers)
     : physickEffects.outgoingDamageMultipliers;

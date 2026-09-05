@@ -285,10 +285,13 @@ GET /api/weapons
 GET /api/weapons/:weaponId
 ```
 
-The list supports `page`, `limit`, `search`, and `affinity`. It returns at most
+The list supports `page`, `limit`, `search`, `affinity`, and `weaponType`. It returns at most
 100 records per request and exposes the matching record count through the
 `X-Total-Count` response header. Both endpoints return normalized application
-data and omit internal MongoDB and import metadata.
+data and omit internal MongoDB and import metadata. Every returned affinity
+variant includes its `maxUpgradeLevel`, derived from the matching imported
+calculation record, so clients do not have to guess whether a weapon ends at
+`+10` or `+25`.
 
 ---
 
@@ -305,6 +308,13 @@ Potential fields:
 - defensive values
 
 Exact fields depend on available ERDB-derived data.
+
+Implemented endpoints are `GET /api/armor` and `GET /api/armor/:armorId`.
+The list accepts optional `slot`, `search`, `page`, and `limit` parameters so
+equipment editors can request only the relevant records. Paginated requests
+return at most 100 records and expose the complete match count through
+`X-Total-Count`. A request without `page` and `limit` temporarily returns the
+complete catalog for backward compatibility with existing build clients.
 
 ---
 
@@ -330,6 +340,18 @@ POST /api/builds/calculate-stats
 
 GET /api/character-classes
 ```
+
+The talisman list accepts optional `search`, `page`, `limit`, and
+`calculationStatus` parameters.
+Paginated requests return at most 100 records and expose the complete match
+count through `X-Total-Count`. A request without pagination parameters
+temporarily returns the complete catalog for backward compatibility.
+
+Build-stat responses derive character level from the selected starting class
+and allocated attributes. They also return the runes required for the next
+level and the cumulative runes invested from that class's starting level. The
+level-cost curve is backend-owned; at the maximum character level of 713 the
+next-level cost is `null`.
 
 List routes return arrays; detail routes return a one-element array or an empty
 array on errors. Until an effect is explicitly mapped and tested, its
@@ -940,6 +962,12 @@ the numeric `iconId` and server-relative `iconUrl` in the form
 `/api/assets/icons/:iconId`. The URL is derived at response time and is not
 stored redundantly in MongoDB.
 
+The equipment editor's approved slot frames and category symbols are stored as
+15 versioned WebP records and served from `GET /api/assets/ui/:assetId` using a
+fixed asset-ID allowlist. The endpoint uses the same cache and ETag behavior as
+the other binary asset routes. Raw menu atlases and extracted files remain
+outside Git.
+
 The same catalog responses expose English `summary` and `description` fields.
 The values are imported by ID from Smithbox's FMG text export; missing fields
 are returned as `null`. Base FMG files and their later patch layers are merged,
@@ -1392,10 +1420,16 @@ API design should remain resource-oriented.
 # Pagination, Search, Filtering, and Sorting
 
 Compendium endpoints add only the query behavior required by their current UI
-contract. Weapons support `page`, `limit`, `search`, and `affinity`, return the
-matching total through `X-Total-Count`, and use a stable server-owned sort.
-Spells and Ashes of War support their documented filters. Other
-catalog routes currently return their complete base-game arrays.
+contract. Weapons support `page`, `limit`, `search`, `affinity`, and
+`weaponType`. Armor
+supports `page`, `limit`, `search`, and `slot`; talismans support `page`,
+`limit`, `search`, and `calculationStatus`. These endpoints return the matching
+total through `X-Total-Count` and use stable alphabetical server-owned sorting.
+Armor and talisman list
+requests without pagination parameters temporarily retain their complete-array
+behavior while existing clients migrate. Spells and Ashes of War support their
+documented filters. Other catalog routes currently return their complete
+base-game arrays.
 
 Before a complete catalog becomes a demonstrated performance problem, do not
 add speculative pagination abstractions. If pagination is introduced, preserve

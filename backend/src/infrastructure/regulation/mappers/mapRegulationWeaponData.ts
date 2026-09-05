@@ -11,6 +11,7 @@ import type {
   ReinforceWeaponRow,
   WeaponParamRow,
 } from "../schemas/weaponParam.schema";
+import type { ArmorEffectRow } from "../schemas/armor.schema";
 
 const DAMAGE_TYPES = ["physical", "magic", "fire", "lightning", "holy"] as const;
 const SOURCE_DAMAGE_TYPES = ["Physics", "Magic", "Fire", "Thunder", "Dark"] as const;
@@ -21,6 +22,7 @@ export interface RegulationWeaponTables {
   reinforcements: ReinforceWeaponRow[];
   corrections: AttackElementCorrectRow[];
   graphs: CalcCorrectGraphRow[];
+  effects?: ArmorEffectRow[];
 }
 
 export function mapRegulationWeapon(

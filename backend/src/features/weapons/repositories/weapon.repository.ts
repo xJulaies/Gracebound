@@ -23,6 +23,7 @@ export interface WeaponCatalogQuery {
   limit: number;
   search?: string;
   affinity?: WeaponAffinity;
+  weaponType?: string;
 }
 
 export interface WeaponCatalogPage {
@@ -36,6 +37,7 @@ export async function findWeaponCatalogPage({
   limit,
   search,
   affinity,
+  weaponType,
 }: WeaponCatalogQuery): Promise<WeaponCatalogPage> {
   const filter = {
     gameVersion,
@@ -43,6 +45,7 @@ export async function findWeaponCatalogPage({
       name: { $regex: escapeRegex(search), $options: "i" },
     }),
     ...(affinity && { "variants.affinity": affinity }),
+    ...(weaponType && { weaponType }),
   };
 
   const [weapons, total] = await Promise.all([
@@ -64,6 +67,16 @@ export function findWeaponCatalogById(weaponId: string, gameVersion: string) {
 
 export function findWeaponCatalogByIds(weaponIds: string[], gameVersion: string) {
   return WeaponCatalogModel.find({ id: { $in: weaponIds }, gameVersion }).lean().exec();
+}
+
+export function findWeaponVariantUpgradeLevels(
+  variantIds: string[],
+  gameVersion: string,
+) {
+  return WeaponVariantModel.find({ id: { $in: variantIds }, gameVersion })
+    .select("id maxUpgradeLevel requirements")
+    .lean()
+    .exec();
 }
 
 export async function findWeaponAttackProfile(

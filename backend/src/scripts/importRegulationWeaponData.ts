@@ -84,6 +84,7 @@ async function importRegulationWeaponData() {
     reinforcements: parseReinforceWeaponCsv(reinforcements),
     corrections: parseAttackElementCorrectCsv(corrections),
     graphs: parseCalcCorrectGraphCsv(graphs),
+    effects: parseArmorEffectCsv(effects),
     }),
     weaponRows,
     behaviorRows,

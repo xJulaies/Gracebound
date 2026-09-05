@@ -526,6 +526,9 @@ describe("mapBaseGameTalismans", () => {
     expect(scopes[3]?.mounted).toEqual(allDamageTypes(1.15));
     expect(scopes[4]?.jumping).toEqual(allDamageTypes(1.15));
     expect(scopes[5]?.guardCounter).toEqual(allDamageTypes(1.2));
+    expect(talismans[4]?.effects?.outgoingDamageMultipliers).toEqual(
+      neutralDamageTypes(),
+    );
   });
 
   it("maps HP thresholds together with their outgoing or incoming modifiers", () => {

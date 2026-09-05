@@ -24,6 +24,8 @@
     "data:compare:regulation": "tsx src/scripts/compareRegulationExports.ts",
     "data:icons:export-ids": "tsx src/scripts/exportIconIds.ts",
     "data:icons:extract": "tsx src/scripts/extractGameIcons.ts",
+    "data:ui-assets:extract": "tsx src/scripts/extractUiAssets.ts",
+    "data:ui-assets:import": "tsx src/scripts/importUiAssets.ts",
     "data:icons:import": "tsx src/scripts/importIconAssets.ts",
     "data:icons:audit": "tsx src/scripts/auditIconAssets.ts",
     "data:class-images:import": "tsx src/scripts/importCharacterClassImageAssets.ts",

@@ -1,12 +1,13 @@
-import { createRootRoute } from "@tanstack/react-router";
-import { AppShell } from "../app/AppShell";
+import { createRootRoute, Outlet } from "@tanstack/react-router";
 
 export const rootRoute = createRootRoute({
-  component: AppShell,
+  component: Outlet,
   notFoundComponent: () => (
-    <main>
-      <h1>Page not found</h1>
-      <p>The requested page does not exist.</p>
-    </main>
+    <div className="app-shell">
+      <main>
+        <h1>Page not found</h1>
+        <p>The requested page does not exist.</p>
+      </main>
+    </div>
   ),
 });

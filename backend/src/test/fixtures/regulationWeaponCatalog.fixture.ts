@@ -125,6 +125,9 @@ function catalogWeapon(
     swordArtId: 1178,
     canChangeAffinity: false,
     castingTypes: id === "moonveil" ? ["sorcery" as const] : [],
+    statusBuildup: id === "serpentbone-blade"
+      ? { poison: 66, rot: 0, bleed: 0, frost: 0, sleep: 0, madness: 0, deathBlight: 0 }
+      : null,
     variants: [{ id, sourceId, affinity: "standard" as const }],
     attacks: attack ? (Array.isArray(attack) ? attack : [attack]) : [],
     skills: id === "moonveil" ? [moonveilSkill] : [],

@@ -1,9 +1,9 @@
 import { createRoute } from "@tanstack/react-router";
 import { HomePage } from "../features/home/components/HomePage";
-import { rootRoute } from "./root.route";
+import { publicLayoutRoute } from "./publicLayout.route";
 
 export const indexRoute = createRoute({
-  getParentRoute: () => rootRoute,
+  getParentRoute: () => publicLayoutRoute,
   path: "/",
   component: HomePage,
 });

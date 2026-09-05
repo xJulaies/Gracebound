@@ -30,6 +30,8 @@ export interface WeaponSkillAttack {
 export interface WeaponSkillProfile {
   id: string;
   name: string;
+  summary?: string | null;
+  description?: string | null;
   sourceSwordArtId: number;
   attacks: WeaponSkillAttack[];
 }

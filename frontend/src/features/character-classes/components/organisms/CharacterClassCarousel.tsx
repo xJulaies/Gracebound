@@ -7,11 +7,15 @@ import { CharacterClassCard } from "../molecules/CharacterClassCard";
 import { CharacterClassPreview } from "../molecules/CharacterClassPreview";
 import { CharacterClassSwipePreview } from "../molecules/CharacterClassSwipePreview";
 
-export function CharacterClassCarousel() {
+export function CharacterClassCarousel({
+  onSelect,
+}: {
+  onSelect?: (characterClass: CharacterClass) => void;
+} = {}) {
   const classesQuery = useCharacterClassesQuery();
 
   if (classesQuery.isPending) {
-    return <CarouselSection><p>Loading character classes…</p></CarouselSection>;
+    return <CarouselSection><p role="status">Loading character classes…</p></CarouselSection>;
   }
   if (classesQuery.isError) {
     return (
@@ -25,17 +29,27 @@ export function CharacterClassCarousel() {
     return <CarouselSection><p>No character classes found.</p></CarouselSection>;
   }
 
-  return <LoadedCarousel classes={classes} />;
+  return <LoadedCarousel classes={classes} onSelect={onSelect} />;
 }
 
-function LoadedCarousel({ classes }: { classes: CharacterClass[] }) {
+function LoadedCarousel({
+  classes,
+  onSelect,
+}: {
+  classes: CharacterClass[];
+  onSelect?: (characterClass: CharacterClass) => void;
+}) {
   const carousel = useCharacterClassCarousel(classes);
 
   return (
     <CarouselSection>
       <div className="mb-5 text-center">
-        <p className="eyebrow">Build creation experiment</p>
-        <h2 id="character-class-carousel-heading">Choose your character</h2>
+        <h2
+          className="text-3xl sm:text-4xl lg:text-5xl"
+          id="character-class-carousel-heading"
+        >
+          Choose your character
+        </h2>
         <p className="text-foreground-muted">
           Browse the ten starting classes. Confirmation does not save a build yet.
         </p>
@@ -68,7 +82,10 @@ function LoadedCarousel({ classes }: { classes: CharacterClass[] }) {
           characterClass={carousel.activeClass}
           classCount={classes.length}
           key={carousel.activeClass.id}
-          onChoose={carousel.selectActiveClass}
+          onChoose={() => {
+            carousel.selectActiveClass();
+            onSelect?.(carousel.activeClass);
+          }}
         />
 
         {carousel.dragOffset !== 0 && (
@@ -99,7 +116,9 @@ function LoadedCarousel({ classes }: { classes: CharacterClass[] }) {
 
 function CarouselSection({ children }: { children: ReactNode }) {
   return (
-    <section aria-label="Character class carousel experiment">
+    <section
+      aria-label="Character class carousel experiment"
+    >
       {children}
     </section>
   );

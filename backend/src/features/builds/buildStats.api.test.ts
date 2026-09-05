@@ -288,6 +288,8 @@ describe("POST /api/builds/calculate-stats", () => {
       stats,
       characterClass: { id: "astrologer", name: "Astrologer", startingLevel: 6 },
       characterLevel: 156,
+      nextLevelRuneCost: 168_508,
+      totalRuneCost: 8_067_647,
       effectiveStats: { ...stats, vigor: 51, strength: 17 },
       resourceMultipliers: { maxHp: 0.972, maxFp: 1, maxStamina: 1, maxEquipLoad: 1 },
       fpCostMultipliers: { skill: 0.85, sorcery: 1, incantation: 1 },

@@ -3,11 +3,21 @@ import { settings } from "../../../config/settings";
 import { createError } from "../../../shared/errors/createError";
 import { createAnswer } from "../../../shared/http/createAnswer";
 import { mapTalismanResponse } from "../mappers/talisman.mapper";
-import { findAllTalismans, findTalismanById } from "../repositories/talisman.repository";
+import {
+  findAllTalismans,
+  findTalismanById,
+  type TalismanCatalogQuery,
+} from "../repositories/talisman.repository";
 
 export const listTalismans: RequestHandler = async (_request, response) => {
-  const talismans = await findAllTalismans(settings.SUPPORTED_GAME_VERSION);
-  response.status(200).json(createAnswer(200, "Talismans found", talismans.map(mapTalismanResponse)));
+  const result = await findAllTalismans(
+    settings.SUPPORTED_GAME_VERSION,
+    response.locals.talismanFilters as TalismanCatalogQuery,
+  );
+  response.set("X-Total-Count", result.total.toString());
+  response.status(200).json(
+    createAnswer(200, "Talismans found", result.talismans.map(mapTalismanResponse)),
+  );
 };
 
 export const getTalisman: RequestHandler = async (_request, response) => {

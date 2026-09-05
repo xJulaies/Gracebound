@@ -35,8 +35,8 @@ The frontend has its own:
 - `package.json`
 - `package-lock.json`
 - dependencies
-- `agents.md`
-- `spec.md`
+- `AGENTS.md`
+- `SPEC.md`
 
 No npm workspaces, Nx, or Turborepo are required.
 
@@ -98,7 +98,7 @@ Initial navigation:
 Home
 
 Compendium
-  Weapons
+  Armaments
   Armor
   Talismans
   Bosses
@@ -150,7 +150,7 @@ toggle remains directly accessible in the header, while navigation links and
 authentication controls are available inside the drawer. The drawer opens from
 the right and must:
 
-- show the public Home, Weapons, Bosses, Builds, and Damage Calculator links
+- show the public Home, Armaments, Bosses, Builds, and Damage Calculator links
 - preserve the active-route indication
 - close after route selection
 - close through its explicit close button, backdrop interaction, or Escape
@@ -208,7 +208,7 @@ ERDB-specific structures must not leak into frontend feature code.
 
 The MVP contains:
 
-- Weapons
+- Armaments
 - Armor
 - Talismans
 - Bosses
@@ -224,7 +224,7 @@ Each category should provide:
 
 ---
 
-# Weapons
+# Armaments
 
 Weapon overview should display relevant information such as:
 
@@ -245,6 +245,59 @@ Weapon detail may include:
 - information required by the damage calculator
 
 Exact fields depend on the normalized backend domain model.
+
+## Unified Equipment Catalog
+
+The public navigation exposes one `Equipment` destination at `/equipment`
+instead of separate top-level destinations for armaments, armor, and talismans.
+The legacy `/weapons` path redirects to the Armaments category so existing
+links remain useful. The catalog is implemented incrementally:
+
+1. establish the route, navigation, responsive header, and URL-owned category
+   and search state;
+2. connect independently paginated Armaments, Armor, and Talismans queries with
+   loading, error, and empty states;
+3. render a shared responsive catalog grid whose cards show a large icon,
+   complete name, category, weight, and a concise category-specific summary;
+4. open the existing category-specific details inside one reusable desktop
+   side panel and mobile sheet layout;
+5. load Armaments, Armor, and Talismans in stable 24-item pages, automatically
+   request the next page near the end of each category, and retain an accessible
+   manual load-more control; category-specific filters and sorting follow as
+   separate increments.
+
+The initial categories are `All`, `Armaments`, `Armor`, and `Talismans`.
+Category and search values remain shareable URL search parameters, for example
+`/equipment?category=talismans&search=claw`. The unified page coordinates the
+three existing backend resources without replacing their domain types or REST
+endpoints. Cards remain scannable; complete descriptions and detailed combat
+values belong in the details view rather than being crowded into every card.
+The catalog uses TanStack infinite queries and the backend `X-Total-Count`
+header. Search remains URL-owned and server-side; changing it starts a new
+paginated result set instead of filtering only the records already loaded.
+Results use a stable alphabetical A-Z order. Category-specific URL filters are
+weapon type and affinity for Armaments, equipment slot for Armor, and
+calculation support for Talismans. The mixed `All` view does not display
+category-specific controls.
+The category selector is a labelled group of ordinary filter buttons with
+`aria-pressed`; it must not claim tab semantics because it does not control a
+corresponding set of tab panels.
+Category-specific select controls are grouped in a semantic `fieldset` with a
+programmatically available legend. Each select retains its own associated
+visible label.
+Opening item details locks background scrolling without losing the catalog
+position. Closing through Escape, the close action, or the backdrop restores
+the exact scroll coordinates and returns focus to the item card that opened the
+dialog. A stable scrollbar gutter prevents horizontal layout movement while an
+overlay is active.
+
+## Spell Catalog
+
+The public `/spells` page will follow the same catalog interaction pattern as
+Equipment while remaining its own feature and route. Its planned categories
+are `All`, `Sorceries`, and `Incantations`. Search, filters, cards, and detail
+content are intentionally deferred; the initial implementation establishes
+only the empty page, route, and public navigation destination.
 
 ---
 
@@ -433,7 +486,12 @@ The agreed interaction is a carousel:
 - Class name and controls remain available as text and semantic controls; the image is not the only means of identification.
 - Text over images requires a strong readability gradient and sufficient contrast.
 
-After confirmation, the selection area becomes a compact class summary and the stat editor is revealed. A `Change class` action can reopen the carousel. When changing class, existing target stats are preserved. A value below the new class's starting value is raised to that starting value, and the backend recalculates the resulting character level. Equipment selections remain unchanged unless backend validation identifies an incompatible selection.
+After confirmation, the complete carousel content is replaced inside the same
+build-workspace frame by the editor. A `Change character` action restores the
+carousel. When changing class, existing target stats are preserved. A value
+below the new class's starting value is raised to that starting value, and the
+backend recalculates the resulting character level. Equipment selections remain
+unchanged unless backend validation identifies an incompatible selection.
 
 The resulting editor follows a hybrid presentation:
 
@@ -457,6 +515,86 @@ The editor progressively adds:
 - spells, catalyst, and memory stones
 - supported buffs
 
+#### Editor presentation
+
+The build editor is an interactive loadout workspace rather than a long linear
+form. Its desktop presentation combines the following regions:
+
+- a compact build header with name, visibility, save action, and damage-test entry point
+- a character and attribute region with level, invested points, resource values, and estimated rune cost
+- three right-hand and three left-hand weapon slots
+- fixed head, body, arms, and legs armor slots
+- four talisman slots, one Great Rune slot, and two Crystal Tear slots
+- a spell-memory region constrained by the build's available memory slots
+- an active-buff strip that explains buff categories, compatibility, and replacement conflicts
+- a grouped, readable summary of calculated offense, resources, defenses, resistances, and equipment load
+
+The main desktop workspace follows a three-region character-sheet layout. A
+compact portrait of the selected starting class and its editable attributes
+sit on the left, equipment occupies the visual center, and calculated status
+values sit on the right. The status region groups resources, the currently
+focused weapon's supported actions, defenses, absorption, and resistances.
+The editor uses the available viewport width rather than constraining all three
+regions to the normal content shell. The established equipment panel keeps its
+own spacious center region; the character and status panels are independent
+siblings rather than content nested inside it. On narrower viewports these
+regions become three task-focused tabs named Leveling, Equipment, and Status,
+so users do not have to scroll through unrelated editor sections.
+Selecting or editing an equipped weapon makes it the focused weapon without
+changing the loadout. Focus is UI state separate from saved equipment state;
+the same interaction can later be extended to an equipped catalyst and spell
+without introducing a universal abstraction before it is needed.
+
+Narrow viewports use task-focused tabs instead of compressing the complete
+desktop workspace. The initial mobile sections are Character, Equipment,
+Spells, Buffs, and Results. A compact result summary may remain accessible
+while moving between tabs, but it must not obscure the active controls.
+The compact Build Editor tabs follow the ARIA automatic-activation pattern.
+Only the active tab participates in the normal Tab sequence; Arrow Left/Right
+wrap between tabs, while Home and End select the first and last tab. Every tab
+controls a correspondingly labelled tab panel.
+
+Selecting an empty or occupied slot opens a searchable, filterable item picker.
+Use a side panel on wide screens and a full-height sheet on narrow screens.
+Catalog items are shown as scrollable icon-based choices. Invalid choices are
+excluded or visibly disabled rather than accepted and rejected later without
+explanation.
+
+Weapon configuration stays attached to the selected weapon slot and exposes
+upgrade level, affinity, and a compatible Ash of War. Unique weapon skills are
+shown as fixed. Interchangeable Ashes and affinities must be limited to valid
+backend-provided combinations. Variant choices use the backend-provided maximum
+upgrade level rather than inferring `+10` or `+25` from weapon categories.
+
+Attribute controls expose decrement, increment, and direct numeric input.
+They show class minimums, the resulting character level, invested levels, and
+the backend-calculated rune cost for the next level and for reaching the
+planned level from the selected class. Attribute inputs, invested levels, and
+the resulting level update locally without waiting for the debounced stats
+request; derived game values and rune costs remain backend-owned. Changed
+calculated values may be highlighted briefly, and softcap
+hints remain explanatory rather than duplicating backend formulas.
+
+The visual foundation uses theme-token-driven CSS gradients, vignette, and
+subtle texture. A future original transparent Gracebound character silhouette
+may sit behind the desktop equipment layout, but slots and labels must remain
+understandable without it. The silhouette is reduced or removed on mobile.
+Do not commit Elden Ring screenshots or extracted game UI assets.
+
+Empty equipment slots combine a consistent slot frame with a recognizable
+category glyph. Original local menu-frame assets may be extracted, optimized,
+and served through the private MongoDB asset pipeline. Custom glyphs fill gaps
+where the game does not provide a clear slot-specific symbol.
+
+The editor follows feature-local Atomic Design. Repeating visual primitives
+such as slot frames, icons, labels, badges, and stat buttons form atoms. A
+complete equipment slot, attribute control, buff chip, stat row, or picker item
+forms a molecule. Hand loadouts, armor and talisman groups, the item picker,
+spell-memory panel, buff bar, calculated-stat summary, and damage-test panel
+form organisms. The page composes these organisms while draft orchestration
+remains in feature hooks or form state. Components are split by meaningful
+responsibility and reuse, not by file-count targets.
+
 Selection dependencies must be respected. For example, a weapon variant belongs to one weapon, an Ash of War must be compatible with the selected weapon, and selected spells must be compatible with the catalyst and available memory slots.
 
 `POST /api/builds/calculate-stats` remains the authority for effective attributes, equipment load, resources, defenses, resistances, catalyst scaling, memory slots, and validation of supported catalog selections.
@@ -464,6 +602,14 @@ Selection dependencies must be respected. For example, a weapon variant belongs 
 ### Slice 3: Damage evaluation
 
 The editor can calculate supported weapon, skill, and spell output with or without a selected boss. The backend remains responsible for attack rating, motion values, buffs, defense, absorption, and final estimated damage.
+
+Boss evaluation is opened deliberately through a `Test against a boss` action
+instead of permanently occupying the main editor. The user selects a boss and
+one supported action such as a light, heavy, charged, jumping, critical, skill,
+spell, or incantation attack. Results distinguish pre-mitigation output, final
+estimated damage, damage types, boss-health percentage, status buildup, active
+buffs, and explicit limitations. Local previews may react immediately while a
+backend request remains authoritative for the final result.
 
 Backend integration:
 
@@ -505,6 +651,22 @@ Public builds should support:
 - build description
 
 Ratings, comments, and social features are stretch goals.
+
+The initial `/builds` overview is implemented as two responsive sections:
+
+- a Clerk-aware creation callout that offers sign-in to anonymous visitors
+- a public build gallery backed by `GET /api/builds`
+
+The gallery provides loading, empty, error with retry, and success states.
+Initial cards display only data already guaranteed by the API contract: name,
+description, level, starting-class identifier, and the three highest character
+attributes. Equipment names, owner display, and detail navigation remain pending
+until their dedicated API contracts and routes are available.
+
+The dedicated `/builds/new` route is the authenticated entry into build
+creation. Anonymous visitors receive a Clerk sign-in prompt; authenticated
+users begin with the existing character-class selector. The attribute editor
+and build persistence remain later vertical increments on this route.
 
 ---
 
@@ -696,6 +858,15 @@ The application may be inspired by Elden Ring's atmosphere without directly repr
 
 Usability is more important than visual imitation.
 
+The public navbar uses the privately stored Gracebound wordmark through the
+backend branding-asset endpoint. The source and generated logo files are not
+committed to the frontend repository. The experimental home hero is currently
+rendered as a full-width responsive image section. It uses the square source on
+narrow viewports and a separately prepared 2048x1152 outpainted asset from the
+`gracebound-hero-desktop` endpoint on wider viewports. The artwork itself has no
+interactive responsibility; semantic content and the future call to action
+remain separate HTML components.
+
 ## Theme System
 
 The frontend uses Tailwind CSS with application-owned components. No external
@@ -712,6 +883,11 @@ Gracebound supports two atmospheric themes:
 - `grace`: warm charcoal and parchment surfaces with stronger golden accents
 - `night`: midnight-blue surfaces with muted moon-blue details and gold as the
   shared Grace accent
+
+Cinzel is the application heading and branding typeface. Load the Google Fonts
+family in weights 400 through 700 with `display=swap`; retain Georgia and
+`Times New Roman` as local fallbacks. Body copy remains in Inter or the system
+sans-serif stack for readability.
 
 Neither theme uses a generic bright-white application surface. Both themes
 must preserve readable contrast, visible focus states, and consistent semantic
@@ -744,6 +920,29 @@ Requirements include:
 - readable contrast
 - correct button and link semantics
 
+The public layout provides a keyboard-visible skip link targeting the content
+container. Every route retains a level-one page heading, including intentionally
+empty page foundations where the heading may be visually hidden. Navigation
+links expose their current-page state through the router.
+
+Async loading and completion states use polite status semantics where the
+change benefits assistive-technology users. Error states remain alerts. Avoid
+placing large changing cards or sections inside live regions; announce a short,
+specific summary instead. Decorative images are hidden from assistive
+technology, while branding and character artwork retain meaningful alternative
+text.
+
+Reusable modal behavior owns initial focus, Tab containment, Escape handling,
+background scroll locking, scroll restoration, and focus restoration. Build
+Editor tabs follow the complete horizontal keyboard pattern. URL-backed
+equipment categories remain pressed filter buttons rather than claiming tab
+semantics, and category-specific filters use `fieldset` and `legend`.
+
+Representative reusable controls and composed UI states are audited with
+`axe-core` in Vitest. These JSDOM checks exclude color and layout-dependent
+rules, so browser review remains required for contrast, visible focus, responsive
+zoom, and the complete keyboard journey.
+
 ---
 
 # Testing
@@ -752,6 +951,7 @@ Frontend test stack:
 
 - Vitest
 - React Testing Library
+- axe-core accessibility audits
 
 Priorities:
 

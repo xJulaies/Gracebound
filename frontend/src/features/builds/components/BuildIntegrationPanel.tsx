@@ -35,7 +35,7 @@ export function BuildIntegrationPanel() {
 
       <article>
         <h3>Public builds</h3>
-        {publicBuilds.isPending && <p>Loading public builds…</p>}
+        {publicBuilds.isPending && <p role="status">Loading public builds…</p>}
         {publicBuilds.isError && <p role="alert">Public builds unavailable.</p>}
         {publicBuilds.data && (
           <BuildList
@@ -47,12 +47,12 @@ export function BuildIntegrationPanel() {
 
       <article>
         <h3>My builds</h3>
-        {!ownedBuilds.isAuthLoaded && <p>Loading authentication…</p>}
+        {!ownedBuilds.isAuthLoaded && <p role="status">Loading authentication…</p>}
         {ownedBuilds.isAuthLoaded && !ownedBuilds.isSignedIn && (
           <p>Sign in to verify the protected build endpoint.</p>
         )}
         {ownedBuilds.query.isPending && ownedBuilds.isSignedIn && (
-          <p>Loading your builds…</p>
+          <p role="status">Loading your builds…</p>
         )}
         {ownedBuilds.query.isError && ownedBuilds.isSignedIn && (
           <p role="alert">Your builds are unavailable.</p>
