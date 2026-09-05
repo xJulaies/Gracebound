@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { neutralArmorPassiveEffects, type ArmorData, type ArmorSlot } from "../../armor/domain/armor.types";
-import { calculateArmorStats } from "./calculateArmorStats";
+import { applyIncomingDamageMultipliers, calculateArmorStats } from "./calculateArmorStats";
 
 describe("calculateArmorStats", () => {
   it("combines armor weight, poise, negation, and resistance points", () => {
@@ -59,6 +59,27 @@ describe("calculateArmorStats", () => {
       regenerationEffects: [{ target: "wearer", hpPerSecond: 2, maximumHpPercent: 18, radius: null }],
       utilityEffects: { enemyHearingMultiplier: 0, aggroPriorityModifier: 0.03, dodgeContactPhysicalDamage: 18, reducesHeadshotImpact: false },
       scopedDamageBoosts: [{ scope: "jumping-attacks" }],
+    });
+  });
+
+  it("combines armor negation with defensive incoming-damage multipliers", () => {
+    const armorNegation = armor("helm", "head", 0.2, 4, 7, false).damageNegation;
+
+    expect(applyIncomingDamageMultipliers(armorNegation, {
+      physical: 0.9,
+      magic: 0.8,
+      fire: 1,
+      lightning: 0.7,
+      holy: 1,
+    })).toEqual({
+      physical: 0.28,
+      strike: 0.28,
+      slash: 0.28,
+      pierce: 0.28,
+      magic: 0.36,
+      fire: 0.2,
+      lightning: 0.44,
+      holy: 0.2,
     });
   });
 });

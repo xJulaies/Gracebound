@@ -528,7 +528,7 @@ function buffSpell(
   buffEffect: SpellBuffEffect,
 ): SpellData {
   return {
-    id, name, type, buffEffect, sourceMagicId: id.length, fpCost: 10,
+    id, name, type, schools: [], buffEffect, sourceMagicId: id.length, fpCost: 10,
     chargedFpCost: null, sustainedFpCost: null, slotsRequired: 1,
     requirements: { intelligence: type === "sorcery" ? 10 : 0, faith: type === "incantation" ? 10 : 0, arcane: 0 },
     iconId: 1, calculationStatus: "supported", attack: null, chargedAttack: null,

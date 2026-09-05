@@ -51,6 +51,10 @@ function validateCatalog(spells: ReturnType<typeof mapBaseGameSpells>) {
   if (sorceries.length !== 70 || incantations.length !== 101) {
     throw new Error(`Incomplete 1.17.0 spell catalog: expected 70/101, mapped ${sorceries.length}/${incantations.length}`);
   }
+  const unclassified = spells.filter(({ schools }) => schools.length === 0);
+  if (unclassified.length > 0) {
+    throw new Error(`Unclassified spells: ${unclassified.map(({ name }) => name).join(", ")}`);
+  }
   for (const id of ["glintstone-pebble", "death-lightning", "night-maiden-s-mist", "lightning-spear"]) {
     if (!spells.some((spell) => spell.id === id)) throw new Error(`Missing reference spell ${id}`);
   }

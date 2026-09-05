@@ -22,6 +22,11 @@ const initialInput: BuildStatsInput = {
     faith: 9,
     arcane: 7,
   },
+  talismanIds: [],
+  armorIds: [],
+  weaponIds: [],
+  greatRuneId: null,
+  crystalTearIds: [],
 };
 
 function createWrapper() {

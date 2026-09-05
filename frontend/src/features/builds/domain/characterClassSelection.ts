@@ -7,6 +7,11 @@ export function createCharacterClassSelection(
   return {
     characterClassId: characterClass.id,
     stats: { ...characterClass.stats },
+    talismanIds: [],
+    armorIds: [],
+    weaponIds: [],
+    greatRuneId: null,
+    crystalTearIds: [],
   };
 }
 
@@ -16,6 +21,11 @@ export function changeCharacterClass(
 ): BuildStatsInput {
   return {
     characterClassId: characterClass.id,
+    talismanIds: [],
+    armorIds: [],
+    weaponIds: [],
+    greatRuneId: null,
+    crystalTearIds: [],
     stats: {
       vigor: Math.max(currentStats.vigor, characterClass.stats.vigor),
       mind: Math.max(currentStats.mind, characterClass.stats.mind),

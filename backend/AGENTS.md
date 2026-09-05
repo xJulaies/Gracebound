@@ -538,6 +538,11 @@ GET /api/assets/branding/gracebound-hero-desktop
 GET /api/assets/branding/gracebound-navbar-logo
 ```
 
+The spell list route supports optional type, curated school, name search, page,
+and limit filters. Return stable alphabetical results and `X-Total-Count` for
+incremental clients. Represent schools as a list on each spell; never infer a
+school from a partial name match at request time.
+
 The public icon endpoint returns the active game version's WebP bytes directly,
 not the normal JSON response envelope. It must validate numeric icon IDs, return
 404 for unknown IDs, and emit the checksum as a strong ETag. Because the URL is

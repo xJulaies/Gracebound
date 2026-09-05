@@ -5,6 +5,8 @@ type Status = "poison" | "rot" | "bleed" | "frost" | "sleep" | "madness" | "deat
 export interface CrystalTear {
   id: string;
   name: string;
+  summary: string | null;
+  description: string | null;
   iconId: number;
   iconUrl: string;
   calculationStatus: CalculationStatus;

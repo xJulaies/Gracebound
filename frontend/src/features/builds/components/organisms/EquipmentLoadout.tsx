@@ -4,6 +4,8 @@ import type { EquippedWeapon } from "../../types/editor.types";
 import { getEquippedWeaponDisplayName } from "../../domain/getEquippedWeaponDisplayName";
 import type { Armor } from "../../../armor/types/armor.types";
 import type { Talisman } from "../../../talismans/types/talisman.types";
+import type { GreatRune } from "../../../great-runes/types/greatRune.types";
+import type { CrystalTear } from "../../../crystal-tears/types/crystalTear.types";
 
 interface EquipmentLoadoutProps {
   onSelectSlot?: (slotId: string) => void;
@@ -11,6 +13,8 @@ interface EquipmentLoadoutProps {
   activeSlotId?: string | null;
   selectedArmor?: Record<string, Armor>;
   selectedTalismans?: Record<string, Talisman>;
+  selectedGreatRune?: GreatRune | null;
+  selectedCrystalTears?: Record<string, CrystalTear>;
 }
 
 const rightHandSlots = ["right-hand-1", "right-hand-2", "right-hand-3"];
@@ -28,6 +32,8 @@ export function EquipmentLoadout({
   onSelectSlot,
   selectedArmor = {},
   selectedTalismans = {},
+  selectedGreatRune = null,
+  selectedCrystalTears = {},
   selectedWeapons = {},
 }: EquipmentLoadoutProps) {
   return (
@@ -42,19 +48,44 @@ export function EquipmentLoadout({
       </header>
 
       <div className="grid gap-7 lg:grid-cols-[1fr_1.2fr_1fr] lg:items-start">
-        <SlotGroup heading="Left hand">
-          {leftHandSlots.map((id, index) => (
+        <div className="grid gap-7">
+          <SlotGroup heading="Left hand">
+            {leftHandSlots.map((id, index) => (
+              <EquipmentSlot
+                emptyAssetId="left-weapon-slot"
+                id={id}
+                item={toSlotItem(selectedWeapons[id])}
+                isActive={activeSlotId === id}
+                key={id}
+                label={`Left hand ${index + 1}`}
+                onSelect={onSelectSlot}
+              />
+            ))}
+          </SlotGroup>
+          <SlotGroup heading="Great Rune">
             <EquipmentSlot
-              emptyAssetId="left-weapon-slot"
-              id={id}
-              item={toSlotItem(selectedWeapons[id])}
-              isActive={activeSlotId === id}
-              key={id}
-              label={`Left hand ${index + 1}`}
+              emptyAssetId="equipment-category"
+              id="great-rune"
+              isActive={activeSlotId === "great-rune"}
+              item={selectedGreatRune}
+              label="Great Rune"
               onSelect={onSelectSlot}
             />
-          ))}
-        </SlotGroup>
+          </SlotGroup>
+          <SlotGroup heading="Wondrous Physick">
+            {["crystal-tear-1", "crystal-tear-2"].map((id, index) => (
+              <EquipmentSlot
+                emptyAssetId="crystal-tear-category"
+                id={id}
+                isActive={activeSlotId === id}
+                item={selectedCrystalTears[id]}
+                key={id}
+                label={`Crystal Tear ${index + 1}`}
+                onSelect={onSelectSlot}
+              />
+            ))}
+          </SlotGroup>
+        </div>
 
         <div className="grid gap-7 sm:grid-cols-2 lg:grid-cols-1">
           <SlotGroup heading="Armor">

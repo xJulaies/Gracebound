@@ -23,7 +23,9 @@ export function ThemeToggle() {
       type="button"
     >
       <span aria-hidden="true">{theme === "night" ? "☾" : "✦"}</span>
-      <span>{theme === "night" ? "Night" : "Grace"}</span>
+      <span className="hidden sm:inline">
+        {theme === "night" ? "Night" : "Grace"}
+      </span>
     </button>
   );
 }

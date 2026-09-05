@@ -1,5 +1,5 @@
 import { model, Schema } from "mongoose";
-import type { SpellData } from "../domain/spell.types";
+import { SPELL_SCHOOLS, type SpellData } from "../domain/spell.types";
 import { damageTypesSchema } from "../../weapons/models/gameData.schemas";
 
 const statusBuildupSchema = new Schema({
@@ -37,6 +37,11 @@ const spellSchema = new Schema<SpellRecord>({
   summary: { type: String, default: null },
   description: { type: String, default: null },
   type: { type: String, required: true, enum: ["sorcery", "incantation"] },
+  schools: {
+    type: [{ type: String, enum: SPELL_SCHOOLS }],
+    required: true,
+    default: [],
+  },
   fpCost: { type: Number, required: true, min: 0 },
   chargedFpCost: { type: Number, min: 0, default: null },
   sustainedFpCost: { type: Number, min: 0, default: null },

@@ -3,6 +3,26 @@ import type { ItemText } from "../../../shared/domain/itemText.types";
 
 export type SpellType = "sorcery" | "incantation";
 
+export const SORCERY_SCHOOLS = [
+  "glintstone", "carian", "night", "gravity", "crystal", "cold",
+  "magma", "death", "claymen", "thorn", "full-moon",
+  "primeval-current",
+] as const;
+
+export const INCANTATION_SCHOOLS = [
+  "two-fingers", "erdtree", "golden-order", "dragon-cult",
+  "dragon-communion", "bestial", "fire-monks", "giants-flame",
+  "godskin-apostle", "frenzied-flame", "servants-of-rot", "blood-oath",
+  "crucible",
+] as const;
+
+export const SPELL_SCHOOLS = [
+  ...SORCERY_SCHOOLS,
+  ...INCANTATION_SCHOOLS,
+] as const;
+
+export type SpellSchool = (typeof SPELL_SCHOOLS)[number];
+
 export interface StatusBuildup {
   poison: number;
   rot: number;
@@ -42,6 +62,7 @@ export interface SpellData extends ItemText {
   sourceMagicId: number;
   name: string;
   type: SpellType;
+  schools: SpellSchool[];
   fpCost: number;
   chargedFpCost: number | null;
   sustainedFpCost: number | null;

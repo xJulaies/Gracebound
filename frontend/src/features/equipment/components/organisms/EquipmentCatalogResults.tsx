@@ -2,7 +2,7 @@ import { useCallback, useState } from "react";
 import type { EquipmentCatalogGroup } from "../../types/equipmentCatalog.types";
 import type { EquipmentCatalogItem } from "../../types/equipmentCatalog.types";
 import { EquipmentCatalogCard } from "../molecules/EquipmentCatalogCard";
-import { EquipmentCatalogLoadMore } from "../molecules/EquipmentCatalogLoadMore";
+import { CatalogLoadMore } from "../../../../shared/ui/molecules/CatalogLoadMore";
 import { EquipmentDetailsDialog } from "./EquipmentDetailsDialog";
 
 export function EquipmentCatalogResults({
@@ -38,7 +38,7 @@ export function EquipmentCatalogResults({
                   </li>
                 ))}
               </ul>
-              <EquipmentCatalogLoadMore
+              <CatalogLoadMore
                 hasNextPage={group.hasNextPage}
                 isFetching={group.isFetchingNextPage}
                 label={group.label}

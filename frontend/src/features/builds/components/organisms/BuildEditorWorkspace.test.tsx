@@ -1,9 +1,15 @@
-import { render, screen } from "@testing-library/react";
+import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { describe, expect, it, vi } from "vitest";
 import type { CharacterClass } from "../../../character-classes/types/characterClass.types";
 import type { Weapon } from "../../../weapons/types/weapon.types";
+import type { GreatRune } from "../../../great-runes/types/greatRune.types";
+import type { CrystalTear } from "../../../crystal-tears/types/crystalTear.types";
 import { BuildEditorWorkspace } from "./BuildEditorWorkspace";
+
+const { useBuildStatsPreviewQueryMock } = vi.hoisted(() => ({
+  useBuildStatsPreviewQueryMock: vi.fn(),
+}));
 
 const vagabond: CharacterClass = {
   id: "vagabond",
@@ -39,13 +45,15 @@ vi.mock(
 );
 
 vi.mock("../../hooks/useBuildStatsPreviewQuery", () => ({
-  useBuildStatsPreviewQuery: () => ({
-    data: undefined,
-    isError: false,
-    isFetching: false,
-    isPending: false,
-  }),
+  useBuildStatsPreviewQuery: useBuildStatsPreviewQueryMock,
 }));
+
+useBuildStatsPreviewQueryMock.mockReturnValue({
+  data: undefined,
+  isError: false,
+  isFetching: false,
+  isPending: false,
+});
 
 vi.mock("./WeaponPicker", () => ({
   WeaponPicker: ({ onSelect }: { onSelect: (weapon: Weapon) => void }) => (
@@ -83,6 +91,51 @@ vi.mock("./WeaponPicker", () => ({
 
 vi.mock("./WeaponInspector", () => ({
   WeaponInspector: () => <div>Weapon configuration</div>,
+}));
+
+vi.mock("./GreatRunePicker", () => ({
+  GreatRunePicker: ({ onSelect }: { onSelect: (greatRune: GreatRune) => void }) => (
+    <button
+      onClick={() => onSelect({
+        id: "godricks-great-rune",
+        name: "Godrick's Great Rune",
+        summary: null,
+        description: null,
+        iconId: 1,
+        iconUrl: "/great-rune.webp",
+        activation: "rune-arc",
+        calculationStatus: "supported",
+        effects: null,
+        limitations: [],
+        gameVersion: "1.17.0",
+      })}
+      type="button"
+    >
+      Select Godrick's Great Rune
+    </button>
+  ),
+}));
+
+vi.mock("./CrystalTearPicker", () => ({
+  CrystalTearPicker: ({ onSelect }: { onSelect: (crystalTear: CrystalTear) => void }) => (
+    <button
+      onClick={() => onSelect({
+        id: "strength-knot-crystal-tear",
+        name: "Strength-knot Crystal Tear",
+        summary: null,
+        description: null,
+        iconId: 2,
+        iconUrl: "/crystal-tear.webp",
+        calculationStatus: "supported",
+        effects: null,
+        limitations: [],
+        gameVersion: "1.17.0",
+      })}
+      type="button"
+    >
+      Select Strength-knot Crystal Tear
+    </button>
+  ),
 }));
 
 vi.mock("./ArmorPicker", () => ({
@@ -258,5 +311,56 @@ describe("BuildEditorWorkspace", () => {
     expect(occupiedSlot).toBeInTheDocument();
     await user.click(occupiedSlot);
     expect(screen.getByText("Talisman picker open")).toBeInTheDocument();
+  });
+
+  it("includes equipped weapons, armor, and talismans in the stats preview", async () => {
+    const user = userEvent.setup();
+    useBuildStatsPreviewQueryMock.mockClear();
+    render(<BuildEditorWorkspace />);
+
+    await user.click(screen.getByRole("button", { name: "Choose Vagabond" }));
+    await user.click(screen.getByRole("button", {
+      name: "Right hand 1: Empty. Select item",
+    }));
+    await user.click(screen.getByRole("button", { name: "Select Longsword" }));
+    await user.click(screen.getByRole("button", { name: "Head: Empty. Select item" }));
+    await user.click(screen.getByRole("button", { name: "Select Vagabond Knight Helm" }));
+    await user.click(screen.getByRole("button", {
+      name: "Talisman 1: Empty. Select item",
+    }));
+    await user.click(screen.getByRole("button", { name: "Select Axe Talisman" }));
+
+    await waitFor(() => expect(useBuildStatsPreviewQueryMock).toHaveBeenLastCalledWith(
+      expect.objectContaining({
+        armorIds: ["vagabond-knight-helm"],
+        talismanIds: ["axe-talisman"],
+        weaponIds: ["longsword"],
+      }),
+    ));
+  });
+
+  it("equips a Great Rune and Crystal Tear and includes them in the stats preview", async () => {
+    const user = userEvent.setup();
+    useBuildStatsPreviewQueryMock.mockClear();
+    render(<BuildEditorWorkspace />);
+
+    await user.click(screen.getByRole("button", { name: "Choose Vagabond" }));
+    await user.click(screen.getByRole("button", { name: "Great Rune: Empty. Select item" }));
+    await user.click(screen.getByRole("button", { name: "Select Godrick's Great Rune" }));
+    await user.click(screen.getByRole("button", { name: "Crystal Tear 1: Empty. Select item" }));
+    await user.click(screen.getByRole("button", { name: "Select Strength-knot Crystal Tear" }));
+
+    expect(screen.getByRole("button", {
+      name: "Great Rune: Godrick's Great Rune. Change selection",
+    })).toBeInTheDocument();
+    expect(screen.getByRole("button", {
+      name: "Crystal Tear 1: Strength-knot Crystal Tear. Change selection",
+    })).toBeInTheDocument();
+    await waitFor(() => expect(useBuildStatsPreviewQueryMock).toHaveBeenLastCalledWith(
+      expect.objectContaining({
+        greatRuneId: "godricks-great-rune",
+        crystalTearIds: ["strength-knot-crystal-tear"],
+      }),
+    ));
   });
 });

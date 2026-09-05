@@ -4,6 +4,7 @@ import type { AttackParamRow } from "../schemas/weaponAttackParam.schema";
 import type { BulletParamRow, FinalDamageRateRow } from "../schemas/weaponSkillParam.schema";
 import type { ArmorEffectRow } from "../schemas/armor.schema";
 import type { GoodsIconRow } from "../schemas/goodsIcon.schema";
+import { findSpellSchools } from "../data/spellSchoolDefinitions";
 
 const FIRST_DLC_MAGIC_ID = 2_000_000;
 const EXCLUDED_MAGIC_IDS = new Set([4641, 4642, 8000, 8001]);
@@ -75,6 +76,7 @@ export function mapBaseGameSpells(
       sourceMagicId: row.ID,
       name,
       type,
+      schools: findSpellSchools(row.ID),
       fpCost: row.mp,
       chargedFpCost: chargedAttack ? row.mp_charge : null,
       sustainedFpCost: SUSTAINED_SPELL_IDS.has(row.ID) ? row.mp_charge : null,

@@ -293,11 +293,19 @@ overlay is active.
 
 ## Spell Catalog
 
-The public `/spells` page will follow the same catalog interaction pattern as
-Equipment while remaining its own feature and route. Its planned categories
-are `All`, `Sorceries`, and `Incantations`. Search, filters, cards, and detail
-content are intentionally deferred; the initial implementation establishes
-only the empty page, route, and public navigation destination.
+The public `/spells` page follows the same catalog interaction pattern as
+Equipment while remaining its own feature and route. Its categories are `All`,
+`Sorceries`, and `Incantations`. Search, spell type, and school remain URL-owned
+filters. Selecting a type reveals only its applicable curated schools, such as
+Gravity for Sorceries or Frenzied Flame for Incantations; changing the type
+clears the previous school.
+
+The page requests stable alphabetical 24-item pages through a TanStack infinite
+query and retains the shared accessible load-more fallback. Cards expose the
+spell icon, type, FP and memory-slot cost, schools, summary, and description.
+The reusable item-details layout shows casting costs, attribute requirements,
+calculation support, and verified buff metadata in a modal that follows the
+shared focus, Escape, backdrop, scroll-lock, and focus-restoration behavior.
 
 ---
 

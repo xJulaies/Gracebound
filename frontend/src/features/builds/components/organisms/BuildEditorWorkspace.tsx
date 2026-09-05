@@ -14,6 +14,10 @@ import { WeaponInspector } from "./WeaponInspector";
 import { WeaponPicker } from "./WeaponPicker";
 import type { Talisman } from "../../../talismans/types/talisman.types";
 import { TalismanPicker } from "./TalismanPicker";
+import type { GreatRune } from "../../../great-runes/types/greatRune.types";
+import type { CrystalTear } from "../../../crystal-tears/types/crystalTear.types";
+import { GreatRunePicker } from "./GreatRunePicker";
+import { CrystalTearPicker } from "./CrystalTearPicker";
 import type { CharacterStats } from "../../../../shared/types/game.types";
 import { useBuildStatsPreviewQuery } from "../../hooks/useBuildStatsPreviewQuery";
 import { CharacterAttributePanel } from "./CharacterAttributePanel";
@@ -46,21 +50,38 @@ const talismanSlotLabels: Record<string, string> = {
   "talisman-4": "Talisman 4",
 };
 
+const crystalTearSlotLabels: Record<string, string> = {
+  "crystal-tear-1": "Crystal Tear 1",
+  "crystal-tear-2": "Crystal Tear 2",
+};
+
 export function BuildEditorWorkspace() {
   const [selectedClass, setSelectedClass] = useState<CharacterClass | null>(null);
   const [stats, setStats] = useState<CharacterStats | null>(null);
   const [activeWeaponSlotId, setActiveWeaponSlotId] = useState<WeaponEditorSlotId | null>(null);
   const [activeArmorSlotId, setActiveArmorSlotId] = useState<string | null>(null);
   const [activeTalismanSlotId, setActiveTalismanSlotId] = useState<string | null>(null);
+  const [isGreatRunePickerOpen, setIsGreatRunePickerOpen] = useState(false);
+  const [activeCrystalTearSlotId, setActiveCrystalTearSlotId] = useState<string | null>(null);
   const [configuredWeaponSlotId, setConfiguredWeaponSlotId] = useState<WeaponEditorSlotId | null>(null);
   const [selectedWeapons, setSelectedWeapons] = useState<Record<string, EquippedWeapon>>({});
   const [selectedArmor, setSelectedArmor] = useState<Record<string, Armor>>({});
   const [selectedTalismans, setSelectedTalismans] = useState<Record<string, Talisman>>({});
+  const [selectedGreatRune, setSelectedGreatRune] = useState<GreatRune | null>(null);
+  const [selectedCrystalTears, setSelectedCrystalTears] = useState<Record<string, CrystalTear>>({});
   const [editorFocus, setEditorFocus] = useState<WeaponEditorFocus | null>(null);
   const [activeTab, setActiveTab] = useState<BuildEditorTab>("equipment");
   const statsQuery = useBuildStatsPreviewQuery(
     selectedClass && stats
-      ? { characterClassId: selectedClass.id, stats }
+      ? {
+          characterClassId: selectedClass.id,
+          stats,
+          armorIds: Object.values(selectedArmor).map(({ id }) => id),
+          talismanIds: Object.values(selectedTalismans).map(({ id }) => id),
+          weaponIds: Object.values(selectedWeapons).map(({ weapon }) => weapon.id),
+          greatRuneId: selectedGreatRune?.id ?? null,
+          crystalTearIds: Object.values(selectedCrystalTears).map(({ id }) => id),
+        }
       : null,
   );
   const statsPreview = statsQuery.data?.data[0] ?? null;
@@ -89,6 +110,16 @@ export function BuildEditorWorkspace() {
     if (talismanSlotLabels[slotId]) {
       setConfiguredWeaponSlotId(null);
       setActiveTalismanSlotId(slotId);
+      return;
+    }
+    if (slotId === "great-rune") {
+      setConfiguredWeaponSlotId(null);
+      setIsGreatRunePickerOpen(true);
+      return;
+    }
+    if (crystalTearSlotLabels[slotId]) {
+      setConfiguredWeaponSlotId(null);
+      setActiveCrystalTearSlotId(slotId);
     }
   };
 
@@ -163,11 +194,19 @@ export function BuildEditorWorkspace() {
               role="tabpanel"
             >
             <EquipmentLoadout
-              activeSlotId={activeWeaponSlotId ?? activeArmorSlotId ?? activeTalismanSlotId ?? configuredWeaponSlotId ?? editorFocus?.slotId}
+              activeSlotId={activeWeaponSlotId
+                ?? activeArmorSlotId
+                ?? activeTalismanSlotId
+                ?? (isGreatRunePickerOpen ? "great-rune" : null)
+                ?? activeCrystalTearSlotId
+                ?? configuredWeaponSlotId
+                ?? editorFocus?.slotId}
               onSelectSlot={openSlot}
               selectedArmor={selectedArmor}
               selectedTalismans={selectedTalismans}
               selectedWeapons={selectedWeapons}
+              selectedGreatRune={selectedGreatRune}
+              selectedCrystalTears={selectedCrystalTears}
             />
           {configuredWeaponSlotId && configuredWeapon && (
             <WeaponInspector
@@ -251,6 +290,47 @@ export function BuildEditorWorkspace() {
                 setActiveTalismanSlotId(null);
               }}
               slotLabel={talismanSlotLabels[activeTalismanSlotId] ?? "Talisman slot"}
+            />
+          )}
+          {isGreatRunePickerOpen && (
+            <GreatRunePicker
+              onClose={() => setIsGreatRunePickerOpen(false)}
+              onRemove={selectedGreatRune
+                ? () => {
+                    setSelectedGreatRune(null);
+                    setIsGreatRunePickerOpen(false);
+                  }
+                : undefined}
+              onSelect={(greatRune) => {
+                setSelectedGreatRune(greatRune);
+                setIsGreatRunePickerOpen(false);
+              }}
+            />
+          )}
+          {activeCrystalTearSlotId && (
+            <CrystalTearPicker
+              excludedIds={Object.entries(selectedCrystalTears)
+                .filter(([slotId]) => slotId !== activeCrystalTearSlotId)
+                .map(([, crystalTear]) => crystalTear.id)}
+              onClose={() => setActiveCrystalTearSlotId(null)}
+              onRemove={selectedCrystalTears[activeCrystalTearSlotId]
+                ? () => {
+                    setSelectedCrystalTears((current) => {
+                      const next = { ...current };
+                      delete next[activeCrystalTearSlotId];
+                      return next;
+                    });
+                    setActiveCrystalTearSlotId(null);
+                  }
+                : undefined}
+              onSelect={(crystalTear) => {
+                setSelectedCrystalTears((current) => ({
+                  ...current,
+                  [activeCrystalTearSlotId]: crystalTear,
+                }));
+                setActiveCrystalTearSlotId(null);
+              }}
+              slotLabel={crystalTearSlotLabels[activeCrystalTearSlotId] ?? "Crystal Tear slot"}
             />
           )}
             </div>

@@ -1,5 +1,11 @@
 import { neutralArmorPassiveEffects, type ArmorData } from "../../armor/domain/armor.types";
 
+type DamageNegation = ArmorData["damageNegation"];
+type IncomingDamageMultipliers = Pick<
+  ArmorData["passiveEffects"]["incomingDamageMultipliers"],
+  "physical" | "magic" | "fire" | "lightning" | "holy"
+>;
+
 export function calculateArmorStats(armor: ArmorData[]) {
   const slots = new Set(armor.map(({ slot }) => slot));
   if (slots.size !== armor.length) throw new Error("Only one armor piece per slot is allowed");
@@ -20,6 +26,22 @@ export function calculateArmorStats(armor: ArmorData[]) {
     passiveEffects: combinePassiveEffects(armor),
     hasUnresolvedPassiveEffects: armor.some(({ hasUnresolvedPassiveEffects }) => hasUnresolvedPassiveEffects),
   };
+}
+
+export function applyIncomingDamageMultipliers(
+  armorNegation: DamageNegation,
+  incomingDamageMultipliers: IncomingDamageMultipliers,
+): DamageNegation {
+  const multiplierFor = (damageType: keyof DamageNegation) =>
+    incomingDamageMultipliers[
+      damageType === "strike" || damageType === "slash" || damageType === "pierce"
+        ? "physical"
+        : damageType
+    ];
+
+  return mapValues(armorNegation, (damageType, negation) =>
+    round(1 - (1 - negation) * multiplierFor(damageType)),
+  );
 }
 
 function combinePassiveEffects(armor: ArmorData[]) {

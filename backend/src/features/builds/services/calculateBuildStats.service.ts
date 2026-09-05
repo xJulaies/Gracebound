@@ -8,7 +8,7 @@ import { calculateCharacterLevel } from "../domain/calculateCharacterLevel";
 import { applyResourceMultipliers, calculateBaseCharacterResources } from "../domain/calculateCharacterResources";
 import { calculateCharacterProtection } from "../domain/calculateCharacterProtection";
 import { findArmorByIds } from "../../armor/repositories/armor.repository";
-import { calculateArmorStats } from "../domain/calculateArmorStats";
+import { applyIncomingDamageMultipliers, calculateArmorStats } from "../domain/calculateArmorStats";
 import { findWeaponCatalogById, findWeaponCatalogByIds, findWeaponCalculationData } from "../../weapons/repositories/weapon.repository";
 import { calculateEquipmentLoad } from "../domain/calculateEquipmentLoad";
 import { findSpellsByIds } from "../../spells/repositories/spell.repository";
@@ -191,6 +191,10 @@ export async function calculateBuildStatsFromInput(input: CalculateBuildStatsInp
     progression.curves,
   );
   const runeCosts = calculateRuneCosts(characterClass.level, characterLevel);
+  const damageNegation = applyIncomingDamageMultipliers(
+    armorStats.damageNegation,
+    buildStats.incomingDamageMultipliers,
+  );
   const statusResistances = Object.fromEntries(
     Object.entries(protection.statusResistances).map(([name, value]) => [
       name,
@@ -219,6 +223,7 @@ export async function calculateBuildStatsFromInput(input: CalculateBuildStatsInp
       passiveEffects: armorStats.passiveEffects,
       hasUnresolvedPassiveEffects: armorStats.hasUnresolvedPassiveEffects,
     },
+    damageNegation,
     characterClass: {
       id: characterClass.id,
       name: characterClass.name,

@@ -24,6 +24,11 @@ describe("character class selection", () => {
     expect(selection).toEqual({
       characterClassId: "vagabond",
       stats: vagabond.stats,
+      talismanIds: [],
+      armorIds: [],
+      weaponIds: [],
+      greatRuneId: null,
+      crystalTearIds: [],
     });
     expect(selection.stats).not.toBe(vagabond.stats);
   });

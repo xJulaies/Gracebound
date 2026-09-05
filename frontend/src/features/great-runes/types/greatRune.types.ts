@@ -3,6 +3,8 @@ import type { CalculationStatus, CharacterStats } from "../../../shared/types/ga
 export interface GreatRune {
   id: string;
   name: string;
+  summary: string | null;
+  description: string | null;
   iconId: number;
   iconUrl: string;
   activation: "rune-arc" | "not-applicable";

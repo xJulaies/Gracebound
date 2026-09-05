@@ -69,6 +69,26 @@ export interface Build {
 export interface BuildStatsInput {
   characterClassId: string;
   stats: CharacterStats;
+  talismanIds: string[];
+  armorIds: string[];
+  weaponIds: string[];
+  greatRuneId: string | null;
+  crystalTearIds: string[];
+}
+
+export interface EquipmentLoadPreview {
+  currentLoad: number;
+  maxEquipLoad: number;
+  loadRatio: number;
+  loadPercentage: number;
+  category: "light" | "medium" | "heavy" | "overloaded";
+}
+
+export interface ArmorStatsPreview {
+  equipmentWeight: number;
+  poise: number;
+  damageNegation: Record<string, number>;
+  hasUnresolvedPassiveEffects: boolean;
 }
 
 export interface BuildStatsPreview {
@@ -88,4 +108,7 @@ export interface BuildStatsPreview {
   characterLevel: number;
   nextLevelRuneCost: number | null;
   totalRuneCost: number;
+  equipmentLoad: EquipmentLoadPreview;
+  armorStats: ArmorStatsPreview;
+  damageNegation: Record<string, number>;
 }

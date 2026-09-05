@@ -173,6 +173,11 @@ Do not duplicate types unnecessarily.
 
 Frontend-facing API types should represent the backend API contract, not raw ERDB structures.
 
+The spell catalog owns its type, school, and search state in the route. Show
+only schools compatible with the selected Sorcery or Incantation type and clear
+the school when type changes. Use the backend's curated `schools` values; never
+classify spells from partial name matches in the UI.
+
 ---
 
 # React

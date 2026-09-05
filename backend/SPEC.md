@@ -662,8 +662,13 @@ Equipment references should use stable application game-data identifiers.
 
 `GET /api/spells` and `GET /api/spells/:spellId` expose 171 playable
 Regulation-derived base-game spells: 70 sorceries and 101 incantations. The
-list route may filter by `type=sorcery` or `type=incantation`. Entries include
-base FP cost, memory-slot cost, Intelligence/Faith/Arcane requirements, icon,
+list route may filter by `type=sorcery` or `type=incantation`, a curated
+`school`, and a case-insensitive `search` over spell names. Optional `page` and
+`limit` parameters support incremental catalog loading, with the complete
+filtered count exposed through `X-Total-Count`. Results have a stable
+alphabetical order. Entries include a `schools` list because a spell may belong
+to more than one meaningful family, alongside base FP cost, memory-slot cost,
+Intelligence/Faith/Arcane requirements, icon,
 and an explicit `supported` or `catalog-only` calculation status. NPC rows, unused Carian Retaliation
 variants, duplicate Briars casting rows, and DLC IDs are excluded. Death
 Lightning and Night Maiden's Mist use their actual player-facing spell types

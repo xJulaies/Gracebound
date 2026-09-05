@@ -17,7 +17,7 @@ describe("mapBaseGameSpells", () => {
   it("normalizes playable spell selection data", () => {
     expect(mapBaseGameSpells([row(4000, "[Sorcery] Glintstone Pebble")])).toEqual([{
       id: "glintstone-pebble", sourceMagicId: 4000, name: "Glintstone Pebble",
-      type: "sorcery", fpCost: 7, chargedFpCost: null, sustainedFpCost: null, slotsRequired: 1,
+      type: "sorcery", schools: ["glintstone"], fpCost: 7, chargedFpCost: null, sustainedFpCost: null, slotsRequired: 1,
       requirements: { intelligence: 10, faith: 0, arcane: 0 },
       iconId: 4000, calculationStatus: "catalog-only", buffEffect: null, attack: null, chargedAttack: null,
     }]);

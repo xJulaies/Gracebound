@@ -312,6 +312,16 @@ describe("POST /api/builds/calculate-stats", () => {
         damageNegation: { physical: 0.28 },
         hasUnresolvedPassiveEffects: true,
       },
+      damageNegation: {
+        physical: 0.208,
+        strike: 0.208,
+        slash: 0.208,
+        pierce: 0.208,
+        magic: 0.28,
+        fire: 0.28,
+        lightning: 0.28,
+        holy: 0.28,
+      },
       armor: [
         { id: "vagabond-knight-helm", name: "vagabond-knight-helm", slot: "head" },
         { id: "vagabond-knight-armor", name: "vagabond-knight-armor", slot: "body" },
@@ -595,7 +605,7 @@ function spell(
   requirements: SpellData["requirements"] = { intelligence: 10, faith: 0, arcane: 0 },
 ): SpellData {
   return {
-    id, sourceMagicId: id.length, name, type, fpCost: 10, slotsRequired,
+    id, sourceMagicId: id.length, name, type, schools: [], fpCost: 10, slotsRequired,
     requirements, iconId: 1,
     calculationStatus: "catalog-only", buffEffect: null, attack: null,
     chargedFpCost: null, sustainedFpCost: null, chargedAttack: null,

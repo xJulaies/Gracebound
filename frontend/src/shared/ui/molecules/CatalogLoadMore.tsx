@@ -1,28 +1,24 @@
 import { useEffect, useRef } from "react";
 
-interface EquipmentCatalogLoadMoreProps {
-  hasNextPage: boolean;
-  isFetching: boolean;
-  label: string;
-  onLoadMore: () => void;
-}
-
-export function EquipmentCatalogLoadMore({
+export function CatalogLoadMore({
   hasNextPage,
   isFetching,
   label,
   onLoadMore,
-}: EquipmentCatalogLoadMoreProps) {
+}: {
+  hasNextPage: boolean;
+  isFetching: boolean;
+  label: string;
+  onLoadMore: () => void;
+}) {
   const triggerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const trigger = triggerRef.current;
     if (!trigger || !hasNextPage || isFetching) return;
-
     const observer = new IntersectionObserver(([entry]) => {
       if (entry?.isIntersecting) onLoadMore();
     }, { rootMargin: "50%" });
-
     observer.observe(trigger);
     return () => observer.disconnect();
   }, [hasNextPage, isFetching, onLoadMore]);

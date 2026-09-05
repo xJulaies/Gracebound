@@ -5,7 +5,9 @@ export type UiAssetId =
   | "left-weapon-slot"
   | "right-weapon-slot"
   | "talisman-slot"
-  | "armor-category";
+  | "armor-category"
+  | "equipment-category"
+  | "crystal-tear-category";
 
 export function UiAssetImage({
   assetId,

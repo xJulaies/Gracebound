@@ -36,7 +36,22 @@ export function CalculatedStatsPanel({
             <StatRow label="HP" value={preview.resources.maxHp} />
             <StatRow label="FP" value={preview.resources.maxFp} />
             <StatRow label="Stamina" value={preview.resources.maxStamina} />
-            <StatRow label="Equip load" value={preview.resources.maxEquipLoad} />
+            <StatRow label="Maximum equip load" value={preview.resources.maxEquipLoad} />
+          </StatSection>
+          <StatSection heading="Equipment load">
+            <StatRow
+              label="Load"
+              value={`${preview.equipmentLoad.currentLoad} / ${preview.equipmentLoad.maxEquipLoad}`}
+            />
+            <StatRow
+              label="Load ratio"
+              value={`${formatDecimal(preview.equipmentLoad.loadPercentage)}%`}
+            />
+            <StatRow
+              label="Roll category"
+              value={formatLabel(preview.equipmentLoad.category)}
+            />
+            <StatRow label="Poise" value={preview.armorStats.poise} />
           </StatSection>
           <StatSection heading="Attack power">
             <StatRow label="Light attack (R1)" value="—" />
@@ -51,6 +66,15 @@ export function CalculatedStatsPanel({
           <StatSection heading="Defense">
             {Object.entries(preview.defenses).map(([name, value]) => (
               <StatRow key={name} label={formatLabel(name)} value={value} />
+            ))}
+          </StatSection>
+          <StatSection heading="Damage negation">
+            {Object.entries(preview.damageNegation).map(([name, value]) => (
+              <StatRow
+                key={name}
+                label={formatLabel(name)}
+                value={`${formatDecimal(value * 100)}%`}
+              />
             ))}
           </StatSection>
           <StatSection heading="Resistance">
@@ -84,4 +108,8 @@ function StatRow({ label, value }: { label: string; value: number | string }) {
 
 function formatLabel(value: string) {
   return value.replace(/([A-Z])/g, " $1").replace(/^./, (letter) => letter.toUpperCase());
+}
+
+function formatDecimal(value: number) {
+  return Number(value.toFixed(2));
 }

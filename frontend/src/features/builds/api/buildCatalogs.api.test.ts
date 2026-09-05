@@ -35,4 +35,29 @@ describe("build catalog API", () => {
       "http://localhost:3000/api/crystal-tears",
     ]);
   });
+
+  it("resolves Great Rune and Crystal Tear icon paths against the backend", async () => {
+    const fetchMock = vi.fn()
+      .mockResolvedValueOnce(new Response(JSON.stringify({
+        status: 200,
+        message: "Great Runes found",
+        data: [{ id: "godricks-great-rune", iconUrl: "/api/assets/icons/3201" }],
+      }), { status: 200, headers: { "Content-Type": "application/json" } }))
+      .mockResolvedValueOnce(new Response(JSON.stringify({
+        status: 200,
+        message: "Crystal Tears found",
+        data: [{ id: "strength-knot-crystal-tear", iconUrl: "/api/assets/icons/423" }],
+      }), { status: 200, headers: { "Content-Type": "application/json" } }));
+    vi.stubGlobal("fetch", fetchMock);
+
+    const [greatRunes, crystalTears] = await Promise.all([
+      getGreatRunes(),
+      getCrystalTears(),
+    ]);
+
+    expect(greatRunes.data[0]?.iconUrl)
+      .toBe("http://localhost:3000/api/assets/icons/3201");
+    expect(crystalTears.data[0]?.iconUrl)
+      .toBe("http://localhost:3000/api/assets/icons/423");
+  });
 });

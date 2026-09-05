@@ -287,7 +287,7 @@ describe("POST /api/damage/calculate spell damage", () => {
 function glintstonePebble(): SpellData {
   return {
     id: "glintstone-pebble", sourceMagicId: 4000, name: "Glintstone Pebble",
-    type: "sorcery", fpCost: 7, chargedFpCost: null, sustainedFpCost: null, slotsRequired: 1,
+    type: "sorcery", schools: ["glintstone"], fpCost: 7, chargedFpCost: null, sustainedFpCost: null, slotsRequired: 1,
     requirements: { intelligence: 10, faith: 0, arcane: 0 }, iconId: 4000,
     calculationStatus: "supported",
     buffEffect: null,

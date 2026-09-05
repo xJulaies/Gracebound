@@ -8,6 +8,7 @@ export function mapSpellResponse(spell: SpellRecord) {
     summary: spell.summary ?? null,
     description: spell.description ?? null,
     type: spell.type,
+    schools: spell.schools ?? [],
     fpCost: spell.fpCost,
     chargedFpCost: spell.chargedFpCost,
     sustainedFpCost: spell.sustainedFpCost,

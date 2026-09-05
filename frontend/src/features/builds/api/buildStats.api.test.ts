@@ -26,6 +26,11 @@ describe("calculateBuildStats", () => {
         faith: 9,
         arcane: 7,
       },
+      talismanIds: ["axe-talisman"],
+      armorIds: ["vagabond-knight-helm"],
+      weaponIds: ["longsword"],
+      greatRuneId: "godricks-great-rune",
+      crystalTearIds: ["strength-knot-crystal-tear"],
     };
 
     await calculateBuildStats(input);

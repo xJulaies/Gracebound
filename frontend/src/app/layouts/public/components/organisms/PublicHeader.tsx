@@ -11,7 +11,7 @@ export function PublicHeader() {
 
   return (
     <header className="border-b border-border bg-surface">
-      <div className="app-shell flex min-h-20 items-center justify-between gap-5 py-3">
+      <div className="app-shell flex min-h-20 items-center justify-between gap-2 py-3 sm:gap-4">
         <BrandLink />
         <MainNavigation />
         <div className="flex items-center gap-2">
