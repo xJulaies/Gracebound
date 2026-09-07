@@ -27,6 +27,9 @@ const initialInput: BuildStatsInput = {
   weaponIds: [],
   greatRuneId: null,
   crystalTearIds: [],
+  memoryStoneCount: 0,
+  spellIds: [],
+  catalyst: null,
 };
 
 function createWrapper() {

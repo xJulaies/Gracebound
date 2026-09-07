@@ -2,6 +2,7 @@ export interface WeaponVariant {
   id: string;
   affinity: string;
   maxUpgradeLevel: number;
+  canApplyWeaponBuff?: boolean;
 }
 
 export interface WeaponAttack {

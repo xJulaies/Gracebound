@@ -1530,6 +1530,11 @@ Required:
 - protect secrets
 - avoid leaking internal server details
 - safely handle user-generated content
+- accept only an exact CORS origin without paths or trailing slashes
+- require HTTPS for the frontend origin and encrypted MongoDB transport in production
+- omit exception messages, stacks, and request data from production error logs
+- configure trusted proxies and HTTPS redirects for the concrete deployment topology
+- use least-privilege MongoDB credentials and an appropriately restricted Atlas network allowlist
 
 ---
 

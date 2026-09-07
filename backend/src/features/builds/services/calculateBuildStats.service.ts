@@ -129,8 +129,10 @@ export async function calculateBuildStatsFromInput(input: CalculateBuildStatsInp
       throw createError(400, "Catalyst variant does not belong to selected weapon");
     }
     const selectedSpellTypes = new Set(selectedSpells.map(({ type }) => type));
-    if ([...selectedSpellTypes].some((type) => !catalystCatalog.castingTypes.includes(type))) {
-      throw createError(400, "Catalyst cannot cast every selected spell");
+    if (selectedSpellTypes.size > 0 && [...selectedSpellTypes].every(
+      (type) => !catalystCatalog.castingTypes.includes(type),
+    )) {
+      throw createError(400, "Catalyst cannot cast any selected spell");
     }
     const { weapon, dataSet } = catalystData;
     if (input.catalyst.upgradeLevel > weapon.maxUpgradeLevel) {

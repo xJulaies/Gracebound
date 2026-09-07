@@ -7,7 +7,7 @@ describe("parseEnvironment", () => {
       NODE_ENV: "production",
       PORT: "4000",
       CORS_ORIGIN: "https://gracebound.example",
-      MONGODB_URL: "mongodb://127.0.0.1:27017/gracebound",
+      MONGODB_URL: "mongodb+srv://cluster.example/gracebound",
       CLERK_PUBLISHABLE_KEY: "pk_test_publishable",
       CLERK_SECRET_KEY: "sk_test_secret",
       SUPPORTED_GAME_VERSION: "1.10.0",
@@ -18,7 +18,7 @@ describe("parseEnvironment", () => {
       NODE_ENV: "production",
       PORT: 4000,
       CORS_ORIGIN: "https://gracebound.example",
-      MONGODB_URL: "mongodb://127.0.0.1:27017/gracebound",
+      MONGODB_URL: "mongodb+srv://cluster.example/gracebound",
       CLERK_PUBLISHABLE_KEY: "pk_test_publishable",
       CLERK_SECRET_KEY: "sk_test_secret",
       SUPPORTED_GAME_VERSION: "1.10.0",
@@ -83,6 +83,44 @@ describe("parseEnvironment", () => {
         CLERK_SECRET_KEY: "sk_test_secret",
       }),
     ).toThrow("Invalid environment configuration: CORS_ORIGIN");
+  });
+
+  it.each([
+    "https://gracebound.example/",
+    "https://gracebound.example/app",
+  ])("rejects a CORS origin that contains more than the origin: %s", (origin) => {
+    expect(() =>
+      parseEnvironment({
+        CORS_ORIGIN: origin,
+        MONGODB_URL: "mongodb://127.0.0.1:27017/gracebound",
+        CLERK_PUBLISHABLE_KEY: "pk_test_publishable",
+        CLERK_SECRET_KEY: "sk_test_secret",
+      }),
+    ).toThrow("Invalid environment configuration: CORS_ORIGIN");
+  });
+
+  it("requires HTTPS for the production CORS origin", () => {
+    expect(() =>
+      parseEnvironment({
+        NODE_ENV: "production",
+        CORS_ORIGIN: "http://gracebound.example",
+        MONGODB_URL: "mongodb+srv://cluster.example/gracebound",
+        CLERK_PUBLISHABLE_KEY: "pk_test_publishable",
+        CLERK_SECRET_KEY: "sk_test_secret",
+      }),
+    ).toThrow("Invalid environment configuration: CORS_ORIGIN");
+  });
+
+  it("requires MongoDB transport encryption in production", () => {
+    expect(() =>
+      parseEnvironment({
+        NODE_ENV: "production",
+        CORS_ORIGIN: "https://gracebound.example",
+        MONGODB_URL: "mongodb://database.example:27017/gracebound",
+        CLERK_PUBLISHABLE_KEY: "pk_test_publishable",
+        CLERK_SECRET_KEY: "sk_test_secret",
+      }),
+    ).toThrow("Invalid environment configuration: MONGODB_URL");
   });
 
   it("rejects an invalid supported game version", () => {

@@ -5,6 +5,7 @@ import type { Attributes } from "../domain/weapon.types";
 export interface WeaponVariantPreviewData {
   maxUpgradeLevel: number;
   requirements: Attributes;
+  canApplyWeaponBuff: boolean;
 }
 
 export function mapWeaponResponse(
@@ -40,6 +41,7 @@ export function mapWeaponResponse(
       id,
       affinity,
       maxUpgradeLevel: getUpgradeLevel(id, variantData),
+      canApplyWeaponBuff: getVariantData(id, variantData).canApplyWeaponBuff,
     })),
     attacks: record.attacks.map(({ id, name }) => ({ id, name })),
     skills: record.skills.map(({ id, name, summary, description, attacks }) => ({
@@ -66,4 +68,15 @@ function getUpgradeLevel(
     throw new Error(`Missing upgrade data for weapon variant ${variantId}`);
   }
   return maxUpgradeLevel;
+}
+
+function getVariantData(
+  variantId: string,
+  variantData: ReadonlyMap<string, WeaponVariantPreviewData>,
+) {
+  const data = variantData.get(variantId);
+  if (!data) {
+    throw new Error(`Missing upgrade data for weapon variant ${variantId}`);
+  }
+  return data;
 }

@@ -34,7 +34,7 @@ export const calculateBuildStatsSchema = z.strictObject({
     .default([]),
   spellIds: z
     .array(z.string().regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/))
-    .max(10)
+    .max(12)
     .refine((ids) => new Set(ids).size === ids.length, {
       message: "Spell IDs must be unique",
     })

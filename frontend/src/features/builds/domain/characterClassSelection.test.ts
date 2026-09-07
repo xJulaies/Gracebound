@@ -29,6 +29,9 @@ describe("character class selection", () => {
       weaponIds: [],
       greatRuneId: null,
       crystalTearIds: [],
+      memoryStoneCount: 0,
+      spellIds: [],
+      catalyst: null,
     });
     expect(selection.stats).not.toBe(vagabond.stats);
   });

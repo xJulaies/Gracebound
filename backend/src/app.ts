@@ -1,5 +1,6 @@
 import cors from "cors";
 import express, { type Request, type Response } from "express";
+import helmet from "helmet";
 import { settings } from "./config/settings";
 import { createBuildRouter } from "./features/builds/routes/build.routes";
 import { createAshOfWarRouter } from "./features/ashesOfWar/routes/ashOfWar.routes";
@@ -20,24 +21,45 @@ import type { Authentication } from "./shared/auth/authentication.types";
 import { createAnswer } from "./shared/http/createAnswer";
 import { errorHandler } from "./shared/middleware/errorHandler";
 import { notFoundHandler } from "./shared/middleware/notFoundHandler";
+import {
+  createApiRateLimiter,
+  createCalculationRateLimiter,
+} from "./shared/middleware/rateLimiters";
+
+const JSON_BODY_LIMIT = "32kb";
 
 export function createApp(authentication: Authentication) {
   const app = express();
 
+  app.use(helmet({
+    contentSecurityPolicy: false,
+    crossOriginResourcePolicy: { policy: "cross-origin" },
+    referrerPolicy: { policy: "strict-origin-when-cross-origin" },
+  }));
   app.use(authentication.authenticationMiddleware);
   app.use(
     cors({
-      origin: settings.CORS_ORIGIN,
+      origin(requestOrigin, callback) {
+        const isAllowed = requestOrigin === undefined
+          || requestOrigin === settings.CORS_ORIGIN;
+
+        callback(null, isAllowed);
+      },
       exposedHeaders: ["X-Total-Count"],
     }),
   );
-  app.use(express.json());
+  app.use("/api", createApiRateLimiter());
+  app.use(express.json({ limit: JSON_BODY_LIMIT }));
 
   app.get("/api/health", (_req: Request, res: Response) => {
     return res.status(200).json(createAnswer(200, "API is healthy", []));
   });
 
-  app.use("/api", createBuildRouter(authentication.getAuthenticatedUserId));
+  const calculationRateLimiter = createCalculationRateLimiter();
+  app.use("/api", createBuildRouter(
+    authentication.getAuthenticatedUserId,
+    calculationRateLimiter,
+  ));
   app.use("/api", createIconAssetRouter());
   app.use("/api", createCharacterClassImageAssetRouter());
   app.use("/api", createBrandingImageAssetRouter());
@@ -49,7 +71,7 @@ export function createApp(authentication: Authentication) {
   app.use("/api", createSpellRouter());
   app.use("/api", createAshOfWarRouter());
   app.use("/api", createBossRouter());
-  app.use("/api", createDamageRouter());
+  app.use("/api", createDamageRouter(calculationRateLimiter));
   app.use("/api", createTalismanRouter());
   app.use("/api", createWeaponRouter());
   app.use(notFoundHandler);

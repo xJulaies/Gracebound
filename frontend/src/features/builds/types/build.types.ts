@@ -74,6 +74,9 @@ export interface BuildStatsInput {
   weaponIds: string[];
   greatRuneId: string | null;
   crystalTearIds: string[];
+  memoryStoneCount: number;
+  spellIds: string[];
+  catalyst: CatalystSelection | null;
 }
 
 export interface EquipmentLoadPreview {
@@ -111,4 +114,23 @@ export interface BuildStatsPreview {
   equipmentLoad: EquipmentLoadPreview;
   armorStats: ArmorStatsPreview;
   damageNegation: Record<string, number>;
+  memorySlots: {
+    availableSlots: number;
+    usedSlots: number;
+    remainingSlots: number;
+  };
+  catalyst: (CatalystSelection & {
+    name: string;
+    castingTypes: Array<"sorcery" | "incantation">;
+    scaling: DamageTypes;
+  }) | null;
+  spells: Array<{
+    id: string;
+    name: string;
+    type: "sorcery" | "incantation";
+    fpCost: number;
+    slotsRequired: number;
+    requirements: Pick<CharacterStats, "intelligence" | "faith" | "arcane">;
+    calculationStatus: "catalog-only" | "supported";
+  }>;
 }

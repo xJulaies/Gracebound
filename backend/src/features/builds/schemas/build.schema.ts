@@ -120,7 +120,7 @@ export const createBuildSchema = z.strictObject({
   stats: statsSchema,
   memoryStoneCount: z.number().int().min(0).max(8).default(0),
   spellIds: z.array(equipmentIdSchema)
-    .max(10)
+    .max(12)
     .refine((ids) => new Set(ids).size === ids.length, { message: "Spell IDs must be unique" })
     .default([]),
   equipment: equipmentSchema.default({
@@ -145,7 +145,7 @@ export const updateBuildSchema = z
     stats: statsSchema.optional(),
     memoryStoneCount: z.number().int().min(0).max(8).optional(),
     spellIds: z.array(equipmentIdSchema)
-      .max(10)
+      .max(12)
       .refine((ids) => new Set(ids).size === ids.length, { message: "Spell IDs must be unique" })
       .optional(),
     equipment: equipmentSchema.optional(),

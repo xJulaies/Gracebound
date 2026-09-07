@@ -1,4 +1,5 @@
 import { useRef, type ReactNode } from "react";
+import { createPortal } from "react-dom";
 import { useModalDialog } from "../../../../shared/hooks/useModalDialog";
 import { PickerSearchInput } from "../atoms/PickerSearchInput";
 
@@ -33,7 +34,7 @@ export function ItemPickerLayout({
   const searchInputRef = useRef<HTMLInputElement>(null);
   useModalDialog({ dialogRef, initialFocusRef: searchInputRef, onClose });
 
-  return (
+  return createPortal(
     <div className="fixed inset-0 z-50 bg-background/75" role="presentation">
       <button
         aria-label="Close item picker"
@@ -79,6 +80,7 @@ export function ItemPickerLayout({
           </div>
         </section>
       </div>
-    </div>
+    </div>,
+    document.body,
   );
 }

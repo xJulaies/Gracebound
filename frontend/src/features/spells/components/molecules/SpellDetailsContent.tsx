@@ -1,10 +1,8 @@
 import type { Spell } from "../../types/spell.types";
 import { formatSpellLabel } from "../../domain/formatSpellLabel";
+import { AttributeRequirements } from "../../../../shared/ui/molecules/AttributeRequirements";
 
 export function SpellDetailsContent({ spell }: { spell: Spell }) {
-  const requirements = Object.entries(spell.requirements)
-    .filter(([, value]) => value > 0);
-
   return (
     <div className="grid gap-5">
       <section aria-labelledby="spell-cost-heading">
@@ -22,13 +20,7 @@ export function SpellDetailsContent({ spell }: { spell: Spell }) {
       </section>
       <section aria-labelledby="spell-requirements-heading">
         <h4 className="mb-2 text-lg" id="spell-requirements-heading">Required attributes</h4>
-        {requirements.length > 0 ? (
-          <dl className="m-0 grid grid-cols-2 gap-2 text-sm">
-            {requirements.map(([attribute, value]) => (
-              <Detail key={attribute} label={formatSpellLabel(attribute)} value={value} />
-            ))}
-          </dl>
-        ) : <p className="mb-0 text-sm text-foreground-muted">No attribute requirements.</p>}
+        <AttributeRequirements requirements={spell.requirements} />
       </section>
       <section aria-labelledby="spell-support-heading">
         <h4 className="mb-2 text-lg" id="spell-support-heading">Gracebound support</h4>

@@ -95,6 +95,7 @@ export function WeaponInspector({
                       id: ashOfWar.id,
                       name: ashOfWar.name,
                       iconUrl: ashOfWar.iconUrl,
+                      buffEffect: ashOfWar.buffEffect,
                     }
                   : null,
               })}

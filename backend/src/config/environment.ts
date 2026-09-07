@@ -16,7 +16,46 @@ const environmentSchema = z.object({
     .regex(/^\d+\.\d+\.\d+$/)
     .default("1.17.0"),
   ERDB_BASE_URL: z.url().default("http://127.0.0.1:8107/v1"),
+}).superRefine((environment, context) => {
+  if (!URL.canParse(environment.CORS_ORIGIN)) {
+    return;
+  }
+
+  const corsOrigin = new URL(environment.CORS_ORIGIN);
+
+  if (corsOrigin.origin !== environment.CORS_ORIGIN) {
+    context.addIssue({
+      code: "custom",
+      path: ["CORS_ORIGIN"],
+      message: "Must contain only an origin without a path or trailing slash",
+    });
+  }
+
+  if (environment.NODE_ENV !== "production") {
+    return;
+  }
+
+  if (corsOrigin.protocol !== "https:") {
+    context.addIssue({
+      code: "custom",
+      path: ["CORS_ORIGIN"],
+      message: "Must use HTTPS in production",
+    });
+  }
+
+  if (!usesEncryptedMongoConnection(environment.MONGODB_URL)) {
+    context.addIssue({
+      code: "custom",
+      path: ["MONGODB_URL"],
+      message: "Must use an encrypted MongoDB connection in production",
+    });
+  }
 });
+
+function usesEncryptedMongoConnection(connectionUrl: string): boolean {
+  return connectionUrl.startsWith("mongodb+srv://")
+    || /[?&](?:tls|ssl)=true(?:&|$)/i.test(connectionUrl);
+}
 
 export type Environment = z.infer<typeof environmentSchema>;
 

@@ -1080,6 +1080,10 @@ Security requirements:
 - protect environment secrets
 - avoid leaking internal errors
 - safely handle user-generated text
+- require an exact HTTPS frontend origin and encrypted MongoDB transport in production
+- keep production error logs free of exception messages, stacks, and request data
+- configure proxy trust only for the known production hosting topology; never enable it blindly
+- use a least-privilege MongoDB application user and restrict Atlas network access outside code
 
 ---
 

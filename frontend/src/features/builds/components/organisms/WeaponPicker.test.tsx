@@ -1,12 +1,12 @@
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { describe, expect, it, vi } from "vitest";
-import { useWeaponsQuery } from "../../../weapons/hooks/useWeaponsQuery";
+import { useInfiniteWeaponsQuery } from "../../../weapons/hooks/useWeaponsQuery";
 import type { Weapon } from "../../../weapons/types/weapon.types";
 import { WeaponPicker } from "./WeaponPicker";
 
 vi.mock("../../../weapons/hooks/useWeaponsQuery", () => ({
-  useWeaponsQuery: vi.fn(),
+  useInfiniteWeaponsQuery: vi.fn(),
 }));
 
 const longsword: Weapon = {
@@ -39,11 +39,12 @@ const longsword: Weapon = {
 
 describe("WeaponPicker", () => {
   it("shows weapons and returns the selected weapon", async () => {
-    vi.mocked(useWeaponsQuery).mockReturnValue({
+    vi.mocked(useInfiniteWeaponsQuery).mockReturnValue({
       isPending: false,
       isError: false,
-      data: { status: 200, message: "Weapons found", data: [longsword] },
-    } as ReturnType<typeof useWeaponsQuery>);
+      data: { pages: [{ status: 200, message: "Weapons found", data: [longsword] }] },
+      hasNextPage: false,
+    } as unknown as ReturnType<typeof useInfiniteWeaponsQuery>);
     const onSelect = vi.fn();
     const user = userEvent.setup();
 
@@ -61,10 +62,11 @@ describe("WeaponPicker", () => {
   });
 
   it("closes with Escape", async () => {
-    vi.mocked(useWeaponsQuery).mockReturnValue({
+    vi.mocked(useInfiniteWeaponsQuery).mockReturnValue({
       isPending: true,
       isError: false,
-    } as ReturnType<typeof useWeaponsQuery>);
+      hasNextPage: false,
+    } as unknown as ReturnType<typeof useInfiniteWeaponsQuery>);
     const onClose = vi.fn();
     const user = userEvent.setup();
 
@@ -81,11 +83,12 @@ describe("WeaponPicker", () => {
   });
 
   it("previews weapon details without selecting the weapon", async () => {
-    vi.mocked(useWeaponsQuery).mockReturnValue({
+    vi.mocked(useInfiniteWeaponsQuery).mockReturnValue({
       isPending: false,
       isError: false,
-      data: { status: 200, message: "Weapons found", data: [longsword] },
-    } as ReturnType<typeof useWeaponsQuery>);
+      data: { pages: [{ status: 200, message: "Weapons found", data: [longsword] }] },
+      hasNextPage: false,
+    } as unknown as ReturnType<typeof useInfiniteWeaponsQuery>);
     const onSelect = vi.fn();
     const user = userEvent.setup();
 

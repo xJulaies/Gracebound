@@ -8,6 +8,10 @@ export interface AshOfWar {
   compatibleWeaponTypes: string[];
   compatibleAffinities: string[];
   calculationStatus: "supported" | "catalog-only";
+  buffEffect: {
+    durationSeconds: number;
+    consumption: "duration" | "next-hit";
+  } | null;
   attacks: Array<{ id: string; name: string; fpCost: number }>;
   gameVersion: string;
 }

@@ -5,10 +5,13 @@ import type { CharacterClass } from "../../../character-classes/types/characterC
 import type { Weapon } from "../../../weapons/types/weapon.types";
 import type { GreatRune } from "../../../great-runes/types/greatRune.types";
 import type { CrystalTear } from "../../../crystal-tears/types/crystalTear.types";
+import type { Spell } from "../../../spells/types/spell.types";
 import { BuildEditorWorkspace } from "./BuildEditorWorkspace";
 
-const { useBuildStatsPreviewQueryMock } = vi.hoisted(() => ({
+const { useBuildStatsPreviewQueryMock, useWeaponOffensePreviewQueryMock, useSpellOffensePreviewQueryMock } = vi.hoisted(() => ({
   useBuildStatsPreviewQueryMock: vi.fn(),
+  useWeaponOffensePreviewQueryMock: vi.fn(),
+  useSpellOffensePreviewQueryMock: vi.fn(),
 }));
 
 const vagabond: CharacterClass = {
@@ -48,7 +51,29 @@ vi.mock("../../hooks/useBuildStatsPreviewQuery", () => ({
   useBuildStatsPreviewQuery: useBuildStatsPreviewQueryMock,
 }));
 
+vi.mock("../../hooks/useWeaponOffensePreviewQuery", () => ({
+  useWeaponOffensePreviewQuery: useWeaponOffensePreviewQueryMock,
+}));
+
+vi.mock("../../hooks/useSpellOffensePreviewQuery", () => ({
+  useSpellOffensePreviewQuery: useSpellOffensePreviewQueryMock,
+}));
+
 useBuildStatsPreviewQueryMock.mockReturnValue({
+  data: undefined,
+  isError: false,
+  isFetching: false,
+  isPending: false,
+});
+
+useWeaponOffensePreviewQueryMock.mockReturnValue({
+  data: undefined,
+  isError: false,
+  isFetching: false,
+  isPending: false,
+});
+
+useSpellOffensePreviewQueryMock.mockReturnValue({
   data: undefined,
   isError: false,
   isFetching: false,
@@ -85,6 +110,32 @@ vi.mock("./WeaponPicker", () => ({
       >
         Select Longsword
       </button>
+      <button
+        onClick={() => onSelect({
+          id: "academy-glintstone-staff",
+          name: "Academy Glintstone Staff",
+          summary: null,
+          description: null,
+          categoryId: 1,
+          weaponTypeId: 1,
+          weaponType: "glintstone-staff",
+          weight: 3,
+          iconId: 101,
+          iconUrl: "/staff.webp",
+          swordArtId: null,
+          canChangeAffinity: false,
+          castingTypes: ["sorcery"],
+          requirements: { strength: 6, dexterity: 0, intelligence: 28, faith: 0, arcane: 0 },
+          statusBuildup: null,
+          variants: [{ id: "academy-glintstone-staff", affinity: "unique", maxUpgradeLevel: 25 }],
+          attacks: [],
+          skills: [],
+          gameVersion: "1.17.0",
+        })}
+        type="button"
+      >
+        Select Academy Glintstone Staff
+      </button>
     </div>
   ),
 }));
@@ -105,7 +156,10 @@ vi.mock("./GreatRunePicker", () => ({
         iconUrl: "/great-rune.webp",
         activation: "rune-arc",
         calculationStatus: "supported",
-        effects: null,
+        effects: {
+          attributeBonuses: { vigor: 5, mind: 5, endurance: 5, strength: 5, dexterity: 5, intelligence: 5, faith: 5, arcane: 5 },
+          resourceMultipliers: { maxHp: 1, maxFp: 1, maxStamina: 1 },
+        },
         limitations: [],
         gameVersion: "1.17.0",
       })}
@@ -127,7 +181,20 @@ vi.mock("./CrystalTearPicker", () => ({
         iconId: 2,
         iconUrl: "/crystal-tear.webp",
         calculationStatus: "supported",
-        effects: null,
+        effects: {
+          durationSeconds: 180,
+          attributeBonuses: { vigor: 0, mind: 0, endurance: 0, strength: 10, dexterity: 0, intelligence: 0, faith: 0, arcane: 0 },
+          resourceMultipliers: { maxHp: 1, maxStamina: 1, maxEquipLoad: 1 },
+          outgoingDamageMultipliers: { physical: 1, magic: 1, fire: 1, lightning: 1, holy: 1 },
+          chargedAttackDamageMultipliers: { physical: 1, magic: 1, fire: 1, lightning: 1, holy: 1 },
+          incomingDamageMultipliers: { physical: 1, magic: 1, fire: 1, lightning: 1, holy: 1 },
+          fpCostMultipliers: { skill: 1, sorcery: 1, incantation: 1 },
+          poiseDamageMultiplier: 1,
+          staminaRecoverySpeedBonus: 0,
+          statusResistanceBonuses: { poison: 0, rot: 0, bleed: 0, frost: 0, sleep: 0, madness: 0, deathBlight: 0 },
+          cleansesStatusBuildup: [],
+          recovery: { instantMaxHpPercent: 0, instantMaxFpPercent: 0, hpPerSecond: 0, hpRegenerationDurationSeconds: 0 },
+        },
         limitations: [],
         gameVersion: "1.17.0",
       })}
@@ -135,6 +202,39 @@ vi.mock("./CrystalTearPicker", () => ({
     >
       Select Strength-knot Crystal Tear
     </button>
+  ),
+}));
+
+vi.mock("./SpellPicker", () => ({
+  SpellPicker: ({ onSelect }: { onSelect: (spell: Spell) => void }) => (
+    <div>
+      <p>Spell picker open</p>
+      <button
+        onClick={() => onSelect({
+          id: "glintstone-pebble",
+          name: "Glintstone Pebble",
+          summary: null,
+          description: null,
+          type: "sorcery",
+          schools: ["glintstone"],
+          fpCost: 7,
+          chargedFpCost: null,
+          sustainedFpCost: null,
+          slotsRequired: 1,
+          requirements: { intelligence: 10, faith: 0, arcane: 0 },
+          iconId: 3,
+          iconUrl: "/spell.webp",
+          calculationStatus: "supported",
+          buffEffect: null,
+          attack: null,
+          chargedAttack: null,
+          gameVersion: "1.17.0",
+        })}
+        type="button"
+      >
+        Select Glintstone Pebble
+      </button>
+    </div>
   ),
 }));
 
@@ -271,7 +371,8 @@ describe("BuildEditorWorkspace", () => {
     await user.click(screen.getByRole("button", { name: "Select Longsword" }));
 
     expect(screen.queryByText("Weapon picker open")).not.toBeInTheDocument();
-    expect(screen.getAllByText("Standard Longsword +0")).toHaveLength(2);
+    expect(screen.getByText("Standard Longsword +0")).toBeInTheDocument();
+    expect(screen.getByText("Active armament: Standard Longsword +0")).toBeInTheDocument();
     await user.click(screen.getByRole("button", {
       name: "Right hand 1: Standard Longsword +0. Change selection",
     }));
@@ -349,6 +450,8 @@ describe("BuildEditorWorkspace", () => {
     await user.click(screen.getByRole("button", { name: "Select Godrick's Great Rune" }));
     await user.click(screen.getByRole("button", { name: "Crystal Tear 1: Empty. Select item" }));
     await user.click(screen.getByRole("button", { name: "Select Strength-knot Crystal Tear" }));
+    await user.click(screen.getByRole("button", { name: "Activate Great Rune" }));
+    await user.click(screen.getByRole("button", { name: "Activate Wondrous Physick" }));
 
     expect(screen.getByRole("button", {
       name: "Great Rune: Godrick's Great Rune. Change selection",
@@ -362,5 +465,73 @@ describe("BuildEditorWorkspace", () => {
         crystalTearIds: ["strength-knot-crystal-tear"],
       }),
     ));
+  });
+
+  it("selects and replaces a spell through its memory slot", async () => {
+    const user = userEvent.setup();
+    useBuildStatsPreviewQueryMock.mockClear();
+    render(<BuildEditorWorkspace />);
+
+    await user.click(screen.getByRole("button", { name: "Choose Vagabond" }));
+    await user.click(screen.getByRole("button", {
+      name: "Spell slot 1: Empty. Select spell",
+    }));
+    await user.click(screen.getByRole("button", { name: "Select Glintstone Pebble" }));
+
+    const occupiedSlot = screen.getByRole("button", {
+      name: "Spell slot 1: Glintstone Pebble. Change selection",
+    });
+    expect(occupiedSlot).toBeInTheDocument();
+    await waitFor(() => expect(useBuildStatsPreviewQueryMock).toHaveBeenLastCalledWith(
+      expect.objectContaining({ spellIds: ["glintstone-pebble"] }),
+    ));
+    await user.click(occupiedSlot);
+    expect(screen.getByText("Spell picker open")).toBeInTheDocument();
+  });
+
+  it("uses the selected casting armament as the active catalyst", async () => {
+    const user = userEvent.setup();
+    useBuildStatsPreviewQueryMock.mockClear();
+    render(<BuildEditorWorkspace />);
+
+    await user.click(screen.getByRole("button", { name: "Choose Vagabond" }));
+    await user.click(screen.getByRole("button", { name: "Left hand 1: Empty. Select item" }));
+    await user.click(screen.getByRole("button", { name: "Select Academy Glintstone Staff" }));
+
+    const catalystSlot = screen.getByRole("button", {
+      name: /Left hand 1: Unique Academy Glintstone Staff \+0\. Change selection\. Catalyst active/,
+    });
+    await user.hover(catalystSlot);
+    expect(screen.getByText("Requires Intelligence 28 · current 9")).toBeInTheDocument();
+
+    await waitFor(() => expect(useBuildStatsPreviewQueryMock).toHaveBeenLastCalledWith(
+      expect.objectContaining({
+        catalyst: {
+          weaponId: "academy-glintstone-staff",
+          variantId: "academy-glintstone-staff",
+          upgradeLevel: 0,
+        },
+      }),
+    ));
+  });
+
+  it("reveals additional spell slots from the top as Memory Stones are added", async () => {
+    const user = userEvent.setup();
+    render(<BuildEditorWorkspace />);
+
+    await user.click(screen.getByRole("button", { name: "Choose Vagabond" }));
+
+    expect(screen.getByRole("button", {
+      name: "Spell slot 2: Empty. Select spell",
+    })).toBeInTheDocument();
+    expect(screen.queryByRole("button", {
+      name: "Spell slot 3: Empty. Select spell",
+    })).not.toBeInTheDocument();
+
+    await user.click(screen.getByRole("button", { name: "Add Memory Stone" }));
+
+    expect(screen.getByRole("button", {
+      name: "Spell slot 3: Empty. Select spell",
+    })).toBeInTheDocument();
   });
 });

@@ -9,6 +9,10 @@ export interface EquippedWeapon {
     id: string;
     name: string;
     iconUrl: string;
+    buffEffect: {
+      durationSeconds: number;
+      consumption: "duration" | "next-hit";
+    } | null;
   } | null;
 }
 
@@ -23,4 +27,17 @@ export type WeaponEditorSlotId =
 export interface WeaponEditorFocus {
   kind: "weapon";
   slotId: WeaponEditorSlotId;
+}
+
+export interface SpellEditorFocus {
+  kind: "spell";
+  slotIndex: number;
+}
+
+export type BuildEditorFocus = WeaponEditorFocus | SpellEditorFocus;
+
+export interface ActiveWeaponBuff {
+  spellId: string;
+  targetSlotId: WeaponEditorSlotId;
+  catalystSlotId: WeaponEditorSlotId;
 }

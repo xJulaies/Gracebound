@@ -23,6 +23,33 @@ describe("GET /api/health", () => {
       data: [],
     });
   });
+
+  it("adds secure HTTP response headers", async () => {
+    const response = await request(app).get("/api/health");
+
+    expect(response.headers["x-content-type-options"]).toBe("nosniff");
+    expect(response.headers["referrer-policy"]).toBe("strict-origin-when-cross-origin");
+    expect(response.headers["cross-origin-resource-policy"]).toBe("cross-origin");
+    expect(response.headers["content-security-policy"]).toBeUndefined();
+  });
+
+  it("allows the configured frontend origin", async () => {
+    const response = await request(app)
+      .get("/api/health")
+      .set("Origin", "http://localhost:5173");
+
+    expect(response.headers["access-control-allow-origin"]).toBe(
+      "http://localhost:5173",
+    );
+  });
+
+  it("does not grant CORS access to another origin", async () => {
+    const response = await request(app)
+      .get("/api/health")
+      .set("Origin", "https://untrusted.example");
+
+    expect(response.headers["access-control-allow-origin"]).toBeUndefined();
+  });
 });
 
 describe("unknown routes", () => {
@@ -33,6 +60,21 @@ describe("unknown routes", () => {
     expect(response.body).toEqual({
       status: 404,
       message: "Route not found",
+      data: [],
+    });
+  });
+});
+
+describe("JSON request limits", () => {
+  it("rejects oversized JSON bodies with a safe error response", async () => {
+    const response = await request(app)
+      .post("/api/builds/calculate-stats")
+      .send({ payload: "x".repeat(33 * 1024) });
+
+    expect(response.status).toBe(413);
+    expect(response.body).toEqual({
+      status: 413,
+      message: "Request body is too large",
       data: [],
     });
   });

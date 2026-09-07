@@ -12,6 +12,9 @@ export function createCharacterClassSelection(
     weaponIds: [],
     greatRuneId: null,
     crystalTearIds: [],
+    memoryStoneCount: 0,
+    spellIds: [],
+    catalyst: null,
   };
 }
 
@@ -26,6 +29,9 @@ export function changeCharacterClass(
     weaponIds: [],
     greatRuneId: null,
     crystalTearIds: [],
+    memoryStoneCount: 0,
+    spellIds: [],
+    catalyst: null,
     stats: {
       vigor: Math.max(currentStats.vigor, characterClass.stats.vigor),
       mind: Math.max(currentStats.mind, characterClass.stats.mind),

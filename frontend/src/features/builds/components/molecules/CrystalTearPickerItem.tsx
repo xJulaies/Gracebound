@@ -12,9 +12,9 @@ export function CrystalTearPickerItem({
 }) {
   return (
     <ItemPickerResult
-      badge={crystalTear.calculationStatus === "supported"
-        ? <span className="mt-1 block text-xs text-accent">Calculation supported</span>
-        : undefined}
+      badge={<span className={`mt-1 block text-xs ${crystalTear.calculationStatus === "supported" ? "text-accent" : "text-foreground-muted"}`}>
+        {crystalTear.calculationStatus === "supported" ? "Calculation supported" : "Catalog only"}
+      </span>}
       iconUrl={crystalTear.iconUrl}
       metadata={crystalTear.effects?.durationSeconds
         ? `${crystalTear.effects.durationSeconds} second duration`

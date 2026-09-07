@@ -56,8 +56,8 @@ async function loadVariantData(
     variantIds,
     settings.SUPPORTED_GAME_VERSION,
   );
-  return new Map(variants.map(({ id, maxUpgradeLevel, requirements }) => [
+  return new Map(variants.map(({ id, maxUpgradeLevel, requirements, canApplyWeaponBuff }) => [
     id,
-    { maxUpgradeLevel, requirements },
+    { maxUpgradeLevel, requirements, canApplyWeaponBuff: canApplyWeaponBuff === true },
   ]));
 }

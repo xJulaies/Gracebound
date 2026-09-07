@@ -51,6 +51,41 @@ describe("EquipmentSlot", () => {
     expect(screen.getByRole("button")).toHaveAttribute("aria-current", "true");
   });
 
+  it("exposes a reusable slot status badge in its accessible name", () => {
+    render(
+      <EquipmentSlot
+        emptyAssetId="left-weapon-slot"
+        id="left-hand-1"
+        item={{ name: "Academy Glintstone Staff", iconUrl: "/staff.webp" }}
+        label="Left hand 1"
+        statusBadge="Catalyst"
+      />,
+    );
+
+    expect(screen.getByRole("button", {
+      name: "Left hand 1: Academy Glintstone Staff. Change selection. Catalyst active",
+    })).toBeInTheDocument();
+  });
+
+  it("shows and hides the portalled preview from the shared slot interaction", () => {
+    render(
+      <EquipmentSlot
+        emptyAssetId="crystal-tear-category"
+        id="crystal-tear-1"
+        item={{ name: "Flame-Shrouding Cracked Tear", iconUrl: "/tear.webp" }}
+        label="Crystal Tear 1"
+      />,
+    );
+
+    const slot = screen.getByRole("button");
+    expect(screen.queryByRole("tooltip")).not.toBeInTheDocument();
+    fireEvent.mouseEnter(slot);
+    expect(screen.getByRole("tooltip")).toBeInTheDocument();
+    expect(slot).toHaveAttribute("aria-describedby", screen.getByRole("tooltip").id);
+    fireEvent.mouseLeave(slot);
+    expect(screen.queryByRole("tooltip")).not.toBeInTheDocument();
+  });
+
   it("shows an Ash icon over the weapon and keeps the complete upgraded name", () => {
     const { container } = render(
       <EquipmentSlot

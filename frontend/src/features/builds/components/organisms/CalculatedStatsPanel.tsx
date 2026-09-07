@@ -1,91 +1,185 @@
-import type { EquippedWeapon, WeaponEditorFocus } from "../../types/editor.types";
+import { useState } from "react";
+import type { BuildEditorFocus, EquippedWeapon } from "../../types/editor.types";
+import type { Spell } from "../../../spells/types/spell.types";
 import type { BuildStatsPreview } from "../../types/build.types";
 import { getEquippedWeaponDisplayName } from "../../domain/getEquippedWeaponDisplayName";
+import { StatusOverview } from "../molecules/StatusOverview";
+import { StatusSectionTabs, type StatusSection } from "../molecules/StatusSectionTabs";
+import type { SpellOffensePreview, WeaponOffensePreview } from "../../types/offensePreview.types";
+import { AttributeRequirements } from "../../../../shared/ui/molecules/AttributeRequirements";
 
 interface CalculatedStatsPanelProps {
   focusedWeapon: EquippedWeapon | null;
-  focus: WeaponEditorFocus | null;
+  focusedSpell: Spell | null;
+  activeCatalyst: EquippedWeapon | null;
+  focus: BuildEditorFocus | null;
   isError: boolean;
+  errorMessage?: string;
   isPending: boolean;
   preview: BuildStatsPreview | null;
+  offensePreview: WeaponOffensePreview | null;
+  isOffensePending: boolean;
+  isOffenseError: boolean;
+  spellOffensePreview: SpellOffensePreview | null;
+  isSpellOffensePending: boolean;
+  isSpellOffenseError: boolean;
 }
 
 export function CalculatedStatsPanel({
   focusedWeapon,
+  focusedSpell,
+  activeCatalyst,
   focus,
   isError,
+  errorMessage,
   isPending,
   preview,
+  offensePreview,
+  isOffensePending,
+  isOffenseError,
+  spellOffensePreview,
+  isSpellOffensePending,
+  isSpellOffenseError,
 }: CalculatedStatsPanelProps) {
+  const [activeSection, setActiveSection] = useState<StatusSection>("offense");
+
   return (
     <aside aria-labelledby="calculated-stats-heading" className="build-editor-panel min-w-0">
       <header className="mb-5 border-b border-border pb-4">
         <h2 className="mb-1 text-2xl" id="calculated-stats-heading">Status</h2>
         <p className="mb-0 text-sm text-foreground-muted">
-          {focusedWeapon && focus
-            ? getEquippedWeaponDisplayName(focusedWeapon)
-            : "Select an equipped armament to inspect its actions."}
+          {getFocusLabel(focus, focusedWeapon, focusedSpell)}
         </p>
       </header>
 
       {isPending && !preview && <p aria-live="polite">Calculating character status…</p>}
-      {isError && <p role="alert">Character status is currently unavailable.</p>}
+      {isError && (
+        <p className="text-danger" role="alert">
+          {errorMessage || "Character status is currently unavailable."}
+        </p>
+      )}
       {preview && (
         <>
-          <StatSection heading="Resources">
-            <StatRow label="HP" value={preview.resources.maxHp} />
-            <StatRow label="FP" value={preview.resources.maxFp} />
-            <StatRow label="Stamina" value={preview.resources.maxStamina} />
-            <StatRow label="Maximum equip load" value={preview.resources.maxEquipLoad} />
-          </StatSection>
-          <StatSection heading="Equipment load">
-            <StatRow
-              label="Load"
-              value={`${preview.equipmentLoad.currentLoad} / ${preview.equipmentLoad.maxEquipLoad}`}
-            />
-            <StatRow
-              label="Load ratio"
-              value={`${formatDecimal(preview.equipmentLoad.loadPercentage)}%`}
-            />
-            <StatRow
-              label="Roll category"
-              value={formatLabel(preview.equipmentLoad.category)}
-            />
-            <StatRow label="Poise" value={preview.armorStats.poise} />
-          </StatSection>
-          <StatSection heading="Attack power">
-            <StatRow label="Light attack (R1)" value="—" />
-            <StatRow label="Heavy attack (R2)" value="—" />
-            <StatRow label="Jump attack" value="—" />
-            <StatRow label="Skill" value="—" />
-            <p className="mt-2 mb-0 text-xs leading-5 text-foreground-muted">
-              Action damage will follow when the focused armament is connected to
-              the damage endpoint.
-            </p>
-          </StatSection>
-          <StatSection heading="Defense">
-            {Object.entries(preview.defenses).map(([name, value]) => (
-              <StatRow key={name} label={formatLabel(name)} value={value} />
-            ))}
-          </StatSection>
-          <StatSection heading="Damage negation">
-            {Object.entries(preview.damageNegation).map(([name, value]) => (
-              <StatRow
-                key={name}
-                label={formatLabel(name)}
-                value={`${formatDecimal(value * 100)}%`}
-              />
-            ))}
-          </StatSection>
-          <StatSection heading="Resistance">
-            {Object.entries(preview.statusResistances).map(([name, value]) => (
-              <StatRow key={name} label={formatLabel(name)} value={value} />
-            ))}
-          </StatSection>
+          <StatusOverview preview={preview} />
+          <StatusSectionTabs activeSection={activeSection} onChange={setActiveSection} />
+          <div aria-labelledby={`status-${activeSection}-tab`} id={`status-${activeSection}-panel`} role="tabpanel">
+            {activeSection === "offense" && (
+              <StatSection heading="Attack power">
+                {focusedSpell && (
+                  <>
+                    <StatRow label="Spell" value={focusedSpell.name} />
+                    <StatRow label="Type" value={formatLabel(focusedSpell.type)} />
+                    <StatRow label="FP cost" value={focusedSpell.fpCost} />
+                    <StatRow label="Memory slots" value={focusedSpell.slotsRequired} />
+                    <StatRow
+                      label="Catalyst"
+                      value={activeCatalyst
+                        ? getEquippedWeaponDisplayName(activeCatalyst)
+                        : "No compatible catalyst selected"}
+                    />
+                    <div className="mt-3">
+                      <h4 className="mb-2 text-sm text-accent">Required attributes</h4>
+                      <AttributeRequirements
+                        currentStats={preview.effectiveStats}
+                        requirements={focusedSpell.requirements}
+                      />
+                    </div>
+                  </>
+                )}
+                {focusedSpell?.calculationStatus === "catalog-only" && (
+                  <p className="mt-3 mb-0 text-sm text-foreground-muted">
+                    This spell is catalogued, but its damage formula has not been verified yet.
+                  </p>
+                )}
+                {focusedSpell?.attack && !activeCatalyst && (
+                  <p className="mt-3 mb-0 text-sm text-foreground-muted">
+                    Equip and select a compatible catalyst to calculate spell damage.
+                  </p>
+                )}
+                {focusedSpell?.attack && activeCatalyst
+                  && !activeCatalyst.weapon.castingTypes.includes(focusedSpell.type) && (
+                  <p className="mt-3 mb-0 text-sm text-foreground-muted">
+                    The active catalyst cannot cast this spell type.
+                  </p>
+                )}
+                {focusedSpell && isSpellOffensePending && <p aria-live="polite">Calculating spell output…</p>}
+                {focusedSpell && isSpellOffenseError && (
+                  <p className="text-danger" role="alert">Spell output is currently unavailable.</p>
+                )}
+                {focusedSpell && spellOffensePreview?.actions.map((action) => (
+                  <div className="mt-3 mb-3 last:mb-0" key={action.id}>
+                    <h4 className="mb-1 text-sm text-foreground">{action.label}</h4>
+                    <dl className="m-0">
+                      <StatRow label="Spell scaling" value={action.attackRating} />
+                      <StatRow label="Offensive output" value={action.offensiveOutput} />
+                    </dl>
+                  </div>
+                ))}
+                {!focusedWeapon && !focusedSpell && <p className="mb-0 text-sm text-foreground-muted">Select an equipped armament or spell to inspect it.</p>}
+                {focusedWeapon && isOffensePending && <p aria-live="polite">Calculating armament output…</p>}
+                {focusedWeapon && isOffenseError && <p className="text-danger" role="alert">Armament output is currently unavailable.</p>}
+                {focusedWeapon && !isOffensePending && !isOffenseError && (!offensePreview || offensePreview.actions.length === 0) && (
+                  <p className="mb-0 text-sm text-foreground-muted">This armament has no supported preview actions yet.</p>
+                )}
+                {focusedWeapon && (
+                  <div className="mb-3">
+                    <h4 className="mb-2 text-sm text-accent">Required attributes</h4>
+                    <AttributeRequirements
+                      currentStats={preview.effectiveStats}
+                      requirements={focusedWeapon.weapon.requirements}
+                    />
+                  </div>
+                )}
+                {focusedWeapon && offensePreview?.actions.map((action) => (
+                  <div className="mb-3 last:mb-0" key={action.id}>
+                    <h4 className="mb-1 text-sm text-foreground">{action.label}</h4>
+                    <dl className="m-0">
+                      <StatRow label="Attack rating" value={action.attackRating} />
+                      <StatRow label="Offensive output" value={action.offensiveOutput} />
+                    </dl>
+                  </div>
+                ))}
+              </StatSection>
+            )}
+            {activeSection === "defense" && (
+              <>
+                <StatSection heading="Defense">
+                  {Object.entries(preview.defenses).map(([name, value]) => (
+                    <StatRow key={name} label={formatLabel(name)} value={value} />
+                  ))}
+                </StatSection>
+                <StatSection heading="Damage negation">
+                  {Object.entries(preview.damageNegation).map(([name, value]) => (
+                    <StatRow key={name} label={formatLabel(name)} value={`${formatDecimal(value * 100)}%`} />
+                  ))}
+                </StatSection>
+              </>
+            )}
+            {activeSection === "resistances" && (
+              <StatSection heading="Resistance">
+                {Object.entries(preview.statusResistances).map(([name, value]) => (
+                  <StatRow key={name} label={formatLabel(name)} value={value} />
+                ))}
+              </StatSection>
+            )}
+          </div>
         </>
       )}
     </aside>
   );
+}
+
+function getFocusLabel(
+  focus: BuildEditorFocus | null,
+  focusedWeapon: EquippedWeapon | null,
+  focusedSpell: Spell | null,
+) {
+  if (focus?.kind === "spell" && focusedSpell) return focusedSpell.name;
+  if (focus?.kind === "weapon" && focusedWeapon) {
+    const role = focusedWeapon.weapon.castingTypes.length > 0 ? "Active catalyst" : "Active armament";
+    return `${role}: ${getEquippedWeaponDisplayName(focusedWeapon)}`;
+  }
+  return "Select an equipped armament or spell to inspect it.";
 }
 
 function StatSection({ children, heading }: { children: React.ReactNode; heading: string }) {

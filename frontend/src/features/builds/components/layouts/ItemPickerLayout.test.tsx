@@ -43,6 +43,29 @@ describe("ItemPickerLayout", () => {
     expect(onClose).not.toHaveBeenCalled();
   });
 
+  it("renders at the document root so parent overflow cannot clip it", () => {
+    render(
+      <div className="overflow-hidden">
+        <ItemPickerLayout
+          headingId="portal-picker-heading"
+          onClose={vi.fn()}
+          onSearchChange={vi.fn()}
+          searchLabel="Search portal items"
+          searchPlaceholder="Search…"
+          searchValue=""
+          subtitle="For portal test"
+          title="Portal picker"
+        >
+          <span>Portal content</span>
+        </ItemPickerLayout>
+      </div>,
+    );
+
+    const overlay = screen.getByRole("dialog").parentElement;
+    expect(overlay).toHaveClass("fixed", "inset-0");
+    expect(overlay?.parentElement).toBe(document.body);
+  });
+
   it("focuses search and keeps forward and backward tabbing inside", async () => {
     const user = userEvent.setup();
     renderLayout(vi.fn());
@@ -60,8 +83,8 @@ describe("ItemPickerLayout", () => {
   });
 
   it("has no automatically detectable accessibility violations", async () => {
-    const { container } = renderLayout(vi.fn());
+    const { baseElement } = renderLayout(vi.fn());
 
-    await expectNoAccessibilityViolations(container);
+    await expectNoAccessibilityViolations(baseElement);
   });
 });

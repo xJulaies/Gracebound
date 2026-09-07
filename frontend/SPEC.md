@@ -548,6 +548,12 @@ own spacious center region; the character and status panels are independent
 siblings rather than content nested inside it. On narrower viewports these
 regions become three task-focused tabs named Leveling, Equipment, and Status,
 so users do not have to scroll through unrelated editor sections.
+The desktop status inspector keeps a compact overview of level, resources,
+equipment-load category, and poise visible above three focused views: Offense,
+Defense, and Resistances. Only the selected detail view is rendered so the
+right-hand region remains scannable instead of becoming one long status list.
+The inspector may become sticky below the public navigation on wide screens,
+but should avoid an unnecessary nested scrollbar.
 Selecting or editing an equipped weapon makes it the focused weapon without
 changing the loadout. Focus is UI state separate from saved equipment state;
 the same interaction can later be extended to an equipped catalyst and spell

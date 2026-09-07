@@ -74,7 +74,7 @@ export function findWeaponVariantUpgradeLevels(
   gameVersion: string,
 ) {
   return WeaponVariantModel.find({ id: { $in: variantIds }, gameVersion })
-    .select("id maxUpgradeLevel requirements")
+    .select("id maxUpgradeLevel requirements canApplyWeaponBuff")
     .lean()
     .exec();
 }

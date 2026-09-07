@@ -1,11 +1,11 @@
 import type { ReactNode } from "react";
 import type { Weapon } from "../../types/weapon.types";
+import { AttributeRequirements } from "../../../../shared/ui/molecules/AttributeRequirements";
 
 export function WeaponDetailsContent({ weapon }: { weapon: Weapon }) {
   const maxUpgradeLevels = [...new Set(
     weapon.variants.map(({ maxUpgradeLevel }) => maxUpgradeLevel),
   )].sort((left, right) => left - right);
-  const requirements = nonZeroEntries(weapon.requirements);
   const statusBuildup = weapon.statusBuildup
     ? nonZeroEntries(weapon.statusBuildup)
     : [];
@@ -28,11 +28,7 @@ export function WeaponDetailsContent({ weapon }: { weapon: Weapon }) {
       </DetailSection>
 
       <DetailSection title="Required attributes">
-        <dl className="m-0 grid gap-1">
-          {requirements.map(([attribute, value]) => (
-            <DetailRow key={attribute} label={formatLabel(attribute)} value={value} />
-          ))}
-        </dl>
+        <AttributeRequirements requirements={weapon.requirements} />
       </DetailSection>
 
       {statusBuildup.length > 0 && (

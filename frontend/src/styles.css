@@ -338,6 +338,12 @@
     .build-editor-region[data-active="true"] {
       @apply block;
     }
+
+    .build-editor-status-region {
+      position: sticky;
+      top: 1rem;
+      align-self: start;
+    }
   }
 
   .weapon-inspector {

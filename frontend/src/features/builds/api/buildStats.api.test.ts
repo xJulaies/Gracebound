@@ -31,6 +31,9 @@ describe("calculateBuildStats", () => {
       weaponIds: ["longsword"],
       greatRuneId: "godricks-great-rune",
       crystalTearIds: ["strength-knot-crystal-tear"],
+      memoryStoneCount: 0,
+      spellIds: ["glintstone-pebble"],
+      catalyst: { weaponId: "academy-glintstone-staff", variantId: "academy-glintstone-staff", upgradeLevel: 12 },
     };
 
     await calculateBuildStats(input);

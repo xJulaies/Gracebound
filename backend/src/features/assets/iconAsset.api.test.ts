@@ -39,6 +39,7 @@ describe("public icon asset API", () => {
     expect(response.headers["cache-control"]).toBe(
       "public, max-age=86400, stale-while-revalidate=604800",
     );
+    expect(response.headers["cross-origin-resource-policy"]).toBe("cross-origin");
     expect(response.body).toEqual(image);
   });
 

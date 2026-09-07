@@ -1,4 +1,4 @@
-import { Router } from "express";
+import { Router, type RequestHandler } from "express";
 import type { GetAuthenticatedUserId } from "../../../shared/auth/authentication.types";
 import { requireAuthenticatedUser } from "../../../shared/middleware/requireAuthenticatedUser";
 import {
@@ -22,10 +22,16 @@ import { validateBuildStatsRequest } from "../middleware/validateBuildStatsReque
 
 export function createBuildRouter(
   getAuthenticatedUserId: GetAuthenticatedUserId,
+  calculationRateLimiter: RequestHandler,
 ) {
   const router = Router();
 
-  router.post("/builds/calculate-stats", validateBuildStatsRequest, calculateSelectedBuildStats);
+  router.post(
+    "/builds/calculate-stats",
+    calculationRateLimiter,
+    validateBuildStatsRequest,
+    calculateSelectedBuildStats,
+  );
   router.get("/builds", listPublicBuilds);
   router.get("/builds/:buildId", validateBuildId, getPublicBuild);
 
@@ -35,6 +41,7 @@ export function createBuildRouter(
   router.get("/me/builds/:buildId", validateBuildId, getOwnedBuild);
   router.post(
     "/me/builds/:buildId/calculate-damage",
+    calculationRateLimiter,
     validateBuildId,
     validateSavedBuildDamage,
     calculateOwnedBuildDamage,

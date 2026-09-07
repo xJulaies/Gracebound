@@ -52,7 +52,7 @@ describe("addVerifiedWeaponAttacks", () => {
       attacks,
     );
 
-    expect(result.catalog.moonveil?.attacks).toHaveLength(33);
+    expect(result.catalog.moonveil?.attacks).toHaveLength(37);
     expect(result.catalog.uchigatana?.attacks).toEqual(result.catalog.moonveil?.attacks);
     expect(result.catalog.moonveil?.attacks.map(({ id }) => id)).toContain("katana-1h-light-1");
     expect(result.catalog.moonveil?.attacks.map(({ id }) => id)).toContain("katana-2h-guard-counter");
@@ -73,6 +73,12 @@ describe("addVerifiedWeaponAttacks", () => {
       attacks: [],
     };
     const definitions = definitionsFor("straight-sword");
+    expect(definitions).toEqual(expect.arrayContaining([
+      expect.objectContaining({ id: "straight-sword-1h-jumping-light", behaviorJudgeId: 150 }),
+      expect.objectContaining({ id: "straight-sword-1h-jumping-heavy", behaviorJudgeId: 160 }),
+      expect.objectContaining({ id: "straight-sword-2h-jumping-light", behaviorJudgeId: 350 }),
+      expect.objectContaining({ id: "straight-sword-2h-jumping-heavy", behaviorJudgeId: 360 }),
+    ]));
 
     const result = addVerifiedWeaponAttacks(
       dataSet,
@@ -81,7 +87,7 @@ describe("addVerifiedWeaponAttacks", () => {
       definitions.map(({ behaviorJudgeId }) => classAttack(200, behaviorJudgeId)),
     );
 
-    expect(result.catalog.longsword?.attacks).toHaveLength(33);
+    expect(result.catalog.longsword?.attacks).toHaveLength(37);
     expect(result.catalog.longsword?.attacks[0]).toMatchObject({
       id: "straight-sword-1h-light-1",
       sourceBehaviorId: 100200000,

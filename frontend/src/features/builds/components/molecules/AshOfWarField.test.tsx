@@ -26,6 +26,7 @@ describe("AshOfWarField", () => {
           compatibleWeaponTypes: ["straight-sword"],
           compatibleAffinities: ["standard"],
           calculationStatus: "supported",
+          buffEffect: null,
           attacks: [],
           gameVersion: "1.17.0",
         }],

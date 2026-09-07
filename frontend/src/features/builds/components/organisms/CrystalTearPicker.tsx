@@ -4,6 +4,7 @@ import type { CrystalTear } from "../../../crystal-tears/types/crystalTear.types
 import { ItemDetailsPreview } from "../../../../shared/ui/organisms/ItemDetailsPreview";
 import { ItemPickerLayout } from "../layouts/ItemPickerLayout";
 import { CrystalTearPickerItem } from "../molecules/CrystalTearPickerItem";
+import { describeCrystalTearEffects } from "../../../crystal-tears/domain/describeCrystalTearEffects";
 
 export function CrystalTearPicker({
   excludedIds,
@@ -53,10 +54,21 @@ export function CrystalTearPicker({
               </dd>
             </div>
           </dl>
+          <section className="mt-4" aria-labelledby="crystal-tear-effects-heading">
+            <h4 className="mb-2 text-sm text-accent" id="crystal-tear-effects-heading">Calculated effects</h4>
+            <ul className="m-0 grid gap-1 pl-5 text-sm text-foreground-muted">
+              {describeCrystalTearEffects(previewed).map((description) => (
+                <li key={description}>{description}</li>
+              ))}
+            </ul>
+          </section>
           {previewed.limitations.length > 0 && (
-            <p className="mt-3 mb-0 text-xs leading-5 text-foreground-muted">
-              {previewed.limitations.join(" ")}
-            </p>
+            <section className="mt-4" aria-labelledby="crystal-tear-limitations-heading">
+              <h4 className="mb-2 text-sm text-accent" id="crystal-tear-limitations-heading">Limitations</h4>
+              <p className="mb-0 text-xs leading-5 text-foreground-muted">
+                {previewed.limitations.join(" ")}
+              </p>
+            </section>
           )}
         </ItemDetailsPreview>
       )}
