@@ -483,6 +483,9 @@ Convert the Gracebound home hero to WebP before storage, enforce the 2 MiB
 asset limit, and serve it through `/api/assets/branding/:assetId` with cache
 validation metadata. The supported branding assets are the experimental home
 hero, the compact navbar logo, and the Grace and Night full-page backgrounds.
+Keep separately stored mobile derivatives for the hero, logo, and theme
+backgrounds so narrow viewports do not download desktop-sized artwork. Derive
+those variants from the stored originals; never replace the source records.
 Keep source images and generated image bytes out of the repository. Frontend
 code references only the allowlisted backend asset URLs.
 
@@ -547,10 +550,14 @@ GET /api/assets/icons/:iconId
 GET /api/assets/character-classes/:classId
 GET /api/assets/ui/:assetId
 GET /api/assets/branding/gracebound-hero
+GET /api/assets/branding/gracebound-hero-mobile
 GET /api/assets/branding/gracebound-hero-desktop
 GET /api/assets/branding/gracebound-navbar-logo
+GET /api/assets/branding/gracebound-navbar-logo-compact
 GET /api/assets/branding/gracebound-background-grace
+GET /api/assets/branding/gracebound-background-grace-mobile
 GET /api/assets/branding/gracebound-background-night
+GET /api/assets/branding/gracebound-background-night-mobile
 ```
 
 The spell list route supports optional type, curated school, name search, page,

@@ -1,9 +1,11 @@
-import { createRoute } from "@tanstack/react-router";
-import { DamageCalculatorPage } from "../features/damage-calculator/pages/DamageCalculatorPage";
+import { createRoute, lazyRouteComponent } from "@tanstack/react-router";
 import { publicLayoutRoute } from "./publicLayout.route";
 
 export const damageCalculatorRoute = createRoute({
   getParentRoute: () => publicLayoutRoute,
   path: "/damage-calculator",
-  component: DamageCalculatorPage,
+  component: lazyRouteComponent(
+    () => import("../features/damage-calculator/pages/DamageCalculatorPage"),
+    "DamageCalculatorPage",
+  ),
 });

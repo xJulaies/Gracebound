@@ -19,7 +19,11 @@ export function CharacterClassPreview({
       <img
         alt=""
         className="size-full object-cover grayscale transition duration-300 group-hover:grayscale-0"
+        decoding="async"
+        height={624}
+        loading="lazy"
         src={characterClass.imageUrl}
+        width={520}
       />
       <span
         aria-hidden="true"

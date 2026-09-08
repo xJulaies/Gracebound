@@ -23,7 +23,11 @@ export function CharacterClassCard({
         <img
           alt={`${characterClass.name} starting class`}
           className="size-full object-cover"
+          decoding="async"
+          height={624}
+          loading="lazy"
           src={characterClass.imageUrl}
+          width={520}
         />
         <div
           aria-hidden="true"

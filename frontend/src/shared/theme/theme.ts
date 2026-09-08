@@ -3,6 +3,7 @@ export const THEMES = ["grace", "night"] as const;
 export type Theme = (typeof THEMES)[number];
 
 const STORAGE_KEY = "gracebound-theme";
+export const THEME_CHANGE_EVENT = "gracebound:theme-change";
 const THEME_TRANSITION_CLASS = "theme-transitioning";
 const THEME_TRANSITION_DURATION_MS = 500;
 let transitionTimeout: number | undefined;
@@ -27,6 +28,7 @@ export function getActiveTheme(): Theme {
 
 export function saveTheme(theme: Theme, animate = false) {
   localStorage.setItem(STORAGE_KEY, theme);
+  window.dispatchEvent(new CustomEvent<Theme>(THEME_CHANGE_EVENT, { detail: theme }));
 
   if (animate && !window.matchMedia?.("(prefers-reduced-motion: reduce)").matches) {
     const root = document.documentElement;

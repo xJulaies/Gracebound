@@ -1,13 +1,4 @@
-import { useState } from "react";
 import { CharacterClassCarousel } from "../../../character-classes/components/organisms/CharacterClassCarousel";
-import type { CharacterClass } from "../../../character-classes/types/characterClass.types";
-import type { Weapon } from "../../../weapons/types/weapon.types";
-import type {
-  BuildEditorFocus,
-  EquippedWeapon,
-  WeaponEditorSlotId,
-} from "../../types/editor.types";
-import type { ArmorSlot } from "../../../armor/types/armor.types";
 import { ArmorPicker } from "./ArmorPicker";
 import { EquipmentLoadout } from "./EquipmentLoadout";
 import { WeaponInspector } from "./WeaponInspector";
@@ -16,51 +7,28 @@ import { TalismanPicker } from "./TalismanPicker";
 import { GreatRunePicker } from "./GreatRunePicker";
 import { CrystalTearPicker } from "./CrystalTearPicker";
 import { SpellPicker } from "./SpellPicker";
-import { useWeaponOffensePreviewQuery } from "../../hooks/useWeaponOffensePreviewQuery";
-import { useSpellOffensePreviewQuery } from "../../hooks/useSpellOffensePreviewQuery";
-import type { CharacterStats } from "../../../../shared/types/game.types";
-import { useBuildStatsPreviewQuery } from "../../hooks/useBuildStatsPreviewQuery";
 import { CharacterAttributePanel } from "./CharacterAttributePanel";
 import { CalculatedStatsPanel } from "./CalculatedStatsPanel";
 import { BuffSimulationBar } from "./BuffSimulationBar";
 import { toggleGeneralBuff } from "../../domain/toggleGeneralBuff";
 import {
   BuildEditorTabs,
-  type BuildEditorTab,
 } from "../molecules/BuildEditorTabs";
 import { useBuildEditorDraft } from "../../hooks/useBuildEditorDraft";
+import { useBuildEditorUiState } from "../../hooks/useBuildEditorUiState";
+import { useBuildEditorPreviews } from "../../hooks/useBuildEditorPreviews";
+import { useBuildEditorInteractions } from "../../hooks/useBuildEditorInteractions";
 import { BuildSaveControls } from "./BuildSaveControls";
 import { UnsavedBuildChangesGuard } from "./UnsavedBuildChangesGuard";
 import type { BuildEditorInitialState } from "../../types/editor.types";
 import { calculateRuneCosts } from "../../domain/calculateRuneCosts";
-
-const weaponSlotLabels: Record<WeaponEditorSlotId, string> = {
-  "left-hand-1": "Left hand 1",
-  "left-hand-2": "Left hand 2",
-  "left-hand-3": "Left hand 3",
-  "right-hand-1": "Right hand 1",
-  "right-hand-2": "Right hand 2",
-  "right-hand-3": "Right hand 3",
-};
-
-const armorSlots: Record<string, { label: string; slot: ArmorSlot }> = {
-  "armor-head": { label: "Head", slot: "head" },
-  "armor-body": { label: "Body", slot: "body" },
-  "armor-arms": { label: "Arms", slot: "arms" },
-  "armor-legs": { label: "Legs", slot: "legs" },
-};
-
-const talismanSlotLabels: Record<string, string> = {
-  "talisman-1": "Talisman 1",
-  "talisman-2": "Talisman 2",
-  "talisman-3": "Talisman 3",
-  "talisman-4": "Talisman 4",
-};
-
-const crystalTearSlotLabels: Record<string, string> = {
-  "crystal-tear-1": "Crystal Tear 1",
-  "crystal-tear-2": "Crystal Tear 2",
-};
+import {
+  armorSlots,
+  crystalTearSlotLabels,
+  isWeaponSlotId,
+  talismanSlotLabels,
+  weaponSlotLabels,
+} from "../../domain/editorSlotDefinitions";
 
 export function BuildEditorWorkspace({
   initialBuildId = null,
@@ -69,6 +37,7 @@ export function BuildEditorWorkspace({
   initialBuildId?: string | null;
   initialState?: BuildEditorInitialState;
 } = {}) {
+  const editor = useBuildEditorDraft(initialState);
   const {
     draft,
     isDirty,
@@ -76,191 +45,71 @@ export function BuildEditorWorkspace({
     setMetadata,
     characterLevel,
     selectedClass, setSelectedClass,
-    stats, setStats,
-    selectedWeapons, setSelectedWeapons,
-    selectedArmor, setSelectedArmor,
-    selectedTalismans, setSelectedTalismans,
-    selectedGreatRune, setSelectedGreatRune,
-    selectedCrystalTears, setSelectedCrystalTears,
-    selectedSpells, setSelectedSpells,
+    stats,
+    selectedWeapons,
+    selectedArmor,
+    selectedTalismans,
+    selectedGreatRune,
+    selectedCrystalTears,
+    selectedSpells,
     memoryStoneCount, setMemoryStoneCount,
-    activeCatalystSlotId, setActiveCatalystSlotId,
+    activeCatalystSlotId,
     activeBuffSpellIds, setActiveBuffSpellIds,
     activeWeaponBuff, setActiveWeaponBuff,
-  } = useBuildEditorDraft(initialState);
-  const [activeWeaponSlotId, setActiveWeaponSlotId] = useState<WeaponEditorSlotId | null>(null);
-  const [activeArmorSlotId, setActiveArmorSlotId] = useState<string | null>(null);
-  const [activeTalismanSlotId, setActiveTalismanSlotId] = useState<string | null>(null);
-  const [isGreatRunePickerOpen, setIsGreatRunePickerOpen] = useState(false);
-  const [activeCrystalTearSlotId, setActiveCrystalTearSlotId] = useState<string | null>(null);
-  const [activeSpellSlot, setActiveSpellSlot] = useState<number | null>(null);
-  const [configuredWeaponSlotId, setConfiguredWeaponSlotId] = useState<WeaponEditorSlotId | null>(null);
-  const [editorFocus, setEditorFocus] = useState<BuildEditorFocus | null>(null);
-  const [isGreatRuneActive, setIsGreatRuneActive] = useState(false);
-  const [isPhysickActive, setIsPhysickActive] = useState(false);
-  const [activeSkillBuffSlotId, setActiveSkillBuffSlotId] = useState<WeaponEditorSlotId | null>(null);
-  const [activeTab, setActiveTab] = useState<BuildEditorTab>("equipment");
-  const statsQuery = useBuildStatsPreviewQuery(
-    selectedClass && stats
-      ? {
-          characterClassId: selectedClass.id,
-          stats,
-          armorIds: Object.values(selectedArmor).map(({ id }) => id),
-          talismanIds: Object.values(selectedTalismans).map(({ id }) => id),
-          weaponIds: Object.values(selectedWeapons).map(({ weapon }) => weapon.id),
-          greatRuneId: isGreatRuneActive ? selectedGreatRune?.id ?? null : null,
-          crystalTearIds: isPhysickActive
-            ? Object.values(selectedCrystalTears).map(({ id }) => id)
-            : [],
-          memoryStoneCount,
-          spellIds: Object.values(selectedSpells).map(({ id }) => id),
-          catalyst: toCatalystSelection(activeCatalystSlotId
-            ? selectedWeapons[activeCatalystSlotId]
-            : undefined),
-        }
-      : null,
-  );
-  const statsPreview = statsQuery.data?.data[0] ?? null;
-  const locallyAvailableSpellSlots = 2 + memoryStoneCount;
-  const availableSpellSlots = Math.max(
-    locallyAvailableSpellSlots,
-    statsPreview?.memorySlots.availableSlots ?? locallyAvailableSpellSlots,
-  );
-  const selectedSpellEntries = Object.entries(selectedSpells);
-  const requiredSpellCapacity = Math.max(
-    selectedSpellEntries.reduce((total, [, spell]) => total + spell.slotsRequired, 0),
-    ...selectedSpellEntries.map(([slot]) => Number(slot)),
-    0,
-  );
-  const nonStoneSlotBonus = Math.max(0, availableSpellSlots - 2 - memoryStoneCount);
-  const minimumMemoryStoneCount = Math.max(0, requiredSpellCapacity - 2 - nonStoneSlotBonus);
+  } = editor;
+  const ui = useBuildEditorUiState();
+  const {
+    activeWeaponSlotId, setActiveWeaponSlotId,
+    activeArmorSlotId, setActiveArmorSlotId,
+    activeTalismanSlotId, setActiveTalismanSlotId,
+    isGreatRunePickerOpen, setIsGreatRunePickerOpen,
+    activeCrystalTearSlotId, setActiveCrystalTearSlotId,
+    activeSpellSlot, setActiveSpellSlot,
+    configuredWeaponSlotId, setConfiguredWeaponSlotId,
+    editorFocus,
+    isGreatRuneActive, setIsGreatRuneActive,
+    isPhysickActive, setIsPhysickActive,
+    activeSkillBuffSlotId, setActiveSkillBuffSlotId,
+    activeTab, setActiveTab,
+  } = ui;
+  const interactions = useBuildEditorInteractions(editor, ui);
+  const {
+    activeCatalyst,
+    availableSpellSlots,
+    focusedSpell,
+    focusedWeapon,
+    focusedWeaponSlotId,
+    minimumMemoryStoneCount,
+    offenseQuery,
+    spellOffenseQuery,
+    statsPreview,
+    statsQuery,
+  } = useBuildEditorPreviews({
+    activeBuffSpellIds,
+    activeCatalystSlotId,
+    activeSkillBuffSlotId,
+    activeWeaponBuff,
+    editorFocus,
+    isGreatRuneActive,
+    isPhysickActive,
+    memoryStoneCount,
+    selectedArmor,
+    selectedClass,
+    selectedCrystalTears,
+    selectedGreatRune,
+    selectedSpells,
+    selectedTalismans,
+    selectedWeapons,
+    stats,
+    weaponBuff: draft?.weaponBuff ?? null,
+  });
   const runeCosts = selectedClass
     ? calculateRuneCosts(selectedClass.level, characterLevel)
     : null;
 
-  const openSlot = (slotId: string) => {
-    if (isWeaponSlotId(slotId)) {
-      if (selectedWeapons[slotId]) {
-        setEditorFocus({ kind: "weapon", slotId });
-        if (selectedWeapons[slotId].weapon.castingTypes.length > 0) {
-          setActiveCatalystSlotId(slotId);
-        }
-        setConfiguredWeaponSlotId(slotId);
-        return;
-      }
-      setConfiguredWeaponSlotId(null);
-      setActiveWeaponSlotId(slotId);
-      return;
-    }
-    if (armorSlots[slotId]) {
-      setConfiguredWeaponSlotId(null);
-      setActiveArmorSlotId(slotId);
-      return;
-    }
-    if (talismanSlotLabels[slotId]) {
-      setConfiguredWeaponSlotId(null);
-      setActiveTalismanSlotId(slotId);
-      return;
-    }
-    if (slotId === "great-rune") {
-      setConfiguredWeaponSlotId(null);
-      setIsGreatRunePickerOpen(true);
-      return;
-    }
-    if (crystalTearSlotLabels[slotId]) {
-      setConfiguredWeaponSlotId(null);
-      setActiveCrystalTearSlotId(slotId);
-      return;
-    }
-    const spellSlot = parseSpellSlot(slotId);
-    if (spellSlot !== null) {
-      setConfiguredWeaponSlotId(null);
-      if (selectedSpells[spellSlot]) {
-        setEditorFocus({ kind: "spell", slotIndex: spellSlot });
-        return;
-      }
-      setActiveSpellSlot(spellSlot);
-    }
-  };
-
-  const selectWeapon = (weapon: Weapon) => {
-    if (!activeWeaponSlotId) return;
-    const firstVariant = weapon.variants[0];
-    if (!firstVariant) return;
-    setSelectedWeapons((current) => ({
-      ...current,
-      [activeWeaponSlotId]: {
-        weapon,
-        variantId: firstVariant.id,
-        upgradeLevel: 0,
-        ashOfWarId: null,
-        ashOfWar: null,
-      },
-    }));
-    setConfiguredWeaponSlotId(activeWeaponSlotId);
-    setEditorFocus({ kind: "weapon", slotId: activeWeaponSlotId });
-    if (weapon.castingTypes.length > 0) {
-      setActiveCatalystSlotId(activeWeaponSlotId);
-    }
-    setActiveWeaponSlotId(null);
-  };
-
   const configuredWeapon = configuredWeaponSlotId
     ? selectedWeapons[configuredWeaponSlotId]
     : undefined;
-  const focusedWeapon = editorFocus?.kind === "weapon"
-    ? selectedWeapons[editorFocus.slotId] ?? null
-    : null;
-  const focusedSpell = editorFocus?.kind === "spell"
-    ? selectedSpells[editorFocus.slotIndex] ?? null
-    : null;
-  const activeCatalyst = activeCatalystSlotId
-    ? selectedWeapons[activeCatalystSlotId] ?? null
-    : null;
-  const focusedWeaponSlotId = editorFocus?.kind === "weapon" ? editorFocus.slotId : null;
-  const weaponBuffSelection = draft?.weaponBuff ?? null;
-  const offenseQuery = useWeaponOffensePreviewQuery(
-    focusedWeapon,
-    stats,
-    {
-      armorIds: Object.values(selectedArmor).map(({ id }) => id),
-      talismanIds: Object.values(selectedTalismans).map(({ id }) => id),
-      greatRuneId: isGreatRuneActive ? selectedGreatRune?.id ?? null : null,
-      crystalTearIds: isPhysickActive
-        ? Object.values(selectedCrystalTears).map(({ id }) => id)
-        : [],
-      buffSpellIds: activeBuffSpellIds,
-      weaponBuff: activeWeaponBuff?.targetSlotId === focusedWeaponSlotId
-        ? weaponBuffSelection
-        : null,
-      skillBuffAshOfWarId: activeSkillBuffSlotId === focusedWeaponSlotId
-        ? focusedWeapon?.ashOfWarId ?? null
-        : null,
-    },
-  );
-  const spellOffenseQuery = useSpellOffensePreviewQuery(
-    focusedSpell,
-    activeCatalyst,
-    stats,
-    {
-      talismanIds: Object.values(selectedTalismans).map(({ id }) => id),
-      greatRuneId: isGreatRuneActive ? selectedGreatRune?.id ?? null : null,
-      crystalTearIds: isPhysickActive
-        ? Object.values(selectedCrystalTears).map(({ id }) => id)
-        : [],
-      buffSpellIds: activeBuffSpellIds,
-    },
-  );
-
-  const selectCharacterClass = (characterClass: CharacterClass) => {
-    setSelectedClass(characterClass);
-    setStats({ ...characterClass.stats });
-  };
-
-  const changeAttribute = (attribute: keyof CharacterStats, value: number) => {
-    setStats((current) => current ? { ...current, [attribute]: value } : current);
-  };
-
   return (
     <section
       aria-label="Build editor"
@@ -293,7 +142,7 @@ export function BuildEditorWorkspace({
                 characterLevel={characterLevel}
                 isUpdatingCosts={statsQuery.isFetching}
                 nextLevelRuneCost={runeCosts?.nextLevelRuneCost ?? null}
-                onChangeAttribute={changeAttribute}
+                onChangeAttribute={interactions.changeAttribute}
                 onChangeCharacter={() => setSelectedClass(null)}
                 stats={stats}
                 totalRuneCost={runeCosts?.totalRuneCost ?? null}
@@ -317,7 +166,7 @@ export function BuildEditorWorkspace({
                 ?? (editorFocus?.kind === "weapon"
                   ? editorFocus.slotId
                   : editorFocus?.kind === "spell" ? `spell-${editorFocus.slotIndex}` : null)}
-              onSelectSlot={openSlot}
+              onSelectSlot={interactions.openSlot}
               selectedArmor={selectedArmor}
               selectedTalismans={selectedTalismans}
               selectedWeapons={selectedWeapons}
@@ -369,71 +218,29 @@ export function BuildEditorWorkspace({
           {configuredWeaponSlotId && configuredWeapon && (
             <WeaponInspector
               configuration={configuredWeapon}
-                onChange={(configuration) => {
-                  setSelectedWeapons((current) => ({
-                    ...current,
-                    [configuredWeaponSlotId]: configuration,
-                  }));
-                  if (configuration.ashOfWarId !== configuredWeapon.ashOfWarId) {
-                    setActiveSkillBuffSlotId((current) => current === configuredWeaponSlotId ? null : current);
-                  }
-                }}
+                onChange={interactions.updateConfiguredWeapon}
               onChangeWeapon={() => {
                 if (isWeaponSlotId(configuredWeaponSlotId)) {
                   setActiveWeaponSlotId(configuredWeaponSlotId);
                 }
               }}
               onClose={() => setConfiguredWeaponSlotId(null)}
-              onRemove={() => {
-                setSelectedWeapons((current) => {
-                  const next = { ...current };
-                  delete next[configuredWeaponSlotId];
-                  return next;
-                });
-                if (editorFocus?.kind === "weapon" && editorFocus.slotId === configuredWeaponSlotId) {
-                  const nextSlotId = Object.keys(selectedWeapons)
-                    .filter(isWeaponSlotId)
-                    .find((slotId) => slotId !== configuredWeaponSlotId);
-                  setEditorFocus(nextSlotId ? { kind: "weapon", slotId: nextSlotId } : null);
-                }
-                if (activeCatalystSlotId === configuredWeaponSlotId) {
-                  setActiveCatalystSlotId(null);
-                }
-                setActiveWeaponBuff((current) => current?.targetSlotId === configuredWeaponSlotId
-                  || current?.catalystSlotId === configuredWeaponSlotId ? null : current);
-                setActiveSkillBuffSlotId((current) => current === configuredWeaponSlotId ? null : current);
-                setConfiguredWeaponSlotId(null);
-              }}
+              onRemove={interactions.removeConfiguredWeapon}
               slotLabel={weaponSlotLabels[configuredWeaponSlotId] ?? "Armament slot"}
             />
           )}
           {activeWeaponSlotId && (
             <WeaponPicker
               onClose={() => setActiveWeaponSlotId(null)}
-              onSelect={selectWeapon}
+              onSelect={interactions.selectWeapon}
               slotLabel={weaponSlotLabels[activeWeaponSlotId] ?? "Armament slot"}
             />
           )}
           {activeArmorSlotId && armorSlots[activeArmorSlotId] && (
             <ArmorPicker
               onClose={() => setActiveArmorSlotId(null)}
-              onRemove={selectedArmor[activeArmorSlotId]
-                ? () => {
-                    setSelectedArmor((current) => {
-                      const next = { ...current };
-                      delete next[activeArmorSlotId];
-                      return next;
-                    });
-                    setActiveArmorSlotId(null);
-                  }
-                : undefined}
-              onSelect={(armor) => {
-                setSelectedArmor((current) => ({
-                  ...current,
-                  [activeArmorSlotId]: armor,
-                }));
-                setActiveArmorSlotId(null);
-              }}
+              onRemove={selectedArmor[activeArmorSlotId] ? interactions.removeArmor : undefined}
+              onSelect={interactions.selectArmor}
               slot={armorSlots[activeArmorSlotId].slot}
               slotLabel={armorSlots[activeArmorSlotId].label}
             />
@@ -441,40 +248,16 @@ export function BuildEditorWorkspace({
           {activeTalismanSlotId && (
             <TalismanPicker
               onClose={() => setActiveTalismanSlotId(null)}
-              onRemove={selectedTalismans[activeTalismanSlotId]
-                ? () => {
-                    setSelectedTalismans((current) => {
-                      const next = { ...current };
-                      delete next[activeTalismanSlotId];
-                      return next;
-                    });
-                    setActiveTalismanSlotId(null);
-                  }
-                : undefined}
-              onSelect={(talisman) => {
-                setSelectedTalismans((current) => ({
-                  ...current,
-                  [activeTalismanSlotId]: talisman,
-                }));
-                setActiveTalismanSlotId(null);
-              }}
+              onRemove={selectedTalismans[activeTalismanSlotId] ? interactions.removeTalisman : undefined}
+              onSelect={interactions.selectTalisman}
               slotLabel={talismanSlotLabels[activeTalismanSlotId] ?? "Talisman slot"}
             />
           )}
           {isGreatRunePickerOpen && (
             <GreatRunePicker
               onClose={() => setIsGreatRunePickerOpen(false)}
-              onRemove={selectedGreatRune
-                ? () => {
-                    setSelectedGreatRune(null);
-                    setIsGreatRuneActive(false);
-                    setIsGreatRunePickerOpen(false);
-                  }
-                : undefined}
-              onSelect={(greatRune) => {
-                setSelectedGreatRune(greatRune);
-                setIsGreatRunePickerOpen(false);
-              }}
+              onRemove={selectedGreatRune ? interactions.removeGreatRune : undefined}
+              onSelect={interactions.selectGreatRune}
             />
           )}
           {activeCrystalTearSlotId && (
@@ -484,26 +267,9 @@ export function BuildEditorWorkspace({
                 .map(([, crystalTear]) => crystalTear.id)}
               onClose={() => setActiveCrystalTearSlotId(null)}
               onRemove={selectedCrystalTears[activeCrystalTearSlotId]
-                ? () => {
-                    setSelectedCrystalTears((current) => {
-                      const next = { ...current };
-                      delete next[activeCrystalTearSlotId];
-                      return next;
-                    });
-                    if (Object.keys(selectedCrystalTears).length === 1) {
-                      setIsPhysickActive(false);
-                    }
-                    setActiveCrystalTearSlotId(null);
-                  }
+                ? interactions.removeCrystalTear
                 : undefined}
-              onSelect={(crystalTear) => {
-                setSelectedCrystalTears((current) => ({
-                  ...current,
-                  [activeCrystalTearSlotId]: crystalTear,
-                }));
-                if (!crystalTear.effects) setIsPhysickActive(false);
-                setActiveCrystalTearSlotId(null);
-              }}
+              onSelect={interactions.selectCrystalTear}
               slotLabel={crystalTearSlotLabels[activeCrystalTearSlotId] ?? "Crystal Tear slot"}
             />
           )}
@@ -516,31 +282,8 @@ export function BuildEditorWorkspace({
                 .filter(([slot]) => Number(slot) !== activeSpellSlot)
                 .map(([, spell]) => spell.id)}
               onClose={() => setActiveSpellSlot(null)}
-              onRemove={selectedSpells[activeSpellSlot]
-                ? () => {
-                    const removedSpellId = selectedSpells[activeSpellSlot]?.id;
-                    setSelectedSpells((current) => {
-                      const next = { ...current };
-                      delete next[activeSpellSlot];
-                      return next;
-                    });
-                    if (removedSpellId) {
-                      setActiveBuffSpellIds((current) => current.filter((id) => id !== removedSpellId));
-                      setActiveWeaponBuff((current) => current?.spellId === removedSpellId ? null : current);
-                    }
-                    setActiveSpellSlot(null);
-                  }
-                : undefined}
-              onSelect={(spell) => {
-                const replacedSpellId = selectedSpells[activeSpellSlot]?.id;
-                setSelectedSpells((current) => ({ ...current, [activeSpellSlot]: spell }));
-                if (replacedSpellId && replacedSpellId !== spell.id) {
-                  setActiveBuffSpellIds((current) => current.filter((id) => id !== replacedSpellId));
-                  setActiveWeaponBuff((current) => current?.spellId === replacedSpellId ? null : current);
-                }
-                setEditorFocus({ kind: "spell", slotIndex: activeSpellSlot });
-                setActiveSpellSlot(null);
-              }}
+              onRemove={selectedSpells[activeSpellSlot] ? interactions.removeSpell : undefined}
+              onSelect={interactions.selectSpell}
               slotLabel={`Spell slot ${activeSpellSlot}`}
             />
           )}
@@ -575,28 +318,8 @@ export function BuildEditorWorkspace({
           </div>
         </>
       ) : (
-        <CharacterClassCarousel onSelect={selectCharacterClass} />
+        <CharacterClassCarousel onSelect={interactions.selectCharacterClass} />
       )}
     </section>
   );
-}
-
-function parseSpellSlot(slotId: string): number | null {
-  const match = /^spell-(\d{1,2})$/.exec(slotId);
-  if (!match) return null;
-  const slot = Number(match[1]);
-  return slot >= 1 && slot <= 12 ? slot : null;
-}
-
-function isWeaponSlotId(slotId: string): slotId is WeaponEditorSlotId {
-  return slotId in weaponSlotLabels;
-}
-
-function toCatalystSelection(weapon?: EquippedWeapon) {
-  if (!weapon || weapon.weapon.castingTypes.length === 0) return null;
-  return {
-    weaponId: weapon.weapon.id,
-    variantId: weapon.variantId,
-    upgradeLevel: weapon.upgradeLevel,
-  };
 }

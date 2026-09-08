@@ -1,7 +1,11 @@
-import { createRoute } from "@tanstack/react-router";
-import { EquipmentPage } from "../features/equipment/pages/EquipmentPage";
+import { createRoute, lazyRouteComponent } from "@tanstack/react-router";
 import { parseEquipmentCatalogSearch } from "../features/equipment/domain/parseEquipmentCatalogSearch";
 import { publicLayoutRoute } from "./publicLayout.route";
+
+const EquipmentPage = lazyRouteComponent(
+  () => import("../features/equipment/pages/EquipmentPage"),
+  "EquipmentPage",
+);
 
 export const equipmentRoute = createRoute({
   getParentRoute: () => publicLayoutRoute,

@@ -373,6 +373,10 @@ Boss defensive values should be usable by the Damage Calculator where supported 
 
 Authentication is handled with Clerk.
 
+The production HTML preconnects to the origin derived from `VITE_API_URL`.
+Branding artwork and API requests can therefore reuse an established connection
+without maintaining a second environment-specific origin setting.
+
 Anonymous users may:
 
 - browse the compendium
@@ -936,17 +940,18 @@ Usability is more important than visual imitation.
 The public navbar uses the privately stored Gracebound wordmark through the
 backend branding-asset endpoint. The source and generated logo files are not
 committed to the frontend repository. The experimental home hero is currently
-rendered as a full-width responsive image section. It uses the square source on
-narrow viewports and a separately prepared 2048x1152 outpainted asset from the
+rendered as a full-width responsive image section. It uses a compact portrait
+derivative on narrow viewports and a separately prepared 2048x1152 asset from the
 `gracebound-hero-desktop` endpoint on wider viewports. The artwork itself has no
 interactive responsibility; semantic content and the future call to action
 remain separate HTML components.
 
 The full-page Grace and Night backgrounds are private MongoDB branding assets.
 `PageBackground` resolves both backend URLs and crossfades its non-interactive
-layers with the theme. No background image bytes are committed to the frontend
-repository, and a theme-colored dimmer preserves content contrast independently
-of the artwork.
+layers with the theme. Native `picture` selection serves cropped mobile WebP
+derivatives on narrow viewports. No background image bytes are committed to the
+frontend repository, and a theme-colored dimmer preserves content contrast
+independently of the artwork.
 
 The home page places a concise unofficial fan-project disclaimer directly below
 the hero. The public footer links to dedicated Impressum and Datenschutz pages.

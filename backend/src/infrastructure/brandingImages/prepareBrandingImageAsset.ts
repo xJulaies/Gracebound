@@ -7,12 +7,16 @@ import type {
 } from "../../features/assets/domain/brandingImageAsset.types";
 
 const BRANDING_ASSETS = {
-  "gracebound-hero": { width: 1200, height: 1200 },
-  "gracebound-hero-desktop": { width: 2048, height: 1152 },
-  "gracebound-navbar-logo": { width: 900, height: 300 },
-  "gracebound-background-grace": { width: 2560, height: 1440 },
-  "gracebound-background-night": { width: 1920, height: 1080 },
-} satisfies Record<BrandingAssetId, { width: number; height: number }>;
+  "gracebound-hero": { width: 1200, height: 1200, quality: 86 },
+  "gracebound-hero-mobile": { width: 480, height: 667, quality: 78 },
+  "gracebound-hero-desktop": { width: 2048, height: 1152, quality: 86 },
+  "gracebound-navbar-logo": { width: 900, height: 300, quality: 86 },
+  "gracebound-navbar-logo-compact": { width: 416, height: 139, quality: 82 },
+  "gracebound-background-grace": { width: 2560, height: 1440, quality: 86 },
+  "gracebound-background-grace-mobile": { width: 768, height: 1366, quality: 68 },
+  "gracebound-background-night": { width: 1920, height: 1080, quality: 86 },
+  "gracebound-background-night-mobile": { width: 768, height: 1366, quality: 68 },
+} satisfies Record<BrandingAssetId, { width: number; height: number; quality: number }>;
 
 export async function prepareBrandingImageAsset(
   sourceFilename: string,
@@ -27,7 +31,7 @@ export async function prepareBrandingImageAsset(
         assetId !== "gracebound-hero-desktop" &&
         !assetId.startsWith("gracebound-background-"),
     })
-    .webp({ quality: 86 })
+    .webp({ quality: dimensions.quality })
     .toBuffer();
   const metadata = await sharp(data).metadata();
   if (metadata.format !== "webp" || !metadata.width || !metadata.height) {

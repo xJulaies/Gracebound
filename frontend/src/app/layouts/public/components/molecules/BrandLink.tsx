@@ -2,7 +2,7 @@ import { Link } from "@tanstack/react-router";
 import { resolveApiAssetUrl } from "../../../../../shared/api/resolveApiAssetUrl";
 
 const NAVBAR_LOGO_URL = resolveApiAssetUrl(
-  "/api/assets/branding/gracebound-navbar-logo",
+  "/api/assets/branding/gracebound-navbar-logo-compact?v=1",
 );
 
 export function BrandLink() {
@@ -11,7 +11,10 @@ export function BrandLink() {
       <img
         alt="Gracebound — Elden Ring companion"
         className="h-auto w-32 rounded-panel min-[24rem]:w-36 sm:w-52"
+        decoding="async"
+        height={139}
         src={NAVBAR_LOGO_URL}
+        width={416}
       />
     </Link>
   );

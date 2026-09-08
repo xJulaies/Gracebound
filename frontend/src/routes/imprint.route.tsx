@@ -1,9 +1,11 @@
-import { createRoute } from "@tanstack/react-router";
-import { ImprintPage } from "../features/legal/pages/ImprintPage";
+import { createRoute, lazyRouteComponent } from "@tanstack/react-router";
 import { publicLayoutRoute } from "./publicLayout.route";
 
 export const imprintRoute = createRoute({
   getParentRoute: () => publicLayoutRoute,
   path: "/imprint",
-  component: ImprintPage,
+  component: lazyRouteComponent(
+    () => import("../features/legal/pages/ImprintPage"),
+    "ImprintPage",
+  ),
 });

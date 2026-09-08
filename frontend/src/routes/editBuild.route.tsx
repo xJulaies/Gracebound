@@ -1,6 +1,10 @@
-import { createRoute } from "@tanstack/react-router";
-import { EditBuildPage } from "../features/builds/pages/EditBuildPage";
+import { createRoute, lazyRouteComponent } from "@tanstack/react-router";
 import { publicLayoutRoute } from "./publicLayout.route";
+
+const EditBuildPage = lazyRouteComponent(
+  () => import("../features/builds/pages/EditBuildPage"),
+  "EditBuildPage",
+);
 
 export const editBuildRoute = createRoute({
   getParentRoute: () => publicLayoutRoute,

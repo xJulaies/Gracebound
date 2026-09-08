@@ -11,7 +11,15 @@ export function CharacterClassSwipePreview({
       className="carousel-swipe-preview absolute inset-y-0 left-0 z-20 m-0 w-full overflow-hidden rounded-panel border border-accent bg-surface-elevated p-0 sm:hidden"
     >
       <div className="relative size-full overflow-hidden">
-        <img alt="" className="size-full object-cover" src={characterClass.imageUrl} />
+        <img
+          alt=""
+          className="size-full object-cover"
+          decoding="async"
+          height={624}
+          loading="lazy"
+          src={characterClass.imageUrl}
+          width={520}
+        />
         <div
           aria-hidden="true"
           className="absolute inset-0 bg-linear-to-t from-background via-background/15 to-transparent"

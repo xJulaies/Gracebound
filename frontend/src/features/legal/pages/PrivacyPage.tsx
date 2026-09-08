@@ -102,13 +102,11 @@ export function PrivacyPage() {
         </p>
       </LegalSection>
 
-      <LegalSection title="8. Google Fonts">
+      <LegalSection title="8. Lokal bereitgestellte Schriftarten">
         <p>
-          Die Schriftart Cinzel wird derzeit über Server von Google geladen. Hierbei kann die
-          IP-Adresse des aufrufenden Geräts an Google übermittelt werden. Vor einer
-          Veröffentlichung sollte die Schriftart lokal bereitgestellt oder die konkrete
-          Verarbeitung einschließlich Rechtsgrundlage und möglicher Drittlandübermittlung
-          abschließend bewertet werden.
+          Die Schriftart Cinzel wird als Bestandteil der Anwendung lokal bereitgestellt. Beim
+          Laden der Schriftart wird daher keine Verbindung zu Servern des Schriftanbieters
+          hergestellt.
         </p>
       </LegalSection>
 

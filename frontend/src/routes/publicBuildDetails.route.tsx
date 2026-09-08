@@ -1,6 +1,10 @@
-import { createRoute } from "@tanstack/react-router";
-import { PublicBuildDetailsPage } from "../features/builds/pages/PublicBuildDetailsPage";
+import { createRoute, lazyRouteComponent } from "@tanstack/react-router";
 import { publicLayoutRoute } from "./publicLayout.route";
+
+const PublicBuildDetailsPage = lazyRouteComponent(
+  () => import("../features/builds/pages/PublicBuildDetailsPage"),
+  "PublicBuildDetailsPage",
+);
 
 export const publicBuildDetailsRoute = createRoute({
   getParentRoute: () => publicLayoutRoute,

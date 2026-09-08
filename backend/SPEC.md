@@ -1001,7 +1001,10 @@ Branding artwork uses the separate `brandingimageassets` collection and the
 allowlisted `/api/assets/branding/:assetId` endpoint. In addition to the hero
 and navbar logo, `gracebound-background-grace` and
 `gracebound-background-night` provide the theme backgrounds. Their source and
-generated files remain outside Git; the frontend contains only API URLs.
+generated files remain outside Git; the frontend contains only API URLs. The
+`gracebound-hero-mobile`, `gracebound-navbar-logo-compact`, and `*-mobile`
+background records are generated from those stored originals and provide
+smaller, more strongly compressed WebP assets for narrow viewports.
 
 The same catalog responses expose English `summary` and `description` fields.
 The values are imported by ID from Smithbox's FMG text export; missing fields

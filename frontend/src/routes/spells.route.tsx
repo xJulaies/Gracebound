@@ -1,7 +1,11 @@
-import { createRoute } from "@tanstack/react-router";
-import { SpellsPage } from "../features/spells/pages/SpellsPage";
+import { createRoute, lazyRouteComponent } from "@tanstack/react-router";
 import { parseSpellCatalogSearch } from "../features/spells/domain/parseSpellCatalogSearch";
 import { publicLayoutRoute } from "./publicLayout.route";
+
+const SpellsPage = lazyRouteComponent(
+  () => import("../features/spells/pages/SpellsPage"),
+  "SpellsPage",
+);
 
 export const spellsRoute = createRoute({
   getParentRoute: () => publicLayoutRoute,
