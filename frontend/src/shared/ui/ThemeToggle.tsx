@@ -10,7 +10,7 @@ export function ThemeToggle() {
   const nextTheme = theme === "night" ? "grace" : "night";
 
   function toggleTheme() {
-    saveTheme(nextTheme);
+    saveTheme(nextTheme, true);
     setTheme(nextTheme);
   }
 

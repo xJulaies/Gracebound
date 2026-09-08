@@ -10,7 +10,7 @@ export function PublicHeader() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
 
   return (
-    <header className="border-b border-border bg-surface">
+    <header className="sticky top-0 z-30 border-b border-border bg-surface shadow-lg shadow-background/25">
       <div className="app-shell flex min-h-20 items-center justify-between gap-2 py-3 sm:gap-4">
         <BrandLink />
         <MainNavigation />

@@ -6,6 +6,7 @@ export function mapBuildResponse(build: HydratedDocument<Build>) {
 
   return {
     id: build.id,
+    gameVersion: plainBuild.gameVersion,
     name: plainBuild.name,
     description: plainBuild.description,
     characterClassId: plainBuild.characterClassId,

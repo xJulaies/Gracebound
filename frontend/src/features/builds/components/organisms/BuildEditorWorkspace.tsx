@@ -4,22 +4,17 @@ import type { CharacterClass } from "../../../character-classes/types/characterC
 import type { Weapon } from "../../../weapons/types/weapon.types";
 import type {
   BuildEditorFocus,
-  ActiveWeaponBuff,
   EquippedWeapon,
   WeaponEditorSlotId,
 } from "../../types/editor.types";
-import type { Armor, ArmorSlot } from "../../../armor/types/armor.types";
+import type { ArmorSlot } from "../../../armor/types/armor.types";
 import { ArmorPicker } from "./ArmorPicker";
 import { EquipmentLoadout } from "./EquipmentLoadout";
 import { WeaponInspector } from "./WeaponInspector";
 import { WeaponPicker } from "./WeaponPicker";
-import type { Talisman } from "../../../talismans/types/talisman.types";
 import { TalismanPicker } from "./TalismanPicker";
-import type { GreatRune } from "../../../great-runes/types/greatRune.types";
-import type { CrystalTear } from "../../../crystal-tears/types/crystalTear.types";
 import { GreatRunePicker } from "./GreatRunePicker";
 import { CrystalTearPicker } from "./CrystalTearPicker";
-import type { Spell } from "../../../spells/types/spell.types";
 import { SpellPicker } from "./SpellPicker";
 import { useWeaponOffensePreviewQuery } from "../../hooks/useWeaponOffensePreviewQuery";
 import { useSpellOffensePreviewQuery } from "../../hooks/useSpellOffensePreviewQuery";
@@ -33,6 +28,11 @@ import {
   BuildEditorTabs,
   type BuildEditorTab,
 } from "../molecules/BuildEditorTabs";
+import { useBuildEditorDraft } from "../../hooks/useBuildEditorDraft";
+import { BuildSaveControls } from "./BuildSaveControls";
+import { UnsavedBuildChangesGuard } from "./UnsavedBuildChangesGuard";
+import type { BuildEditorInitialState } from "../../types/editor.types";
+import { calculateRuneCosts } from "../../domain/calculateRuneCosts";
 
 const weaponSlotLabels: Record<WeaponEditorSlotId, string> = {
   "left-hand-1": "Left hand 1",
@@ -62,9 +62,32 @@ const crystalTearSlotLabels: Record<string, string> = {
   "crystal-tear-2": "Crystal Tear 2",
 };
 
-export function BuildEditorWorkspace() {
-  const [selectedClass, setSelectedClass] = useState<CharacterClass | null>(null);
-  const [stats, setStats] = useState<CharacterStats | null>(null);
+export function BuildEditorWorkspace({
+  initialBuildId = null,
+  initialState,
+}: {
+  initialBuildId?: string | null;
+  initialState?: BuildEditorInitialState;
+} = {}) {
+  const {
+    draft,
+    isDirty,
+    markSaved,
+    setMetadata,
+    characterLevel,
+    selectedClass, setSelectedClass,
+    stats, setStats,
+    selectedWeapons, setSelectedWeapons,
+    selectedArmor, setSelectedArmor,
+    selectedTalismans, setSelectedTalismans,
+    selectedGreatRune, setSelectedGreatRune,
+    selectedCrystalTears, setSelectedCrystalTears,
+    selectedSpells, setSelectedSpells,
+    memoryStoneCount, setMemoryStoneCount,
+    activeCatalystSlotId, setActiveCatalystSlotId,
+    activeBuffSpellIds, setActiveBuffSpellIds,
+    activeWeaponBuff, setActiveWeaponBuff,
+  } = useBuildEditorDraft(initialState);
   const [activeWeaponSlotId, setActiveWeaponSlotId] = useState<WeaponEditorSlotId | null>(null);
   const [activeArmorSlotId, setActiveArmorSlotId] = useState<string | null>(null);
   const [activeTalismanSlotId, setActiveTalismanSlotId] = useState<string | null>(null);
@@ -72,19 +95,9 @@ export function BuildEditorWorkspace() {
   const [activeCrystalTearSlotId, setActiveCrystalTearSlotId] = useState<string | null>(null);
   const [activeSpellSlot, setActiveSpellSlot] = useState<number | null>(null);
   const [configuredWeaponSlotId, setConfiguredWeaponSlotId] = useState<WeaponEditorSlotId | null>(null);
-  const [selectedWeapons, setSelectedWeapons] = useState<Record<string, EquippedWeapon>>({});
-  const [selectedArmor, setSelectedArmor] = useState<Record<string, Armor>>({});
-  const [selectedTalismans, setSelectedTalismans] = useState<Record<string, Talisman>>({});
-  const [selectedGreatRune, setSelectedGreatRune] = useState<GreatRune | null>(null);
-  const [selectedCrystalTears, setSelectedCrystalTears] = useState<Record<string, CrystalTear>>({});
-  const [selectedSpells, setSelectedSpells] = useState<Record<number, Spell>>({});
-  const [memoryStoneCount, setMemoryStoneCount] = useState(0);
   const [editorFocus, setEditorFocus] = useState<BuildEditorFocus | null>(null);
-  const [activeCatalystSlotId, setActiveCatalystSlotId] = useState<WeaponEditorSlotId | null>(null);
   const [isGreatRuneActive, setIsGreatRuneActive] = useState(false);
   const [isPhysickActive, setIsPhysickActive] = useState(false);
-  const [activeBuffSpellIds, setActiveBuffSpellIds] = useState<string[]>([]);
-  const [activeWeaponBuff, setActiveWeaponBuff] = useState<ActiveWeaponBuff | null>(null);
   const [activeSkillBuffSlotId, setActiveSkillBuffSlotId] = useState<WeaponEditorSlotId | null>(null);
   const [activeTab, setActiveTab] = useState<BuildEditorTab>("equipment");
   const statsQuery = useBuildStatsPreviewQuery(
@@ -108,7 +121,11 @@ export function BuildEditorWorkspace() {
       : null,
   );
   const statsPreview = statsQuery.data?.data[0] ?? null;
-  const availableSpellSlots = statsPreview?.memorySlots.availableSlots ?? 2 + memoryStoneCount;
+  const locallyAvailableSpellSlots = 2 + memoryStoneCount;
+  const availableSpellSlots = Math.max(
+    locallyAvailableSpellSlots,
+    statsPreview?.memorySlots.availableSlots ?? locallyAvailableSpellSlots,
+  );
   const selectedSpellEntries = Object.entries(selectedSpells);
   const requiredSpellCapacity = Math.max(
     selectedSpellEntries.reduce((total, [, spell]) => total + spell.slotsRequired, 0),
@@ -117,13 +134,9 @@ export function BuildEditorWorkspace() {
   );
   const nonStoneSlotBonus = Math.max(0, availableSpellSlots - 2 - memoryStoneCount);
   const minimumMemoryStoneCount = Math.max(0, requiredSpellCapacity - 2 - nonStoneSlotBonus);
-  const characterLevel = selectedClass && stats
-    ? selectedClass.level + Object.keys(stats).reduce(
-        (total, attribute) => total + stats[attribute as keyof CharacterStats]
-          - selectedClass.stats[attribute as keyof CharacterStats],
-        0,
-      )
-    : 0;
+  const runeCosts = selectedClass
+    ? calculateRuneCosts(selectedClass.level, characterLevel)
+    : null;
 
   const openSlot = (slotId: string) => {
     if (isWeaponSlotId(slotId)) {
@@ -132,8 +145,10 @@ export function BuildEditorWorkspace() {
         if (selectedWeapons[slotId].weapon.castingTypes.length > 0) {
           setActiveCatalystSlotId(slotId);
         }
+        setConfiguredWeaponSlotId(slotId);
+        return;
       }
-      setConfiguredWeaponSlotId(selectedWeapons[slotId] ? slotId : null);
+      setConfiguredWeaponSlotId(null);
       setActiveWeaponSlotId(slotId);
       return;
     }
@@ -162,6 +177,7 @@ export function BuildEditorWorkspace() {
       setConfiguredWeaponSlotId(null);
       if (selectedSpells[spellSlot]) {
         setEditorFocus({ kind: "spell", slotIndex: spellSlot });
+        return;
       }
       setActiveSpellSlot(spellSlot);
     }
@@ -202,11 +218,7 @@ export function BuildEditorWorkspace() {
     ? selectedWeapons[activeCatalystSlotId] ?? null
     : null;
   const focusedWeaponSlotId = editorFocus?.kind === "weapon" ? editorFocus.slotId : null;
-  const weaponBuffSelection = toWeaponBuffSelection(
-    activeWeaponBuff,
-    selectedSpells,
-    selectedWeapons,
-  );
+  const weaponBuffSelection = draft?.weaponBuff ?? null;
   const offenseQuery = useWeaponOffensePreviewQuery(
     focusedWeapon,
     stats,
@@ -257,6 +269,16 @@ export function BuildEditorWorkspace() {
     >
       {selectedClass && stats ? (
         <>
+          {draft && (
+            <BuildSaveControls
+              draft={draft}
+              initialBuildId={initialBuildId}
+              isDirty={isDirty}
+              onMetadataChange={setMetadata}
+              onSaved={markSaved}
+            />
+          )}
+          <UnsavedBuildChangesGuard isDirty={isDirty} />
           <BuildEditorTabs activeTab={activeTab} onChange={setActiveTab} />
           <div className="build-editor-grid">
             <div
@@ -270,11 +292,11 @@ export function BuildEditorWorkspace() {
                 characterClass={selectedClass}
                 characterLevel={characterLevel}
                 isUpdatingCosts={statsQuery.isFetching}
-                nextLevelRuneCost={statsPreview?.nextLevelRuneCost ?? null}
+                nextLevelRuneCost={runeCosts?.nextLevelRuneCost ?? null}
                 onChangeAttribute={changeAttribute}
                 onChangeCharacter={() => setSelectedClass(null)}
                 stats={stats}
-                totalRuneCost={statsPreview?.totalRuneCost ?? null}
+                totalRuneCost={runeCosts?.totalRuneCost ?? null}
               />
             </div>
             <div
@@ -292,7 +314,9 @@ export function BuildEditorWorkspace() {
                 ?? activeCrystalTearSlotId
                 ?? (activeSpellSlot === null ? null : `spell-${activeSpellSlot}`)
                 ?? configuredWeaponSlotId
-                ?? (editorFocus?.kind === "weapon" ? editorFocus.slotId : null)}
+                ?? (editorFocus?.kind === "weapon"
+                  ? editorFocus.slotId
+                  : editorFocus?.kind === "spell" ? `spell-${editorFocus.slotIndex}` : null)}
               onSelectSlot={openSlot}
               selectedArmor={selectedArmor}
               selectedTalismans={selectedTalismans}
@@ -543,6 +567,9 @@ export function BuildEditorWorkspace() {
                 spellOffensePreview={spellOffenseQuery.data ?? null}
                 isSpellOffensePending={spellOffenseQuery.isPending || spellOffenseQuery.isFetching}
                 isSpellOffenseError={spellOffenseQuery.isError}
+                onChangeFocusedSpell={editorFocus?.kind === "spell"
+                  ? () => setActiveSpellSlot(editorFocus.slotIndex)
+                  : undefined}
               />
             </div>
           </div>
@@ -571,22 +598,5 @@ function toCatalystSelection(weapon?: EquippedWeapon) {
     weaponId: weapon.weapon.id,
     variantId: weapon.variantId,
     upgradeLevel: weapon.upgradeLevel,
-  };
-}
-
-function toWeaponBuffSelection(
-  activeWeaponBuff: ActiveWeaponBuff | null,
-  selectedSpells: Record<number, Spell>,
-  selectedWeapons: Record<string, EquippedWeapon>,
-) {
-  if (!activeWeaponBuff) return null;
-  const spellExists = Object.values(selectedSpells).some(({ id }) => id === activeWeaponBuff.spellId);
-  const catalyst = selectedWeapons[activeWeaponBuff.catalystSlotId];
-  if (!spellExists || !catalyst) return null;
-  return {
-    spellId: activeWeaponBuff.spellId,
-    catalystWeaponId: catalyst.weapon.id,
-    catalystVariantId: catalyst.variantId,
-    upgradeLevel: catalyst.upgradeLevel,
   };
 }

@@ -1,9 +1,10 @@
 import { describe, expect, it } from "vitest";
-import type { BossData } from "../../../features/bosses/domain/boss.types";
+import { unclassifiedBossMetadata, type BossData } from "../../../features/bosses/domain/boss.types";
 import { validateBossCatalogVersion } from "./validateBossCatalogVersion";
 
 function createBoss(id: string): BossData {
   return {
+    ...unclassifiedBossMetadata,
     id,
     name: id,
     health: 1,

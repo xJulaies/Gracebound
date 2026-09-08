@@ -46,6 +46,26 @@ beforeEach(() => Promise.all([
     data: image,
     sourceHash: "c".repeat(64),
   }),
+  saveBrandingImageAsset({
+    assetId: "gracebound-background-grace",
+    checksum,
+    mimeType: "image/webp",
+    width: 2560,
+    height: 1440,
+    size: image.length,
+    data: image,
+    sourceHash: "e".repeat(64),
+  }),
+  saveBrandingImageAsset({
+    assetId: "gracebound-background-night",
+    checksum,
+    mimeType: "image/webp",
+    width: 1920,
+    height: 1080,
+    size: image.length,
+    data: image,
+    sourceHash: "f".repeat(64),
+  }),
 ]));
 
 describe("public branding image API", () => {
@@ -71,6 +91,16 @@ describe("public branding image API", () => {
   it("returns the desktop hero", async () => {
     const response = await request(app).get(
       "/api/assets/branding/gracebound-hero-desktop",
+    );
+
+    expect(response.status).toBe(200);
+    expect(response.headers["content-type"]).toBe("image/webp");
+    expect(response.body).toEqual(image);
+  });
+
+  it.each(["grace", "night"])("returns the %s theme background", async (theme) => {
+    const response = await request(app).get(
+      `/api/assets/branding/gracebound-background-${theme}`,
     );
 
     expect(response.status).toBe(200);

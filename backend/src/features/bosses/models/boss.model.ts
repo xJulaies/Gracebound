@@ -5,6 +5,7 @@ import type {
   BossData,
   PhysicalAbsorption,
 } from "../domain/boss.types";
+import { BOSS_LOCATION_TYPES, BOSS_REGIONS } from "../domain/boss.types";
 
 export type BossRecord = BossData & {
   source: "REGULATION";
@@ -34,10 +35,28 @@ const bossAbsorptionSchema = new Schema<BossAbsorption>(
   { _id: false },
 );
 
+const bossEncounterSchema = new Schema(
+  {
+    region: { type: String, enum: BOSS_REGIONS, required: true },
+    location: { type: String, default: null },
+    locationType: { type: String, enum: BOSS_LOCATION_TYPES, default: null },
+  },
+  { _id: false },
+);
+
 const bossSchema = new Schema<BossRecord>(
   {
     id: { type: String, required: true },
     name: { type: String, required: true },
+    encounters: { type: [bossEncounterSchema], required: true, default: [] },
+    rank: { type: String, enum: ["major", "minor"], default: null },
+    progression: {
+      type: String,
+      enum: ["required", "route-dependent", "optional"],
+      default: null,
+    },
+    rewardsGreatRune: { type: Boolean, default: null },
+    rewardsRemembrance: { type: Boolean, default: null },
     health: { type: Number, required: true, min: 1 },
     defense: { type: damageTypesSchema, required: true },
     absorption: { type: bossAbsorptionSchema, required: true },

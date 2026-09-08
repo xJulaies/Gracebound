@@ -1,15 +1,18 @@
 import { createHash } from "node:crypto";
 import { readFile } from "node:fs/promises";
 import sharp from "sharp";
-import type { BrandingImageAssetData } from "../../features/assets/domain/brandingImageAsset.types";
+import type {
+  BrandingAssetId,
+  BrandingImageAssetData,
+} from "../../features/assets/domain/brandingImageAsset.types";
 
 const BRANDING_ASSETS = {
   "gracebound-hero": { width: 1200, height: 1200 },
   "gracebound-hero-desktop": { width: 2048, height: 1152 },
   "gracebound-navbar-logo": { width: 900, height: 300 },
-} as const;
-
-export type BrandingAssetId = keyof typeof BRANDING_ASSETS;
+  "gracebound-background-grace": { width: 2560, height: 1440 },
+  "gracebound-background-night": { width: 1920, height: 1080 },
+} satisfies Record<BrandingAssetId, { width: number; height: number }>;
 
 export async function prepareBrandingImageAsset(
   sourceFilename: string,
@@ -20,7 +23,9 @@ export async function prepareBrandingImageAsset(
   const data = await sharp(source)
     .resize(dimensions.width, dimensions.height, {
       fit: "cover",
-      withoutEnlargement: assetId !== "gracebound-hero-desktop",
+      withoutEnlargement:
+        assetId !== "gracebound-hero-desktop" &&
+        !assetId.startsWith("gracebound-background-"),
     })
     .webp({ quality: 86 })
     .toBuffer();

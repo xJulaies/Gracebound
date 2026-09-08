@@ -53,6 +53,7 @@ export interface BuildEquipment {
 
 export interface Build {
   id: string;
+  gameVersion: string;
   name: string;
   description: string;
   characterClassId: string | null;
@@ -65,6 +66,11 @@ export interface Build {
   createdAt: string;
   updatedAt: string;
 }
+
+export type BuildWriteInput = Omit<
+  Build,
+  "id" | "gameVersion" | "createdAt" | "updatedAt"
+>;
 
 export interface BuildStatsInput {
   characterClassId: string;

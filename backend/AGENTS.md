@@ -237,9 +237,12 @@ On creation, the backend assigns:
 
 ```text
 ownerId = authenticatedUserId
+gameVersion = supportedGameVersion
 ```
 
-Do not accept an `ownerId` from the request body.
+Do not accept an `ownerId` or `gameVersion` from the request body. Both values
+belong to trusted server context. The stored game version is immutable through
+normal build updates.
 
 Saved builds persist the character class, memory stones, spell loadout, six
 fixed weapon slots (`rightHand1` through `rightHand3` and `leftHand1` through
@@ -348,6 +351,15 @@ stored once; differing regional rows and named phases remain distinct.
 Shadow of the Erdtree map files are not available in the current local source
 installation, so DLC bosses must not be included or guessed until those source
 files can be validated.
+
+Boss combat values and contextual metadata have different evidence boundaries.
+Keep HP, defense, and absorption Regulation-derived. Region, location type,
+major/minor rank, progression relevance, Great Rune rewards, and Remembrance
+rewards must be explicitly curated. Represent an unverified contextual value as
+`null`; never infer it from a boss name or collapse unknown into `false`.
+Store locations as an `encounters` array: one Regulation combat profile may be
+shared by multiple encounters. Do not duplicate the combat record or discard
+additional locations merely to force a singular location field.
 
 Before importing a new Regulation version, compare it with the previous local
 exports and run both importers with `--dry-run`. Version-specific catalog-count
@@ -470,8 +482,9 @@ Branding artwork is also a local source artifact and must not be committed.
 Convert the Gracebound home hero to WebP before storage, enforce the 2 MiB
 asset limit, and serve it through `/api/assets/branding/:assetId` with cache
 validation metadata. The supported branding assets are the experimental home
-hero and the compact navbar logo. Keep source images and generated image bytes
-out of the repository.
+hero, the compact navbar logo, and the Grace and Night full-page backgrounds.
+Keep source images and generated image bytes out of the repository. Frontend
+code references only the allowlisted backend asset URLs.
 
 ---
 
@@ -536,6 +549,8 @@ GET /api/assets/ui/:assetId
 GET /api/assets/branding/gracebound-hero
 GET /api/assets/branding/gracebound-hero-desktop
 GET /api/assets/branding/gracebound-navbar-logo
+GET /api/assets/branding/gracebound-background-grace
+GET /api/assets/branding/gracebound-background-night
 ```
 
 The spell list route supports optional type, curated school, name search, page,
@@ -1193,7 +1208,9 @@ are two base slots plus zero to eight submitted Memory Stones and supported
 talisman bonuses. Reject selections exceeding that capacity. This endpoint does
 not calculate FP consumption or spell damage; verified spell profiles use the
 damage endpoint. Validate Intelligence, Faith, and
-Arcane requirements against effective stats after supported equipment bonuses.
+Arcane requirements in the selected spell's own damage operation. Unmet spell
+requirements must not fail the aggregate build-stat response; return the spell
+metadata so the client can present the limitation on that selection.
 
 Identify catalysts only through `EquipParamWeapon.enableMagic` and
 `enableMiracle`. Catalyst scaling uses the existing weapon reinforcement,
@@ -1202,9 +1219,10 @@ scaling per damage type; do not choose a single spell scaling value until a
 verified spell attack component supplies its damage type.
 
 Build stats accepts an optional catalyst selection containing canonical weapon
-ID, calculation-variant ID, and upgrade level. Verify variant ownership,
-supported casting types, upgrade bounds, and effective attribute requirements.
-Return Regulation-derived scaling for all five damage types.
+ID, calculation-variant ID, and upgrade level. Verify variant ownership and
+upgrade bounds. Casting-type or attribute incompatibility belongs to the
+individual spell/damage operation and must not hide unrelated build stats.
+Return Regulation-derived scaling for all five damage types when available.
 
 Spell damage uses verified direct, area, spread, channelled, multi-projectile,
 and multi-component profiles. Resolve

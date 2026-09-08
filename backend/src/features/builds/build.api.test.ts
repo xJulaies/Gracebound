@@ -73,8 +73,14 @@ function createBuildRequest() {
 }
 
 describe("protected build API", () => {
-  it("rejects unauthenticated requests", async () => {
-    const response = await request(app).get("/api/me/builds");
+  it.each([
+    ["GET", "/api/me/builds"],
+    ["POST", "/api/me/builds"],
+    ["GET", "/api/me/builds/507f1f77bcf86cd799439011"],
+    ["PATCH", "/api/me/builds/507f1f77bcf86cd799439011"],
+    ["DELETE", "/api/me/builds/507f1f77bcf86cd799439011"],
+  ])("rejects unauthenticated %s %s requests", async (method, path) => {
+    const response = await request(app)[method.toLowerCase() as "get"](path);
 
     expect(response.status).toBe(401);
     expect(response.body).toEqual({
@@ -93,6 +99,7 @@ describe("protected build API", () => {
     expect(response.status).toBe(201);
     expect(response.body.data).toHaveLength(1);
     expect(response.body.data[0]).toMatchObject({
+      gameVersion: REGULATION_TEST_GAME_VERSION,
       name: "Moonveil Build",
       visibility: "private",
     });
@@ -102,6 +109,7 @@ describe("protected build API", () => {
 
     const storedBuild = await BuildModel.findOne();
     expect(storedBuild?.ownerId).toBe("user-1");
+    expect(storedBuild?.gameVersion).toBe(REGULATION_TEST_GAME_VERSION);
   });
 
   it("rejects client-controlled ownership", async () => {
@@ -109,6 +117,16 @@ describe("protected build API", () => {
       .post("/api/me/builds")
       .set("x-test-user-id", "user-1")
       .send({ ...createBuildRequest(), ownerId: "user-2" });
+
+    expect(response.status).toBe(400);
+    expect(await BuildModel.countDocuments()).toBe(0);
+  });
+
+  it("rejects a client-controlled game version", async () => {
+    const response = await request(app)
+      .post("/api/me/builds")
+      .set("x-test-user-id", "user-1")
+      .send({ ...createBuildRequest(), gameVersion: "1.00.0" });
 
     expect(response.status).toBe(400);
     expect(await BuildModel.countDocuments()).toBe(0);
@@ -139,8 +157,8 @@ describe("protected build API", () => {
 
   it("lists only builds owned by the authenticated user", async () => {
     await BuildModel.create([
-      { ownerId: "user-1", name: "Owned", level: 100, stats },
-      { ownerId: "user-2", name: "Foreign", level: 100, stats },
+      { ownerId: "user-1", gameVersion: REGULATION_TEST_GAME_VERSION, name: "Owned", level: 100, stats },
+      { ownerId: "user-2", gameVersion: REGULATION_TEST_GAME_VERSION, name: "Foreign", level: 100, stats },
     ]);
 
     const response = await request(app)
@@ -155,6 +173,7 @@ describe("protected build API", () => {
   it("does not expose another user's build", async () => {
     const foreignBuild = await BuildModel.create({
       ownerId: "user-2",
+      gameVersion: REGULATION_TEST_GAME_VERSION,
       name: "Foreign",
       level: 100,
       stats,
@@ -168,9 +187,23 @@ describe("protected build API", () => {
     expect(response.body.data).toEqual([]);
   });
 
+  it.each([
+    ["GET", "get"],
+    ["PATCH", "patch"],
+    ["DELETE", "delete"],
+  ] as const)("rejects invalid build IDs for authenticated %s requests", async (_label, method) => {
+    const response = await request(app)[method]("/api/me/builds/not-an-object-id")
+      .set("x-test-user-id", "user-1")
+      .send(method === "patch" ? { name: "Updated" } : undefined);
+
+    expect(response.status).toBe(400);
+    expect(response.body.data).toEqual([]);
+  });
+
   it("returns an owned build", async () => {
     const build = await BuildModel.create({
       ownerId: "user-1",
+      gameVersion: REGULATION_TEST_GAME_VERSION,
       name: "Owned",
       level: 100,
       stats,
@@ -188,6 +221,7 @@ describe("protected build API", () => {
   it("updates an owned build", async () => {
     const build = await BuildModel.create({
       ownerId: "user-1",
+      gameVersion: REGULATION_TEST_GAME_VERSION,
       name: "Original",
       level: 100,
       stats,
@@ -202,9 +236,67 @@ describe("protected build API", () => {
     expect(response.body.data[0].name).toBe("Updated");
   });
 
+  it("preserves omitted fields during a partial update", async () => {
+    const build = await BuildModel.create({
+      ownerId: "user-1",
+      gameVersion: REGULATION_TEST_GAME_VERSION,
+      name: "Original",
+      description: "Keep this description",
+      level: 100,
+      stats,
+      visibility: "private",
+    });
+
+    const response = await request(app)
+      .patch(`/api/me/builds/${build.id}`)
+      .set("x-test-user-id", "user-1")
+      .send({ name: "Updated" });
+
+    expect(response.status).toBe(200);
+    expect(response.body.data[0]).toMatchObject({
+      name: "Updated",
+      description: "Keep this description",
+      gameVersion: REGULATION_TEST_GAME_VERSION,
+      level: 100,
+      stats,
+      visibility: "private",
+    });
+    expect(response.body.data[0]).not.toHaveProperty("ownerId");
+  });
+
+  it.each([
+    ["an empty update", {}],
+    ["an owner change", { ownerId: "user-2" }],
+    ["a game-version change", { gameVersion: "1.00.0" }],
+    ["a database-ID change", { _id: "507f1f77bcf86cd799439012" }],
+    ["a MongoDB update operator", { $set: { ownerId: "user-2" } }],
+  ])("rejects %s without changing the build", async (_case, update) => {
+    const build = await BuildModel.create({
+      ownerId: "user-1",
+      gameVersion: REGULATION_TEST_GAME_VERSION,
+      name: "Original",
+      level: 100,
+      stats,
+    });
+
+    const response = await request(app)
+      .patch(`/api/me/builds/${build.id}`)
+      .set("x-test-user-id", "user-1")
+      .send(update);
+
+    expect(response.status).toBe(400);
+    const unchangedBuild = await BuildModel.findById(build.id).lean();
+    expect(unchangedBuild).toMatchObject({
+      ownerId: "user-1",
+      gameVersion: REGULATION_TEST_GAME_VERSION,
+      name: "Original",
+    });
+  });
+
   it("cannot update or delete another user's build", async () => {
     const foreignBuild = await BuildModel.create({
       ownerId: "user-2",
+      gameVersion: REGULATION_TEST_GAME_VERSION,
       name: "Foreign",
       level: 100,
       stats,
@@ -226,6 +318,7 @@ describe("protected build API", () => {
   it("deletes an owned build with an empty data array", async () => {
     const build = await BuildModel.create({
       ownerId: "user-1",
+      gameVersion: REGULATION_TEST_GAME_VERSION,
       name: "Owned",
       level: 100,
       stats,
@@ -249,6 +342,7 @@ describe("public build API", () => {
     await BuildModel.create([
       {
         ownerId: "user-1",
+        gameVersion: REGULATION_TEST_GAME_VERSION,
         name: "Public",
         level: 100,
         stats,
@@ -256,6 +350,7 @@ describe("public build API", () => {
       },
       {
         ownerId: "user-1",
+        gameVersion: REGULATION_TEST_GAME_VERSION,
         name: "Private",
         level: 100,
         stats,
@@ -275,6 +370,7 @@ describe("public build API", () => {
     const [publicBuild, privateBuild] = await BuildModel.create([
       {
         ownerId: "user-1",
+        gameVersion: REGULATION_TEST_GAME_VERSION,
         name: "Public",
         level: 100,
         stats,
@@ -282,6 +378,7 @@ describe("public build API", () => {
       },
       {
         ownerId: "user-1",
+        gameVersion: REGULATION_TEST_GAME_VERSION,
         name: "Private",
         level: 100,
         stats,
@@ -299,6 +396,33 @@ describe("public build API", () => {
     expect(publicResponse.status).toBe(200);
     expect(publicResponse.body.data[0].name).toBe("Public");
     expect(privateResponse.status).toBe(404);
+  });
+
+  it("reflects owner-controlled visibility changes immediately", async () => {
+    const build = await BuildModel.create({
+      ownerId: "user-1",
+      gameVersion: REGULATION_TEST_GAME_VERSION,
+      name: "Visibility Build",
+      level: 100,
+      stats,
+      visibility: "private",
+    });
+
+    expect((await request(app).get(`/api/builds/${build.id}`)).status).toBe(404);
+
+    const publishResponse = await request(app)
+      .patch(`/api/me/builds/${build.id}`)
+      .set("x-test-user-id", "user-1")
+      .send({ visibility: "public" });
+    expect(publishResponse.status).toBe(200);
+    expect((await request(app).get(`/api/builds/${build.id}`)).status).toBe(200);
+
+    const privatizeResponse = await request(app)
+      .patch(`/api/me/builds/${build.id}`)
+      .set("x-test-user-id", "user-1")
+      .send({ visibility: "private" });
+    expect(privatizeResponse.status).toBe(200);
+    expect((await request(app).get(`/api/builds/${build.id}`)).status).toBe(404);
   });
 
   it("rejects invalid build IDs", async () => {

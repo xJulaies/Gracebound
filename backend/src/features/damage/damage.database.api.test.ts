@@ -2,7 +2,7 @@ import type { RequestHandler } from "express";
 import request from "supertest";
 import { beforeEach, describe, expect, it } from "vitest";
 import { createApp } from "../../app";
-import type { BossData } from "../bosses/domain/boss.types";
+import { unclassifiedBossMetadata, type BossData } from "../bosses/domain/boss.types";
 import { saveBossDataSet } from "../../infrastructure/regulation/services/saveBossDataSet";
 import { saveWeaponCatalog } from "../../infrastructure/regulation/services/saveWeaponCatalog";
 import { saveAshOfWarCatalog } from "../../infrastructure/regulation/services/saveAshOfWarCatalog";
@@ -112,6 +112,7 @@ const frozenArmament = createBuffEffect(
 );
 
 const boss: BossData = {
+  ...unclassifiedBossMetadata,
   id: "test-boss",
   name: "Test Boss",
   health: 1000,

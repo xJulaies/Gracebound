@@ -4,7 +4,7 @@ import { beforeEach, describe, expect, it } from "vitest";
 import { createApp } from "../../app";
 import { saveBossDataSet } from "../../infrastructure/regulation/services/saveBossDataSet";
 import { useMongoMemoryServer } from "../../test/useMongoMemoryServer";
-import type { BossData } from "./domain/boss.types";
+import { unclassifiedBossMetadata, type BossData } from "./domain/boss.types";
 
 const passThroughAuthentication: RequestHandler = (_request, _response, next) => {
   next();
@@ -20,6 +20,7 @@ useMongoMemoryServer({ replicaSet: true });
 const sourceHash = "b".repeat(64);
 const bosses: BossData[] = [
   {
+    ...unclassifiedBossMetadata,
     id: "margit-the-fell-omen",
     name: "Margit, the Fell Omen",
     health: 4174,
@@ -41,8 +42,18 @@ const bosses: BossData[] = [
     healthScalingEffectId: 7030,
   },
   {
+    ...unclassifiedBossMetadata,
     id: "fire-giant",
     name: "Fire Giant",
+    encounters: [{
+      region: "mountaintops-of-the-giants",
+      location: "Flame Peak",
+      locationType: "open-world",
+    }],
+    rank: "major",
+    progression: "required",
+    rewardsGreatRune: false,
+    rewardsRemembrance: true,
     health: 43263,
     defense: {
       physical: 120,
@@ -98,6 +109,15 @@ describe("public boss API", () => {
       {
         id: "fire-giant",
         name: "Fire Giant",
+        encounters: [{
+          region: "mountaintops-of-the-giants",
+          location: "Flame Peak",
+          locationType: "open-world",
+        }],
+        rank: "major",
+        progression: "required",
+        rewardsGreatRune: false,
+        rewardsRemembrance: true,
         health: 43263,
         defense: {
           physical: 120,
@@ -116,6 +136,27 @@ describe("public boss API", () => {
         gameVersion: "1.17.0",
       },
     ]);
+  });
+
+  it("searches and filters the paginated boss catalog", async () => {
+    const response = await request(app).get(
+      "/api/bosses?search=fire&region=mountaintops-of-the-giants"
+        + "&locationType=open-world&progression=required"
+        + "&rewardsRemembrance=true&page=1&limit=10",
+    );
+
+    expect(response.status).toBe(200);
+    expect(response.headers["x-total-count"]).toBe("1");
+    expect(response.body.data.map(({ id }: { id: string }) => id)).toEqual([
+      "fire-giant",
+    ]);
+  });
+
+  it("rejects unsupported boss filters", async () => {
+    const response = await request(app).get("/api/bosses?region=the-lands-between");
+
+    expect(response.status).toBe(400);
+    expect(response.body.data).toEqual([]);
   });
 
   it("returns not found for an unknown valid boss ID", async () => {

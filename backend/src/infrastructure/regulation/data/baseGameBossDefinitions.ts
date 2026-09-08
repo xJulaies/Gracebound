@@ -1,6 +1,7 @@
 import type { RegulationBossDefinition } from "../mappers/mapRegulationBoss";
+import { getBaseGameBossMetadata } from "./baseGameBossMetadata";
 
-export const baseGameBossDefinitions = [
+const baseGameBossCombatDefinitions = [
   {
     id: "abductor-virgin-swinging-sickle",
     name: "Abductor Virgin (Swinging Sickle)",
@@ -886,4 +887,11 @@ export const baseGameBossDefinitions = [
     name: "Wormface",
     npcParamId: 45800030,
   },
-] as const satisfies readonly RegulationBossDefinition[];
+] as const;
+
+export const baseGameBossDefinitions = baseGameBossCombatDefinitions.map(
+  (definition) => ({
+    ...definition,
+    ...getBaseGameBossMetadata(definition.id, definition.npcParamId),
+  }),
+) satisfies readonly RegulationBossDefinition[];

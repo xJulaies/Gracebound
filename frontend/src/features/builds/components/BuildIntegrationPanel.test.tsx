@@ -17,6 +17,7 @@ vi.mock("../api/builds.api", () => ({
 
 const publicBuild: Build = {
   id: "public-build",
+  gameVersion: "1.17.0",
   name: "Public Build",
   description: "",
   characterClassId: null,

@@ -4,6 +4,11 @@ export function mapBossResponse(record: BossRecord) {
   return {
     id: record.id,
     name: record.name,
+    encounters: record.encounters?.map((encounter) => ({ ...encounter })) ?? [],
+    rank: record.rank ?? null,
+    progression: record.progression ?? null,
+    rewardsGreatRune: record.rewardsGreatRune ?? null,
+    rewardsRemembrance: record.rewardsRemembrance ?? null,
     health: record.health,
     defense: { ...record.defense },
     absorption: {

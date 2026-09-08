@@ -59,6 +59,14 @@ vi.mock("../../hooks/useSpellOffensePreviewQuery", () => ({
   useSpellOffensePreviewQuery: useSpellOffensePreviewQueryMock,
 }));
 
+vi.mock("./BuildSaveControls", () => ({
+  BuildSaveControls: () => <div>Build save controls</div>,
+}));
+
+vi.mock("./UnsavedBuildChangesGuard", () => ({
+  UnsavedBuildChangesGuard: () => null,
+}));
+
 useBuildStatsPreviewQueryMock.mockReturnValue({
   data: undefined,
   isError: false,
@@ -141,7 +149,12 @@ vi.mock("./WeaponPicker", () => ({
 }));
 
 vi.mock("./WeaponInspector", () => ({
-  WeaponInspector: () => <div>Weapon configuration</div>,
+  WeaponInspector: ({ onChangeWeapon }: { onChangeWeapon: () => void }) => (
+    <div>
+      <p>Weapon configuration</p>
+      <button onClick={onChangeWeapon} type="button">Change armament</button>
+    </div>
+  ),
 }));
 
 vi.mock("./GreatRunePicker", () => ({
@@ -360,7 +373,7 @@ describe("BuildEditorWorkspace", () => {
     expect(status).toHaveFocus();
   });
 
-  it("opens the weapon picker again when an occupied slot is clicked", async () => {
+  it("focuses an occupied armament and opens its picker only through Change armament", async () => {
     const user = userEvent.setup();
     render(<BuildEditorWorkspace />);
 
@@ -374,9 +387,12 @@ describe("BuildEditorWorkspace", () => {
     expect(screen.getByText("Standard Longsword +0")).toBeInTheDocument();
     expect(screen.getByText("Active armament: Standard Longsword +0")).toBeInTheDocument();
     await user.click(screen.getByRole("button", {
-      name: "Right hand 1: Standard Longsword +0. Change selection",
+      name: "Right hand 1: Standard Longsword +0. Select armament",
     }));
 
+    expect(screen.queryByText("Weapon picker open")).not.toBeInTheDocument();
+    expect(screen.getByText("Weapon configuration")).toBeInTheDocument();
+    await user.click(screen.getByRole("button", { name: "Change armament" }));
     expect(screen.getByText("Weapon picker open")).toBeInTheDocument();
   });
 
@@ -479,13 +495,16 @@ describe("BuildEditorWorkspace", () => {
     await user.click(screen.getByRole("button", { name: "Select Glintstone Pebble" }));
 
     const occupiedSlot = screen.getByRole("button", {
-      name: "Spell slot 1: Glintstone Pebble. Change selection",
+      name: "Spell slot 1: Glintstone Pebble. Select spell",
     });
     expect(occupiedSlot).toBeInTheDocument();
     await waitFor(() => expect(useBuildStatsPreviewQueryMock).toHaveBeenLastCalledWith(
       expect.objectContaining({ spellIds: ["glintstone-pebble"] }),
     ));
     await user.click(occupiedSlot);
+    expect(screen.queryByText("Spell picker open")).not.toBeInTheDocument();
+    expect(occupiedSlot).toHaveAttribute("aria-current", "true");
+    await user.click(screen.getByRole("button", { name: "Change spell" }));
     expect(screen.getByText("Spell picker open")).toBeInTheDocument();
   });
 
@@ -499,7 +518,7 @@ describe("BuildEditorWorkspace", () => {
     await user.click(screen.getByRole("button", { name: "Select Academy Glintstone Staff" }));
 
     const catalystSlot = screen.getByRole("button", {
-      name: /Left hand 1: Unique Academy Glintstone Staff \+0\. Change selection\. Catalyst active/,
+      name: /Left hand 1: Unique Academy Glintstone Staff \+0\. Select armament\. Catalyst active/,
     });
     await user.hover(catalystSlot);
     expect(screen.getByText("Requires Intelligence 28 · current 9")).toBeInTheDocument();

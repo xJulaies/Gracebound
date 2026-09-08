@@ -30,3 +30,14 @@ export async function getWeapons(query: WeaponQuery = {}) {
     })),
   };
 }
+
+export async function getWeapon(weaponId: string) {
+  const response = await apiRequest<Weapon>(`/weapons/${encodeURIComponent(weaponId)}`);
+  return {
+    ...response,
+    data: response.data.map((weapon) => ({
+      ...weapon,
+      iconUrl: resolveApiAssetUrl(weapon.iconUrl),
+    })),
+  };
+}

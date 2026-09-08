@@ -26,3 +26,14 @@ export async function getArmor(query: ArmorQuery = {}) {
     })),
   };
 }
+
+export async function getArmorPiece(armorId: string) {
+  const response = await apiRequest<Armor>(`/armor/${encodeURIComponent(armorId)}`);
+  return {
+    ...response,
+    data: response.data.map((armor) => ({
+      ...armor,
+      iconUrl: resolveApiAssetUrl(armor.iconUrl),
+    })),
+  };
+}

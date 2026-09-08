@@ -1,4 +1,5 @@
 import type { RequestHandler } from "express";
+import { settings } from "../../../config/settings";
 import { createError } from "../../../shared/errors/createError";
 import { createAnswer } from "../../../shared/http/createAnswer";
 import { mapBuildResponse } from "../mappers/build.mapper";
@@ -33,7 +34,11 @@ export const createOwnedBuild: RequestHandler = async (_request, response) => {
   const ownerId = response.locals.authenticatedUserId as string;
   const input = response.locals.validatedBuild as CreateBuildInput;
   await validateBuildCatalogSelections(input);
-  const build = await createBuild({ ...input, ownerId });
+  const build = await createBuild({
+    ...input,
+    ownerId,
+    gameVersion: settings.SUPPORTED_GAME_VERSION,
+  });
 
   response
     .status(201)

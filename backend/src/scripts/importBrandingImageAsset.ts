@@ -1,19 +1,16 @@
 import path from "node:path";
 import { connectMongoDB, disconnectMongoDB } from "../db";
 import {
-  prepareBrandingImageAsset,
+  BRANDING_ASSET_IDS,
   type BrandingAssetId,
-} from "../infrastructure/brandingImages/prepareBrandingImageAsset";
+} from "../features/assets/domain/brandingImageAsset.types";
+import { prepareBrandingImageAsset } from "../infrastructure/brandingImages/prepareBrandingImageAsset";
 import { saveBrandingImageAsset } from "../infrastructure/brandingImages/saveBrandingImageAsset";
 
 async function importBrandingImageAsset() {
   const sourceFilename = requiredArgument("--source");
   const assetId = optionalArgument("--asset-id") ?? "gracebound-hero";
-  if (
-    assetId !== "gracebound-hero" &&
-    assetId !== "gracebound-hero-desktop" &&
-    assetId !== "gracebound-navbar-logo"
-  ) {
+  if (!BRANDING_ASSET_IDS.includes(assetId as BrandingAssetId)) {
     throw new Error(`Unsupported branding asset ID: ${assetId}`);
   }
   const asset = await prepareBrandingImageAsset(

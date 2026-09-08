@@ -171,8 +171,17 @@ Backend integration tests use MongoDB Memory Server, so they do not write test d
 
 ## Next priorities
 
-- build the responsive loadout editor with desktop equipment regions and task-focused mobile tabs
-- add slot pickers for weapons, armor, talismans, spells, buffs, Great Runes, and Crystal Tears
-- connect selection steps for equipment, attributes, buffs, and bosses to the existing APIs
-- keep client-side previews responsive while treating backend calculations as authoritative
-- expand verified spell, skill, weapon, and equipment behavior only where it materially improves build planning
+Build persistence is implemented incrementally in this order:
+
+1. [completed] finalize the saved-build contract and persist the server-selected game version
+2. [completed] complete TDD coverage for authenticated create, read, update, and delete flows
+3. [completed] extract a maintainable editor draft and map it to and from the API contract
+4. [completed] add manual save, save-changes, save-as-new, dirty-state protection, and a save dialog
+5. [completed: owner workflow] implement the owned-build list and protected owner edit route with catalog hydration
+6. [completed] complete public build cards, public details, and authenticated copying as a private record
+7. add one reversible like per authenticated user and public build, then allow like sorting
+8. connect saved builds to boss-independent and boss-specific damage simulation
+
+Calculated results are recomputed and are not persisted. Private visibility is
+the default. Likes use a separate relation with a unique build/user pair rather
+than embedding user IDs in build documents.

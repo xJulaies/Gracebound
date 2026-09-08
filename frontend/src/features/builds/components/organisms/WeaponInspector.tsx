@@ -1,3 +1,4 @@
+import { ActionButton } from "../../../../shared/ui/atoms/ActionButton";
 import type { EquippedWeapon } from "../../types/editor.types";
 import { AffinitySelector } from "../molecules/AffinitySelector";
 import { AshOfWarField } from "../molecules/AshOfWarField";
@@ -48,9 +49,9 @@ export function WeaponInspector({
       <header className="flex flex-col gap-5 border-b border-border pb-5 lg:flex-row lg:items-center lg:justify-between">
         <SelectedWeaponSummary configuration={configuration} slotLabel={slotLabel} />
         <div className="flex flex-wrap gap-2">
-          <button className="build-secondary-action" onClick={onChangeWeapon} type="button">
+          <ActionButton onClick={onChangeWeapon} type="button">
             Change armament
-          </button>
+          </ActionButton>
           <button className="build-secondary-action" onClick={onRemove} type="button">
             Remove
           </button>

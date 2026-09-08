@@ -116,12 +116,37 @@ src/shared/ui/
 
 Move a component into `shared/ui` only when it is genuinely reusable across multiple features.
 
+Cross-feature visual semantics belong in shared UI and central theme tokens once
+they have real consumers. In particular, physical, magic, fire, lightning, and
+holy damage colors and stat presentation must remain consistent across the
+builder, boss catalog, and future damage simulator. Feature components must not
+recreate independent damage-type color maps.
+
 The build editor must remain a feature-owned workspace assembled from focused
 parts rather than one large component. Slot primitives, slot groups, item
 pickers, attribute controls, buff indicators, calculated-stat summaries, and
 mobile tab navigation should be separated when they have distinct behavior.
 Keep selection and draft orchestration in feature hooks or form state; do not
 hide domain rules inside visual slot components.
+
+Keep persistable build state separate from transient editor UI state. Translate
+between editor slot identifiers and the backend contract only in tested domain
+mappers. Build write payloads must be constructed from an explicit allowlist;
+never spread a server response into a create or update request.
+
+When reopening a saved build, fetch it through the protected owner endpoint
+and hydrate only referenced large-catalog records through detail endpoints.
+Do not load complete weapon, armor, talisman, or spell catalogs just to restore
+one build. Mount the editor after hydration and initialize its local state once;
+do not mirror query data into editor state with effects. The hydrated draft is
+the initial saved baseline and must not appear dirty before the user changes it.
+
+Independent build previews must fail independently. An unmet requirement or
+unsupported calculation for one equipped spell, catalyst, talisman, Great Rune,
+or Crystal Tear must be shown on that selection and must not hide character
+level, rune costs, defenses, or unrelated equipment data. Cheap deterministic
+feedback such as level and rune-cost changes should update locally at once;
+debounced backend previews remain authoritative for aggregate game data.
 
 Atomic Design is mandatory for the build editor because its interface is
 composed from many repeating controls. Use the following responsibility levels:
@@ -432,6 +457,11 @@ Modal dialogs, drawers, and full-screen pickers must:
 - restore focus to the element that opened them
 - preserve the underlying page scroll position
 - support explicit close and backdrop behavior where appropriate
+
+Render viewport-level overlays through a portal to `document.body`, especially
+when their trigger lives inside a transformed editor or carousel container.
+Otherwise `position: fixed` may be scoped to that container instead of the
+viewport. The overlay must own scrolling when its content exceeds the viewport.
 
 ARIA tab interfaces must implement the complete keyboard pattern: one tab in
 the normal tab order, Arrow Left/Right navigation, Home/End navigation,

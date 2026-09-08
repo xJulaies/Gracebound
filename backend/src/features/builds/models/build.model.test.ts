@@ -8,6 +8,7 @@ describe("BuildModel", () => {
   it("persists a build with safe defaults and timestamps", async () => {
     const build = await BuildModel.create({
       ownerId: "user-1",
+      gameVersion: "1.17.0",
       name: "Strength Build",
       level: 100,
       stats: {
@@ -23,6 +24,7 @@ describe("BuildModel", () => {
     });
 
     expect(build.description).toBe("");
+    expect(build.gameVersion).toBe("1.17.0");
     expect(build.characterClassId).toBeNull();
     expect(build.memoryStoneCount).toBe(0);
     expect(build.spellIds).toEqual([]);
@@ -42,7 +44,10 @@ describe("BuildModel", () => {
   });
 
   it("requires an owner", async () => {
-    const build = new BuildModel({ name: "Ownerless Build" });
+    const build = new BuildModel({
+      gameVersion: "1.17.0",
+      name: "Ownerless Build",
+    });
 
     await expect(build.validate()).rejects.toThrow();
   });
@@ -52,5 +57,6 @@ describe("BuildModel", () => {
 
     expect(indexes).toContainEqual({ ownerId: 1, updatedAt: -1 });
     expect(indexes).toContainEqual({ visibility: 1, createdAt: -1 });
+    expect(indexes).toContainEqual({ gameVersion: 1, visibility: 1, createdAt: -1 });
   });
 });

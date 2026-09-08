@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { ActionButton } from "../../../../shared/ui/atoms/ActionButton";
 import type { BuildEditorFocus, EquippedWeapon } from "../../types/editor.types";
 import type { Spell } from "../../../spells/types/spell.types";
 import type { BuildStatsPreview } from "../../types/build.types";
@@ -7,6 +8,8 @@ import { StatusOverview } from "../molecules/StatusOverview";
 import { StatusSectionTabs, type StatusSection } from "../molecules/StatusSectionTabs";
 import type { SpellOffensePreview, WeaponOffensePreview } from "../../types/offensePreview.types";
 import { AttributeRequirements } from "../../../../shared/ui/molecules/AttributeRequirements";
+import { isDamageType } from "../../../../shared/domain/damageTypes";
+import { DamageTypeStat } from "../../../../shared/ui/molecules/DamageTypeStat";
 
 interface CalculatedStatsPanelProps {
   focusedWeapon: EquippedWeapon | null;
@@ -23,6 +26,7 @@ interface CalculatedStatsPanelProps {
   spellOffensePreview: SpellOffensePreview | null;
   isSpellOffensePending: boolean;
   isSpellOffenseError: boolean;
+  onChangeFocusedSpell?: () => void;
 }
 
 export function CalculatedStatsPanel({
@@ -40,6 +44,7 @@ export function CalculatedStatsPanel({
   spellOffensePreview,
   isSpellOffensePending,
   isSpellOffenseError,
+  onChangeFocusedSpell,
 }: CalculatedStatsPanelProps) {
   const [activeSection, setActiveSection] = useState<StatusSection>("offense");
 
@@ -51,6 +56,16 @@ export function CalculatedStatsPanel({
           {getFocusLabel(focus, focusedWeapon, focusedSpell)}
         </p>
       </header>
+
+      {focusedSpell && onChangeFocusedSpell && (
+        <ActionButton
+          className="mb-4 w-full"
+          onClick={onChangeFocusedSpell}
+          type="button"
+        >
+          Change spell
+        </ActionButton>
+      )}
 
       {isPending && !preview && <p aria-live="polite">Calculating character status…</p>}
       {isError && (
@@ -145,12 +160,34 @@ export function CalculatedStatsPanel({
               <>
                 <StatSection heading="Defense">
                   {Object.entries(preview.defenses).map(([name, value]) => (
-                    <StatRow key={name} label={formatLabel(name)} value={value} />
+                    isDamageType(name) ? (
+                      <DamageTypeStat
+                        compact
+                        key={name}
+                        label={formatLabel(name)}
+                        type={name}
+                        value={value}
+                      />
+                    ) : <StatRow key={name} label={formatLabel(name)} value={value} />
                   ))}
                 </StatSection>
                 <StatSection heading="Damage negation">
                   {Object.entries(preview.damageNegation).map(([name, value]) => (
-                    <StatRow key={name} label={formatLabel(name)} value={`${formatDecimal(value * 100)}%`} />
+                    isDamageType(name) ? (
+                      <DamageTypeStat
+                        compact
+                        key={name}
+                        label={formatLabel(name)}
+                        type={name}
+                        value={`${formatDecimal(value * 100)}%`}
+                      />
+                    ) : (
+                      <StatRow
+                        key={name}
+                        label={formatLabel(name)}
+                        value={`${formatDecimal(value * 100)}%`}
+                      />
+                    )
                   ))}
                 </StatSection>
               </>

@@ -2,7 +2,11 @@ import { calculateScaledBossHealth } from "../../../features/bosses/domain/calcu
 import type {
   BossAbsorption,
   BossData,
+  BossEncounter,
+  BossProgression,
+  BossRank,
 } from "../../../features/bosses/domain/boss.types";
+import { unclassifiedBossMetadata } from "../../../features/bosses/domain/boss.types";
 import type { DamageTypes } from "../../../features/damage/domain/damage.types";
 import type { NpcParamRow } from "../schemas/npcParam.schema";
 import type { SpEffectParamRow } from "../schemas/spEffectParam.schema";
@@ -11,6 +15,11 @@ export interface RegulationBossDefinition {
   id: string;
   name: string;
   npcParamId: number;
+  encounters?: BossEncounter[];
+  rank?: BossRank;
+  progression?: BossProgression;
+  rewardsGreatRune?: boolean;
+  rewardsRemembrance?: boolean;
 }
 
 export function mapRegulationBoss(
@@ -39,8 +48,14 @@ export function mapRegulationBoss(
   }
 
   return {
+    ...unclassifiedBossMetadata,
     id: definition.id,
     name: definition.name,
+    encounters: definition.encounters?.map((encounter) => ({ ...encounter })) ?? [],
+    rank: definition.rank ?? null,
+    progression: definition.progression ?? null,
+    rewardsGreatRune: definition.rewardsGreatRune ?? null,
+    rewardsRemembrance: definition.rewardsRemembrance ?? null,
     health: calculateScaledBossHealth(npc.hp, healthScalingEffect.maxHpRate),
     defense: mapDefense(npc, healthScalingEffect),
     absorption: mapAbsorption(npc),

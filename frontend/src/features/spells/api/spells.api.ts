@@ -28,3 +28,14 @@ export async function getSpells(query: SpellQuery = {}) {
     })),
   };
 }
+
+export async function getSpell(spellId: string) {
+  const response = await apiRequest<Spell>(`/spells/${encodeURIComponent(spellId)}`);
+  return {
+    ...response,
+    data: response.data.map((spell) => ({
+      ...spell,
+      iconUrl: resolveApiAssetUrl(spell.iconUrl),
+    })),
+  };
+}

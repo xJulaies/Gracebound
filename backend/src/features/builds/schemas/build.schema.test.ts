@@ -186,13 +186,15 @@ describe("createBuildSchema", () => {
     expect(() => createBuildSchema.parse({ ...input, memoryStoneCount: 9 })).toThrow();
   });
 
-  it("rejects client-controlled ownership and unknown fields", () => {
-    expect(() =>
-      createBuildSchema.parse({
-        ...createValidBuildInput(),
-        ownerId: "attacker-controlled-user",
-      }),
-    ).toThrow();
+  it.each([
+    ["owner", { ownerId: "attacker-controlled-user" }],
+    ["game version", { gameVersion: "1.00.0" }],
+    ["unknown field", { unexpected: true }],
+  ])("rejects client-controlled %s metadata", (_case, metadata) => {
+    expect(() => createBuildSchema.parse({
+      ...createValidBuildInput(),
+      ...metadata,
+    })).toThrow();
   });
 });
 
@@ -207,9 +209,12 @@ describe("updateBuildSchema", () => {
     expect(() => updateBuildSchema.parse({})).toThrow();
   });
 
-  it("rejects immutable and unknown fields", () => {
-    expect(() =>
-      updateBuildSchema.parse({ ownerId: "another-user" }),
-    ).toThrow();
+  it.each([
+    ["owner", { ownerId: "another-user" }],
+    ["game version", { gameVersion: "1.00.0" }],
+    ["database ID", { _id: "507f1f77bcf86cd799439011" }],
+    ["unknown field", { unexpected: true }],
+  ])("rejects immutable or unknown %s fields", (_case, update) => {
+    expect(() => updateBuildSchema.parse(update)).toThrow();
   });
 });

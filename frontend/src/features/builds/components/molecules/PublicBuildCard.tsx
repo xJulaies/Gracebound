@@ -1,6 +1,7 @@
 import { getBuildStatHighlights } from "../../domain/getBuildStatHighlights";
 import type { Build } from "../../types/build.types";
 import { BuildStat } from "../atoms/BuildStat";
+import { Link } from "@tanstack/react-router";
 
 export function PublicBuildCard({ build }: { build: Build }) {
   const highlightedStats = getBuildStatHighlights(build.stats);
@@ -26,6 +27,13 @@ export function PublicBuildCard({ build }: { build: Build }) {
             <BuildStat key={stat.label} {...stat} />
           ))}
         </dl>
+        <Link
+          className="build-secondary-action mt-4 inline-flex"
+          params={{ buildId: build.id }}
+          to="/builds/$buildId"
+        >
+          View build
+        </Link>
       </div>
     </article>
   );

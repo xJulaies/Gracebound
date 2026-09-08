@@ -24,10 +24,13 @@ const stats = {
   arcane: 10,
 };
 
+const gameVersion = "1.17.0";
+
 describe("buildRepository", () => {
   it("creates a build with its internal owner", async () => {
     const build = await createBuild({
       ownerId: "user-1",
+      gameVersion,
       name: "Owned Build",
       characterClassId: null,
       level: 120,
@@ -62,9 +65,9 @@ describe("buildRepository", () => {
 
   it("returns only builds owned by the requested user", async () => {
     await BuildModel.create([
-      { ownerId: "user-1", name: "First", level: 100, stats },
-      { ownerId: "user-1", name: "Second", level: 100, stats },
-      { ownerId: "user-2", name: "Foreign", level: 100, stats },
+      { ownerId: "user-1", gameVersion, name: "First", level: 100, stats },
+      { ownerId: "user-1", gameVersion, name: "Second", level: 100, stats },
+      { ownerId: "user-2", gameVersion, name: "Foreign", level: 100, stats },
     ]);
 
     const builds = await findAllBuildsByOwner("user-1");
@@ -76,6 +79,7 @@ describe("buildRepository", () => {
   it("cannot read another user's build through an owned query", async () => {
     const foreignBuild = await BuildModel.create({
       ownerId: "user-2",
+      gameVersion,
       name: "Foreign",
       level: 100,
       stats,
@@ -92,6 +96,7 @@ describe("buildRepository", () => {
   it("updates only a build owned by the requested user", async () => {
     const build = await BuildModel.create({
       ownerId: "user-1",
+      gameVersion,
       name: "Original",
       level: 100,
       stats,
@@ -110,6 +115,7 @@ describe("buildRepository", () => {
   it("deletes only a build owned by the requested user", async () => {
     const build = await BuildModel.create({
       ownerId: "user-1",
+      gameVersion,
       name: "Owned",
       level: 100,
       stats,
@@ -126,6 +132,7 @@ describe("buildRepository", () => {
     const [publicBuild, privateBuild] = await BuildModel.create([
       {
         ownerId: "user-1",
+        gameVersion,
         name: "Public",
         level: 100,
         stats,
@@ -133,6 +140,7 @@ describe("buildRepository", () => {
       },
       {
         ownerId: "user-1",
+        gameVersion,
         name: "Private",
         level: 100,
         stats,

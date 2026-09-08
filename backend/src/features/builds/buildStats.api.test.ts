@@ -164,11 +164,14 @@ describe("POST /api/builds/calculate-stats", () => {
     });
   });
 
-  it("rejects catalog-only Crystal Tears", async () => {
+  it("keeps catalog-only Crystal Tears non-blocking", async () => {
     const response = await request(app).post("/api/builds/calculate-stats").send({
       characterClassId: "astrologer", stats, crystalTearIds: ["thorny-cracked-tear"],
     });
-    expect(response.status).toBe(400);
+    expect(response.status).toBe(200);
+    expect(response.body.data[0].crystalTears).toEqual([
+      { id: "thorny-cracked-tear", name: "Thorny Cracked Tear" },
+    ]);
   });
 
   it("exposes supported defensive and FP-cost Physick effects", async () => {
@@ -257,7 +260,7 @@ describe("POST /api/builds/calculate-stats", () => {
     });
   });
 
-  it("rejects unknown and catalog-only Great Runes", async () => {
+  it("rejects unknown Great Runes but keeps catalog-only selections non-blocking", async () => {
     const [unknown, unsupported] = await Promise.all([
       request(app).post("/api/builds/calculate-stats").send({
         characterClassId: "astrologer", stats, greatRuneId: "unknown-rune",
@@ -269,8 +272,11 @@ describe("POST /api/builds/calculate-stats", () => {
 
     expect(unknown.status).toBe(400);
     expect(unknown.body.data).toEqual([]);
-    expect(unsupported.status).toBe(400);
-    expect(unsupported.body.data).toEqual([]);
+    expect(unsupported.status).toBe(200);
+    expect(unsupported.body.data[0].greatRune).toEqual({
+      id: "rykards-great-rune",
+      name: "Rykard's Great Rune",
+    });
   });
 
   it("calculates aggregate build stats from supported talismans", async () => {
@@ -359,7 +365,7 @@ describe("POST /api/builds/calculate-stats", () => {
     });
   });
 
-  it("checks spell requirements against effective stats including talisman bonuses", async () => {
+  it("keeps build stats available when a spell requirement is not met", async () => {
     const [withoutBonus, withBonus] = await Promise.all([
       request(app).post("/api/builds/calculate-stats").send({
         characterClassId: "astrologer", stats,
@@ -372,8 +378,9 @@ describe("POST /api/builds/calculate-stats", () => {
       }),
     ]);
 
-    expect(withoutBonus.status).toBe(400);
-    expect(withoutBonus.body.data).toEqual([]);
+    expect(withoutBonus.status).toBe(200);
+    expect(withoutBonus.body.data[0].effectiveStats.intelligence).toBe(70);
+    expect(withoutBonus.body.data[0].spells[0].requirements.intelligence).toBe(75);
     expect(withBonus.status).toBe(200);
     expect(withBonus.body.data[0].effectiveStats.intelligence).toBe(75);
   });
@@ -396,7 +403,7 @@ describe("POST /api/builds/calculate-stats", () => {
     });
   });
 
-  it("rejects incompatible catalysts and unavailable upgrade levels", async () => {
+  it("keeps incompatible spell selections non-blocking but rejects unavailable upgrade levels", async () => {
     const [incompatible, invalidUpgrade] = await Promise.all([
       request(app).post("/api/builds/calculate-stats").send({
         characterClassId: "astrologer", stats,
@@ -409,7 +416,8 @@ describe("POST /api/builds/calculate-stats", () => {
       }),
     ]);
 
-    expect(incompatible.status).toBe(400);
+    expect(incompatible.status).toBe(200);
+    expect(incompatible.body.data[0].spells).toHaveLength(1);
     expect(invalidUpgrade.status).toBe(400);
   });
 
@@ -451,7 +459,7 @@ describe("POST /api/builds/calculate-stats", () => {
     expect(response.body.data).toEqual([]);
   });
 
-  it("rejects duplicate and catalog-only talisman selections", async () => {
+  it("rejects duplicate talismans but keeps catalog-only selections non-blocking", async () => {
     const [duplicate, unsupported] = await Promise.all([
       request(app).post("/api/builds/calculate-stats").send({
         characterClassId: "astrologer",
@@ -466,9 +474,11 @@ describe("POST /api/builds/calculate-stats", () => {
     ]);
 
     expect(duplicate.status).toBe(400);
-    expect(unsupported.status).toBe(400);
+    expect(unsupported.status).toBe(200);
     expect(duplicate.body.data).toEqual([]);
-    expect(unsupported.body.data).toEqual([]);
+    expect(unsupported.body.data[0].talismans).toEqual([
+      { id: "blue-dancer-charm", name: "Blue Dancer Charm" },
+    ]);
   });
 
   it("rejects unknown classes and stats below their starting values", async () => {

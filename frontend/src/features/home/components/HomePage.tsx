@@ -2,6 +2,7 @@ import { BuildIntegrationPanel } from "../../builds/components/BuildIntegrationP
 import { useHealthQuery } from "../../../shared/hooks/useHealthQuery";
 import { CharacterClassCarousel } from "../../character-classes/components/organisms/CharacterClassCarousel";
 import { HomeHero } from "./organisms/HomeHero";
+import { FanProjectDisclaimer } from "../../legal/components/molecules/FanProjectDisclaimer";
 
 export function HomePage() {
   const health = useHealthQuery();
@@ -9,6 +10,7 @@ export function HomePage() {
   return (
     <main className="pt-0">
       <HomeHero />
+      <FanProjectDisclaimer />
 
       <div>
         <section aria-labelledby="backend-health-heading">

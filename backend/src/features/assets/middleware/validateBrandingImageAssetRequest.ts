@@ -1,13 +1,10 @@
 import type { RequestHandler } from "express";
 import { z } from "zod";
 import { createError } from "../../../shared/errors/createError";
+import { BRANDING_ASSET_IDS } from "../domain/brandingImageAsset.types";
 
 const brandingAssetIdSchema = z.object({
-  assetId: z.enum([
-    "gracebound-hero",
-    "gracebound-hero-desktop",
-    "gracebound-navbar-logo",
-  ]),
+  assetId: z.enum(BRANDING_ASSET_IDS),
 });
 
 export const validateBrandingAssetId: RequestHandler = (request, response, next) => {

@@ -106,6 +106,19 @@ describe("CharacterClassCarousel", () => {
       "dexterity",
     ]);
   });
+
+  it("does not highlight arbitrary attributes when every starting value is equal", () => {
+    expect(getHighlightedStats({
+      vigor: 10,
+      mind: 10,
+      endurance: 10,
+      strength: 10,
+      dexterity: 10,
+      intelligence: 10,
+      faith: 10,
+      arcane: 10,
+    })).toEqual([]);
+  });
 });
 
 function characterClass(

@@ -22,3 +22,16 @@ export async function getAshesOfWar(query: AshOfWarQuery = {}) {
     })),
   };
 }
+
+export async function getAshOfWar(ashOfWarId: string) {
+  const response = await apiRequest<AshOfWar>(
+    `/ashes-of-war/${encodeURIComponent(ashOfWarId)}`,
+  );
+  return {
+    ...response,
+    data: response.data.map((ashOfWar) => ({
+      ...ashOfWar,
+      iconUrl: resolveApiAssetUrl(ashOfWar.iconUrl),
+    })),
+  };
+}

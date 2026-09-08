@@ -253,7 +253,7 @@ The backend should expose normalized weapon information required by:
 - Build Planner
 - Damage Calculator
 
-Potential fields:
+The normalized boss contract contains:
 
 - id
 - name
@@ -477,7 +477,9 @@ endpoint returns unchanged submitted stats, effective attributes capped at 99,
 combined resource multipliers, summed status resistance points, multiplied
 incoming-damage modifiers, Regulation-derived base and modified HP/FP/stamina/
 equip-load values, selected class/level, and selected talisman metadata.
-Unknown classes and unknown or `catalog-only` talismans return `400`.
+Unknown classes and talisman IDs return `400`. A known `catalog-only` talisman
+remains present in response metadata and contributes its weight, but applies no
+unverified effect and does not block unrelated build statistics.
 
 Resource curves come from `CalcCorrectGraph` IDs 100, 101, 104, and 220 for the
 active game version. Attribute bonuses are applied before resolving a curve;
@@ -511,7 +513,11 @@ Potential fields:
 
 - id
 - name
-- location
+- encounters (one or more region/location/location-type records because a
+  shared combat profile can occur in multiple places)
+- rank (`major` or `minor`)
+- progression classification (`required`, `route-dependent`, or `optional`)
+- Great Rune and Remembrance reward flags
 - health
 - defense
 - physical absorption
@@ -523,6 +529,12 @@ Potential fields:
 - supported game version
 - source URL
 - accuracy classification where required
+
+Combat values remain Regulation-derived. Contextual catalog metadata is curated
+separately because location, progression relevance, and rewards cannot be
+reliably inferred from `NpcParam`. Until a profile has been verified, each
+contextual field is returned as `null`; unknown data must never be presented as
+`false` or guessed from the boss name.
 
 The Regulation 1.17.0 import contains 177 verified base-game boss combat
 profiles. Names and `NpcParam` mappings were cross-checked through local game
@@ -540,6 +552,14 @@ GET /api/bosses/:bossId
 
 They return only records for the configured game version and omit internal
 MongoDB and Regulation source metadata.
+
+`GET /api/bosses` is alphabetically sorted and supports optional pagination,
+`search`, `region`,
+`locationType`, `rank`, `progression`, `rewardsGreatRune`, and
+`rewardsRemembrance`. The response exposes the matching total through
+`X-Total-Count`.
+When pagination parameters are omitted, the complete catalog remains available
+to existing build and damage-calculation consumers.
 
 Boss raw data follows the same source boundary:
 
@@ -790,6 +810,7 @@ returned as weapon-buff metadata; proc damage and accumulated status remain
 outside the stateless damage request.
 
 Saved builds retain `characterClassId`, level, memory stones, selected spells,
+the server-selected game version,
 six named weapon slots, spell catalyst, `buffSpellIds`, and an optional
 `weaponBuff` catalyst selection. The weapon slots are `rightHand1`,
 `rightHand2`, `rightHand3`, `leftHand1`, `leftHand2`, and `leftHand3`. Each slot
@@ -900,8 +921,9 @@ no Rune Arc combat effect.
 `POST /api/builds/calculate-stats` accepts one optional `greatRuneId`. Supported
 attribute bonuses are applied before resource and protection curves; resource
 multipliers are applied afterward. Responses expose the selected rune's public
-ID and name. Unknown and catalog-only selections return 400. Saved builds store
-the same optional selection.
+ID and name. Unknown selections return 400. A known catalog-only selection is
+returned without applying an unverified effect and does not block unrelated
+build statistics. Saved builds store the same optional selection.
 
 Weapon and spell damage requests accept the same optional `greatRuneId`.
 Godrick's verified attribute bonuses are applied before weapon attack rating,
@@ -923,7 +945,9 @@ elemental Shrouding Tears, plus Spiked, Stonebarb, Opaline Hardtear, and
 Cerulean Hidden Tear, Greenburst, Winged, and Speckled Hardtear. Knot bonuses apply before requirements and scaling;
 resource multipliers apply after curves; Shrouding multipliers apply to the
 matching outgoing damage type. Selection order is preserved. Unknown,
-duplicate, excessive, and catalog-only selections are rejected.
+duplicate, and excessive selections are rejected. Known catalog-only selections
+remain visible without applying unverified effects and do not block the build-
+stat preview; damage requests may still reject effects they cannot calculate.
 
 Spiked multiplies charged-attack output by 1.15 for all five damage types.
 Stonebarb exposes a 1.30 poise-damage multiplier for 30 seconds without
@@ -972,6 +996,12 @@ The equipment editor's approved slot frames and category symbols are stored as
 fixed asset-ID allowlist. The endpoint uses the same cache and ETag behavior as
 the other binary asset routes. Raw menu atlases and extracted files remain
 outside Git.
+
+Branding artwork uses the separate `brandingimageassets` collection and the
+allowlisted `/api/assets/branding/:assetId` endpoint. In addition to the hero
+and navbar logo, `gracebound-background-grace` and
+`gracebound-background-night` provide the theme backgrounds. Their source and
+generated files remain outside Git; the frontend contains only API URLs.
 
 The same catalog responses expose English `summary` and `description` fields.
 The values are imported by ID from Smithbox's FMG text export; missing fields
@@ -1405,6 +1435,8 @@ POST /api/builds/calculate-stats
 POST /api/damage/calculate
 GET  /api/assets/icons/:iconId
 GET  /api/assets/character-classes/:classId
+GET  /api/assets/ui/:assetId
+GET  /api/assets/branding/:assetId
 ```
 
 Protected authenticated-user routes:

@@ -129,7 +129,9 @@ rootRoute
     ├── weaponsRoute
     ├── bossesRoute
     ├── buildsRoute
-    └── damageCalculatorRoute
+    ├── damageCalculatorRoute
+    ├── imprintRoute
+    └── privacyRoute
 ```
 
 The public layout uses a full-height flex structure. The content area grows so
@@ -341,6 +343,18 @@ Boss overview should provide:
 - name
 - search
 - relevant filters
+
+Boss catalog filters are URL-backed and use independent facets rather than one
+mixed category: region, location type, major/minor rank, progression
+(`required`, `route-dependent`, or `optional`), Great Rune reward, and
+Remembrance reward. Contextual values that the backend still returns as `null`
+must be shown as unclassified and must not silently match a negative filter.
+Locations are exposed through an `encounters` array because one shared combat
+profile can occur at multiple places. Search and filters use the paginated boss
+API and its `X-Total-Count` header.
+Boss catalog cards link to a dedicated detail route. The detail page owns the
+expandable boss presentation because encounters, combat values, rewards, and a
+future damage-simulator entry point exceed the scope of a compact dialog.
 
 Boss detail may include:
 
@@ -609,9 +623,34 @@ form organisms. The page composes these organisms while draft orchestration
 remains in feature hooks or form state. Components are split by meaningful
 responsibility and reuse, not by file-count targets.
 
+Persistable editor selections are coordinated by a feature-owned draft hook;
+transient state such as the active tab, focused item, and open picker is not
+part of the saved build. The draft uses editor-facing slot identifiers, while
+pure domain mappers translate those identifiers to the backend write contract
+and map saved API builds back into an editor draft. Server-owned `id`,
+`ownerId`, `gameVersion`, and timestamp fields must never enter a build write
+payload. Mapping must copy nested mutable values so editing a hydrated draft
+cannot mutate TanStack Query cache data.
+
+Authenticated users save explicitly through an accessible themed dialog. The
+dialog edits the build name, description, and private/public visibility. The
+first save creates a build; later saves update that build, while `Save as new`
+creates a distinct copy. Successful writes invalidate owned and public build
+queries. The editor tracks its last successfully saved draft and warns before
+both client-side navigation and browser unload when newer changes exist. A
+failed request leaves the dialog and dirty state intact. Save requests attach
+the current Clerk token but never send an owner ID or game version.
+
 Selection dependencies must be respected. For example, a weapon variant belongs to one weapon, an Ash of War must be compatible with the selected weapon, and selected spells must be compatible with the catalyst and available memory slots.
 
 `POST /api/builds/calculate-stats` remains the authority for effective attributes, equipment load, resources, defenses, resistances, catalyst scaling, memory slots, and validation of supported catalog selections.
+
+Level and rune-cost feedback is mirrored by the frontend's deterministic
+progression formula so it updates in the same interaction frame. The debounced
+stats response remains authoritative for aggregate values. A selected item with
+unmet requirements or catalog-only effects is a local limitation, not a failure
+of the complete stats preview: its warning belongs to that item while unrelated
+character and equipment values remain visible.
 
 ### Slice 3: Damage evaluation
 
@@ -672,15 +711,37 @@ The initial `/builds` overview is implemented as two responsive sections:
 - a public build gallery backed by `GET /api/builds`
 
 The gallery provides loading, empty, error with retry, and success states.
-Initial cards display only data already guaranteed by the API contract: name,
-description, level, starting-class identifier, and the three highest character
-attributes. Equipment names, owner display, and detail navigation remain pending
-until their dedicated API contracts and routes are available.
+Overview cards display name, description, level, starting-class identifier, and
+the three highest character attributes. Each card links to the public detail
+route at `/builds/$buildId`. That route hydrates referenced catalog entries and
+shows all attributes plus recorded armaments, armor, talismans, spells, Great
+Rune, and Crystal Tears with their available icons. It remains readable without
+authentication. A signed-in user may copy the public build as a new private
+record through the authenticated create endpoint; anonymous users receive the
+Clerk sign-in action first. Owner identity remains absent until a dedicated
+public owner-display contract exists.
 
 The dedicated `/builds/new` route is the authenticated entry into build
 creation. Anonymous visitors receive a Clerk sign-in prompt; authenticated
 users begin with the existing character-class selector. The attribute editor
 and build persistence remain later vertical increments on this route.
+
+Authenticated users reach their personal build collection at `/my-builds`,
+presented as **Tarnished Records** rather than a generic analytics dashboard.
+The archive lists only the current user's protected `/api/me/builds` response,
+filters locally by private or public visibility, and provides an entry to forge
+a new build. A record can be duplicated as a new private build or permanently
+deleted after an accessible confirmation dialog. Duplication constructs a new
+allowlisted write payload; deletion and duplication attach the Clerk token and
+remain subject to backend ownership enforcement. Each record links to its
+protected owner-edit route at `/my-builds/$buildId/edit`. That route loads the
+saved build through `GET /api/me/builds/:buildId`, then hydrates only its
+referenced large-catalog records through detail endpoints. Small fixed catalogs
+such as character classes, Great Runes, and Crystal Tears may be loaded as
+complete lists. The editor mounts only after hydration and treats the restored
+draft as its saved baseline, so opening a record never creates a false unsaved-
+change warning. Missing, stale, or inaccessible references produce an explicit
+unavailable state instead of silently substituting another item.
 
 ---
 
@@ -880,6 +941,18 @@ narrow viewports and a separately prepared 2048x1152 outpainted asset from the
 `gracebound-hero-desktop` endpoint on wider viewports. The artwork itself has no
 interactive responsibility; semantic content and the future call to action
 remain separate HTML components.
+
+The full-page Grace and Night backgrounds are private MongoDB branding assets.
+`PageBackground` resolves both backend URLs and crossfades its non-interactive
+layers with the theme. No background image bytes are committed to the frontend
+repository, and a theme-colored dimmer preserves content contrast independently
+of the artwork.
+
+The home page places a concise unofficial fan-project disclaimer directly below
+the hero. The public footer links to dedicated Impressum and Datenschutz pages.
+Legal drafts must display missing operator, hosting, retention, and contractual
+details explicitly; never invent production details or present an incomplete
+draft as publication-ready.
 
 ## Theme System
 

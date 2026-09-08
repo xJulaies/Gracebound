@@ -34,5 +34,6 @@ export function useBuildStatsPreviewQuery(
     queryFn: ({ signal }) => calculateBuildStats(requestInput!, signal),
     enabled: requestInput !== null,
     placeholderData: keepPreviousData,
+    staleTime: Infinity,
   });
 }

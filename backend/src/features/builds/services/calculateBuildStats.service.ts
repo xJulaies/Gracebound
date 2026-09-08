@@ -13,7 +13,6 @@ import { findWeaponCatalogById, findWeaponCatalogByIds, findWeaponCalculationDat
 import { calculateEquipmentLoad } from "../domain/calculateEquipmentLoad";
 import { findSpellsByIds } from "../../spells/repositories/spell.repository";
 import { calculateMemorySlots } from "../domain/calculateMemorySlots";
-import { validateSpellRequirements } from "../domain/validateSpellRequirements";
 import { calculateCatalystScaling } from "../../weapons/domain/calculateAttackRating";
 import type { SpellType } from "../../spells/domain/spell.types";
 import { findGreatRuneById } from "../../greatRunes/repositories/greatRune.repository";
@@ -42,20 +41,15 @@ export async function calculateBuildStatsFromInput(input: CalculateBuildStatsInp
   ]);
   if (!characterClass) throw createError(400, "Unknown character class");
   if (!progression) throw createError(500, "Character progression data is unavailable");
-  if (
-    talismans.length !== input.talismanIds.length ||
-    talismans.some(({ effects }) => !effects)
-  ) {
-    throw createError(400, "Unsupported talisman selection");
+  if (talismans.length !== input.talismanIds.length) {
+    throw createError(400, "Unknown talisman selection");
   }
   if (armor.length !== input.armorIds.length) throw createError(400, "Unknown armor selection");
   if (weapons.length !== new Set(input.weaponIds).size) throw createError(400, "Unknown weapon selection");
   if (spells.length !== input.spellIds.length) throw createError(400, "Unknown spell selection");
-  if (input.greatRuneId && (!greatRune || !greatRune.effects)) {
-    throw createError(400, "Unsupported Great Rune selection");
-  }
-  if (crystalTears.length !== input.crystalTearIds.length || crystalTears.some(({ effects }) => !effects)) {
-    throw createError(400, "Unsupported Crystal Tear selection");
+  if (input.greatRuneId && !greatRune) throw createError(400, "Unknown Great Rune selection");
+  if (crystalTears.length !== input.crystalTearIds.length) {
+    throw createError(400, "Unknown Crystal Tear selection");
   }
   const talismansById = new Map(talismans.map((talisman) => [talisman.id, talisman]));
   const selectedTalismans = input.talismanIds.map((id) => talismansById.get(id)!);
@@ -67,7 +61,9 @@ export async function calculateBuildStatsFromInput(input: CalculateBuildStatsInp
   const selectedSpells = input.spellIds.map((id) => spellsById.get(id)!);
   const crystalTearsById = new Map(crystalTears.map((tear) => [tear.id, tear]));
   const selectedCrystalTears = input.crystalTearIds.map((id) => crystalTearsById.get(id)!);
-  const physickEffects = combineCrystalTearEffects(selectedCrystalTears.map(({ effects }) => effects!));
+  const physickEffects = combineCrystalTearEffects(selectedCrystalTears.flatMap(({ effects }) =>
+    effects ? [effects] : [],
+  ));
   let armorStats: ReturnType<typeof calculateArmorStats>;
   try {
     armorStats = calculateArmorStats(selectedArmor);
@@ -86,7 +82,7 @@ export async function calculateBuildStatsFromInput(input: CalculateBuildStatsInp
 
   const talismanBuildStats = calculateBuildStats(
       input.stats,
-      selectedTalismans.map(({ effects }) => effects!),
+      selectedTalismans.flatMap(({ effects }) => effects ? [effects] : []),
     );
   const buildStats = {
     ...talismanBuildStats,
@@ -128,19 +124,9 @@ export async function calculateBuildStatsFromInput(input: CalculateBuildStatsInp
     if (!catalystCatalog.variants.some(({ id }) => id === input.catalyst!.variantId)) {
       throw createError(400, "Catalyst variant does not belong to selected weapon");
     }
-    const selectedSpellTypes = new Set(selectedSpells.map(({ type }) => type));
-    if (selectedSpellTypes.size > 0 && [...selectedSpellTypes].every(
-      (type) => !catalystCatalog.castingTypes.includes(type),
-    )) {
-      throw createError(400, "Catalyst cannot cast any selected spell");
-    }
     const { weapon, dataSet } = catalystData;
     if (input.catalyst.upgradeLevel > weapon.maxUpgradeLevel) {
       throw createError(400, `Invalid upgrade level for ${weapon.name}`);
-    }
-    if (Object.entries(weapon.requirements).some(([attribute, requirement]) =>
-      buildStats.effectiveStats[attribute as keyof typeof weapon.requirements] < requirement)) {
-      throw createError(400, `Attribute requirements not met for ${weapon.name}`);
     }
     const damageTypes = ["physical", "magic", "fire", "lightning", "holy"] as const;
     catalyst = {
@@ -155,14 +141,8 @@ export async function calculateBuildStatsFromInput(input: CalculateBuildStatsInp
       ])) as Record<(typeof damageTypes)[number], number>,
     };
   }
-  try {
-    validateSpellRequirements(selectedSpells, buildStats.effectiveStats);
-  } catch (error) {
-    const message = error instanceof Error ? error.message : "Spell requirements are not met";
-    throw createError(400, message);
-  }
   const talismanMemorySlotBonus = selectedTalismans.reduce(
-    (total, talisman) => total + talisman.effects!.utilityEffects.memorySlotBonus,
+    (total, talisman) => total + (talisman.effects?.utilityEffects.memorySlotBonus ?? 0),
     0,
   );
   let memorySlots: ReturnType<typeof calculateMemorySlots>;

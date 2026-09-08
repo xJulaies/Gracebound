@@ -1,3 +1,5 @@
+import { ActionButton } from "../../../../shared/ui/atoms/ActionButton";
+
 interface EffectActivationControlProps {
   active: boolean;
   disabled?: boolean;
@@ -18,15 +20,15 @@ export function EffectActivationControl({
       <span className="min-w-0 text-sm leading-5 text-foreground-muted">
         {message ?? (active ? "Included in simulation" : "Not included in simulation")}
       </span>
-      <button
+      <ActionButton
         aria-pressed={active}
-        className="w-full rounded-panel border border-accent bg-accent px-4 py-3 font-heading text-sm text-background shadow-md transition-[background-color,color,box-shadow,transform] hover:bg-accent-hover focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent active:translate-y-px disabled:cursor-not-allowed disabled:border-border disabled:bg-surface disabled:text-foreground-muted disabled:shadow-none sm:w-fit"
+        className="w-full sm:w-fit"
         disabled={disabled}
         onClick={() => onChange(!active)}
         type="button"
       >
         {active ? `Deactivate ${label}` : `Activate ${label}`}
-      </button>
+      </ActionButton>
     </div>
   );
 }

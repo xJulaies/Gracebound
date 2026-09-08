@@ -3,14 +3,19 @@ import { settings } from "../../../config/settings";
 import { createError } from "../../../shared/errors/createError";
 import { createAnswer } from "../../../shared/http/createAnswer";
 import { mapBossResponse } from "../mappers/boss.mapper";
-import { findAllBosses, findBossById } from "../repositories/boss.repository";
+import { findBossById, findBossCatalogPage } from "../repositories/boss.repository";
+import type { BossListQuery } from "../schemas/boss.schema";
 
 export const listBosses: RequestHandler = async (_request, response) => {
-  const bosses = await findAllBosses(settings.SUPPORTED_GAME_VERSION);
+  const result = await findBossCatalogPage(
+    settings.SUPPORTED_GAME_VERSION,
+    response.locals.bossListQuery as BossListQuery,
+  );
 
+  response.set("X-Total-Count", result.total.toString());
   response
     .status(200)
-    .json(createAnswer(200, "Bosses found", bosses.map(mapBossResponse)));
+    .json(createAnswer(200, "Bosses found", result.bosses.map(mapBossResponse)));
 };
 
 export const getBoss: RequestHandler = async (_request, response) => {

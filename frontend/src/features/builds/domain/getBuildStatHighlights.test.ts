@@ -15,9 +15,9 @@ describe("getBuildStatHighlights", () => {
         arcane: 12,
       }),
     ).toEqual([
-      { label: "Dexterity", value: 50 },
-      { label: "Strength", value: 50 },
-      { label: "Vigor", value: 40 },
+      { label: "DEX", accessibleLabel: "Dexterity", value: 50 },
+      { label: "STR", accessibleLabel: "Strength", value: 50 },
+      { label: "VIG", accessibleLabel: "Vigor", value: 40 },
     ]);
   });
 });

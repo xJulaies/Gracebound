@@ -36,7 +36,7 @@ describe("EquipmentSlot", () => {
     expect(screen.getByText("Axe Talisman")).toBeInTheDocument();
   });
 
-  it("visibly marks the slot currently being edited", () => {
+  it("marks the active slot without adding an overlapping badge", () => {
     render(
       <EquipmentSlot
         emptyAssetId="right-weapon-slot"
@@ -47,8 +47,10 @@ describe("EquipmentSlot", () => {
       />,
     );
 
-    expect(screen.getByText("Editing")).toBeInTheDocument();
-    expect(screen.getByRole("button")).toHaveAttribute("aria-current", "true");
+    const slot = screen.getByRole("button");
+    expect(screen.queryByText("Editing")).not.toBeInTheDocument();
+    expect(slot).toHaveAttribute("aria-current", "true");
+    expect(slot).toHaveClass("border-accent");
   });
 
   it("exposes a reusable slot status badge in its accessible name", () => {
@@ -58,12 +60,13 @@ describe("EquipmentSlot", () => {
         id="left-hand-1"
         item={{ name: "Academy Glintstone Staff", iconUrl: "/staff.webp" }}
         label="Left hand 1"
+        occupiedActionLabel="Select armament"
         statusBadge="Catalyst"
       />,
     );
 
     expect(screen.getByRole("button", {
-      name: "Left hand 1: Academy Glintstone Staff. Change selection. Catalyst active",
+      name: "Left hand 1: Academy Glintstone Staff. Select armament. Catalyst active",
     })).toBeInTheDocument();
   });
 

@@ -89,6 +89,7 @@ export function EquipmentLoadout({
                 key={id}
                 label={`Left hand ${index + 1}`}
                 onSelect={onSelectSlot}
+                occupiedActionLabel="Select armament"
                 statusBadge={activeCatalystSlotId === id ? "Catalyst" : undefined}
               />
             ))}
@@ -178,6 +179,7 @@ export function EquipmentLoadout({
                 key={id}
                 label={`Right hand ${index + 1}`}
                 onSelect={onSelectSlot}
+                occupiedActionLabel="Select armament"
                 statusBadge={activeCatalystSlotId === id ? "Catalyst" : undefined}
               />
             ))}

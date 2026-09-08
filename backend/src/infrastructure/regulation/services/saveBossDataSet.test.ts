@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
-import type { BossData } from "../../../features/bosses/domain/boss.types";
+import { unclassifiedBossMetadata, type BossData } from "../../../features/bosses/domain/boss.types";
 import { BossModel } from "../../../features/bosses/models/boss.model";
 import { useMongoMemoryServer } from "../../../test/useMongoMemoryServer";
 import { saveBossDataSet } from "./saveBossDataSet";
@@ -31,6 +31,7 @@ const absorption = {
 
 const bosses: BossData[] = [
   {
+    ...unclassifiedBossMetadata,
     id: "margit-the-fell-omen",
     name: "Margit, the Fell Omen",
     health: 4174,
@@ -40,8 +41,18 @@ const bosses: BossData[] = [
     healthScalingEffectId: 7030,
   },
   {
+    ...unclassifiedBossMetadata,
     id: "fire-giant",
     name: "Fire Giant",
+    encounters: [{
+      region: "mountaintops-of-the-giants",
+      location: "Flame Peak",
+      locationType: "open-world",
+    }],
+    rank: "major",
+    progression: "required",
+    rewardsGreatRune: false,
+    rewardsRemembrance: true,
     health: 43263,
     defense,
     absorption,
@@ -66,6 +77,8 @@ describe("saveBossDataSet", () => {
       gameVersion: "1.17.0",
       sourceHash,
       health: 43263,
+      progression: "required",
+      rewardsRemembrance: true,
       sourceNpcId: 47601050,
     });
     expect(fireGiant?.importedAt).toBeInstanceOf(Date);

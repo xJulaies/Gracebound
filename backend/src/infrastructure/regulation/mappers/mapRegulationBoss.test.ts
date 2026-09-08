@@ -10,6 +10,15 @@ const margitDefinition: RegulationBossDefinition = {
   id: "margit-the-fell-omen",
   name: "Margit, the Fell Omen",
   npcParamId: 21300014,
+  encounters: [{
+    region: "limgrave",
+    location: "Castleward Tunnel",
+    locationType: "legacy-dungeon",
+  }],
+  rank: "major",
+  progression: "optional",
+  rewardsGreatRune: false,
+  rewardsRemembrance: false,
 };
 
 const margitNpc: NpcParamRow = {
@@ -64,6 +73,15 @@ describe("mapRegulationBoss", () => {
     ).toEqual({
       id: "margit-the-fell-omen",
       name: "Margit, the Fell Omen",
+      encounters: [{
+        region: "limgrave",
+        location: "Castleward Tunnel",
+        locationType: "legacy-dungeon",
+      }],
+      rank: "major",
+      progression: "optional",
+      rewardsGreatRune: false,
+      rewardsRemembrance: false,
       health: 4174,
       defense: {
         physical: 103,

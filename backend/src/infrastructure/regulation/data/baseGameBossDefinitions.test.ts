@@ -38,4 +38,38 @@ describe("baseGameBossDefinitions", () => {
       ]),
     );
   });
+
+  it("classifies every profile without confusing unknown locations with false values", () => {
+    expect(baseGameBossDefinitions.every(({ encounters }) => encounters.length > 0)).toBe(true);
+    expect(baseGameBossDefinitions.every(({ rank }) => rank !== null)).toBe(true);
+    expect(baseGameBossDefinitions.every(({ progression }) => progression !== null)).toBe(true);
+    expect(baseGameBossDefinitions.filter(({ rewardsGreatRune }) => rewardsGreatRune)).toHaveLength(7);
+    expect(baseGameBossDefinitions.filter(({ rewardsRemembrance }) => rewardsRemembrance)).toHaveLength(15);
+    expect(baseGameBossDefinitions.filter(({ progression }) => progression === "required")).toHaveLength(9);
+    expect(baseGameBossDefinitions.every(({ encounters }) =>
+      encounters.every(({ region }) => region.length > 0))).toBe(true);
+  });
+
+  it("preserves multiple encounters that share one combat profile", () => {
+    const nightsCavalry = baseGameBossDefinitions.find(
+      ({ id }) => id === "nights-cavalry-31500020",
+    );
+
+    expect(nightsCavalry?.encounters).toEqual([
+      expect.objectContaining({ location: "Gate Town Bridge", region: "liurnia" }),
+      expect.objectContaining({ location: "Bellum Church", region: "liurnia" }),
+    ]);
+  });
+
+  it("uses corrected location categories for open-world and cave encounters", () => {
+    const smarag = baseGameBossDefinitions.find(
+      ({ id }) => id === "glintstone-dragon-smarag",
+    );
+    const putridCrystalian = baseGameBossDefinitions.find(
+      ({ id }) => id === "putrid-crystalian-ringblade",
+    );
+
+    expect(smarag?.encounters[0]?.locationType).toBe("open-world");
+    expect(putridCrystalian?.encounters[0]?.locationType).toBe("cave");
+  });
 });

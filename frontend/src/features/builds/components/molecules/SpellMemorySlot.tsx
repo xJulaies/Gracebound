@@ -27,7 +27,7 @@ export function SpellMemorySlot({
     : [];
   const label = `Spell slot ${index}`;
   const accessibleLabel = spell
-    ? `${label}: ${spell.name}. Change selection`
+    ? `${label}: ${spell.name}. Select spell`
     : `${label}: Empty. Select spell`;
 
   return (

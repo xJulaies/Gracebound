@@ -1,6 +1,5 @@
 import { EquipmentSlotFrame } from "../atoms/EquipmentSlotFrame";
 import { UiAssetImage, type UiAssetId } from "../atoms/UiAssetImage";
-import { EditingBadge } from "../atoms/EditingBadge";
 import { EquippedItemPreview } from "./EquippedItemPreview";
 import { useId, useRef, useState } from "react";
 
@@ -17,6 +16,7 @@ export interface EquipmentSlotProps {
   } | null;
   isActive?: boolean;
   onSelect?: (id: string) => void;
+  occupiedActionLabel?: string;
   statusBadge?: string;
 }
 
@@ -27,13 +27,14 @@ export function EquipmentSlot({
   item,
   isActive = false,
   onSelect,
+  occupiedActionLabel = "Change selection",
   statusBadge,
 }: EquipmentSlotProps) {
   const previewId = useId();
   const buttonRef = useRef<HTMLButtonElement>(null);
   const [isPreviewVisible, setIsPreviewVisible] = useState(false);
   const selectionLabel = item
-    ? `${label}: ${item.name}. Change selection`
+    ? `${label}: ${item.name}. ${occupiedActionLabel}`
     : `${label}: Empty. Select item`;
   const accessibleLabel = statusBadge
     ? `${selectionLabel}. ${statusBadge} active`
@@ -55,7 +56,6 @@ export function EquipmentSlot({
       ref={buttonRef}
       type="button"
     >
-      {isActive && <EditingBadge />}
       {statusBadge && (
         <span className="absolute top-1 left-1 z-20 rounded-full border border-accent bg-background/90 px-2 py-1 text-[0.625rem] font-semibold uppercase tracking-wide text-accent">
           {statusBadge}

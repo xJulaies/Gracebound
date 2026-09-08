@@ -1,4 +1,5 @@
 import { Show, SignInButton, UserButton } from "@clerk/react";
+import { Link } from "@tanstack/react-router";
 
 export function AuthControls() {
   return (
@@ -9,7 +10,7 @@ export function AuthControls() {
         </SignInButton>
       </Show>
       <Show when="signed-in">
-        <span>Signed in</span>
+        <Link className="auth-records-link" to="/my-builds">Tarnished Records</Link>
         <UserButton />
       </Show>
     </div>

@@ -73,6 +73,7 @@ const equipmentSchema = new Schema(
 const buildSchema = new Schema(
   {
     ownerId: { type: String, required: true },
+    gameVersion: { type: String, required: true },
     name: { type: String, required: true, trim: true, maxlength: 80 },
     description: { type: String, trim: true, maxlength: 1000, default: "" },
     characterClassId: { type: String, default: null },
@@ -96,6 +97,7 @@ const buildSchema = new Schema(
 
 buildSchema.index({ ownerId: 1, updatedAt: -1 });
 buildSchema.index({ visibility: 1, createdAt: -1 });
+buildSchema.index({ gameVersion: 1, visibility: 1, createdAt: -1 });
 
 export type Build = InferSchemaType<typeof buildSchema>;
 export const BuildModel = model<Build>("Build", buildSchema);

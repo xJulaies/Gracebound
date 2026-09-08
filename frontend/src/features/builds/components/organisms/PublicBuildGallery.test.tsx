@@ -4,13 +4,22 @@ import { describe, expect, it, vi } from "vitest";
 import { usePublicBuildsQuery } from "../../hooks/useBuildQueries";
 import type { Build } from "../../types/build.types";
 import { PublicBuildGallery } from "./PublicBuildGallery";
+import type { ReactNode } from "react";
 
 vi.mock("../../hooks/useBuildQueries", () => ({
   usePublicBuildsQuery: vi.fn(),
 }));
+vi.mock("@tanstack/react-router", () => ({
+  Link: ({ children, className, params }: {
+    children: ReactNode;
+    className?: string;
+    params: { buildId: string };
+  }) => <a className={className} href={`/builds/${params.buildId}`}>{children}</a>,
+}));
 
 const publicBuild: Build = {
   id: "moonveil-mage",
+  gameVersion: "1.17.0",
   name: "Moonveil Mage",
   description: "A fast intelligence build.",
   characterClassId: "prisoner",
@@ -61,7 +70,7 @@ describe("PublicBuildGallery", () => {
 
     expect(screen.getByRole("heading", { name: "Moonveil Mage" })).toBeInTheDocument();
     expect(screen.getByText("Level 125")).toBeInTheDocument();
-    expect(screen.getByText("Intelligence")).toBeInTheDocument();
+    expect(screen.getByText("INT")).toHaveAccessibleName("Intelligence");
   });
 
   it("renders a dedicated empty state", () => {

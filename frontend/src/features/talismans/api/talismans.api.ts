@@ -28,3 +28,14 @@ export async function getTalismans(query: TalismanQuery = {}) {
     })),
   };
 }
+
+export async function getTalisman(talismanId: string) {
+  const response = await apiRequest<Talisman>(`/talismans/${encodeURIComponent(talismanId)}`);
+  return {
+    ...response,
+    data: response.data.map((talisman) => ({
+      ...talisman,
+      iconUrl: resolveApiAssetUrl(talisman.iconUrl),
+    })),
+  };
+}

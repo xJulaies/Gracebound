@@ -157,7 +157,10 @@ export const updateBuildSchema = z
 
 export type CreateBuildInput = z.infer<typeof createBuildSchema>;
 export type UpdateBuildInput = z.infer<typeof updateBuildSchema>;
-export type CreateBuildData = CreateBuildInput & { ownerId: string };
+export type CreateBuildData = CreateBuildInput & {
+  ownerId: string;
+  gameVersion: string;
+};
 
 const attackIdSchema = z.string().regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/);
 const bossIdSchema = attackIdSchema.optional();
