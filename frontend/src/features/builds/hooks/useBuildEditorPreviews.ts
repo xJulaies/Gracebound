@@ -6,8 +6,6 @@ import type { Spell } from "../../spells/types/spell.types";
 import type { Talisman } from "../../talismans/types/talisman.types";
 import type { CharacterStats } from "../../../shared/types/game.types";
 import type {
-  ActiveWeaponBuff,
-  BuildEditorDraft,
   BuildEditorFocus,
   EquippedWeapon,
   WeaponEditorSlotId,
@@ -17,10 +15,7 @@ import { useSpellOffensePreviewQuery } from "./useSpellOffensePreviewQuery";
 import { useWeaponOffensePreviewQuery } from "./useWeaponOffensePreviewQuery";
 
 interface BuildEditorPreviewOptions {
-  activeBuffSpellIds: string[];
   activeCatalystSlotId: WeaponEditorSlotId | null;
-  activeSkillBuffSlotId: WeaponEditorSlotId | null;
-  activeWeaponBuff: ActiveWeaponBuff | null;
   editorFocus: BuildEditorFocus | null;
   isGreatRuneActive: boolean;
   isPhysickActive: boolean;
@@ -33,14 +28,10 @@ interface BuildEditorPreviewOptions {
   selectedTalismans: Record<string, Talisman>;
   selectedWeapons: Record<string, EquippedWeapon>;
   stats: CharacterStats | null;
-  weaponBuff: BuildEditorDraft["weaponBuff"];
 }
 
 export function useBuildEditorPreviews({
-  activeBuffSpellIds,
   activeCatalystSlotId,
-  activeSkillBuffSlotId,
-  activeWeaponBuff,
   editorFocus,
   isGreatRuneActive,
   isPhysickActive,
@@ -53,7 +44,6 @@ export function useBuildEditorPreviews({
   selectedTalismans,
   selectedWeapons,
   stats,
-  weaponBuff,
 }: BuildEditorPreviewOptions) {
   const armorIds = Object.values(selectedArmor).map(({ id }) => id);
   const talismanIds = Object.values(selectedTalismans).map(({ id }) => id);
@@ -108,19 +98,15 @@ export function useBuildEditorPreviews({
     talismanIds,
     greatRuneId,
     crystalTearIds,
-    buffSpellIds: activeBuffSpellIds,
-    weaponBuff: activeWeaponBuff?.targetSlotId === focusedWeaponSlotId
-      ? weaponBuff
-      : null,
-    skillBuffAshOfWarId: activeSkillBuffSlotId === focusedWeaponSlotId
-      ? focusedWeapon?.ashOfWarId ?? null
-      : null,
+    buffSpellIds: [],
+    weaponBuff: null,
+    skillBuffAshOfWarId: null,
   });
   const spellOffenseQuery = useSpellOffensePreviewQuery(
     focusedSpell,
     activeCatalyst,
     stats,
-    { talismanIds, greatRuneId, crystalTearIds, buffSpellIds: activeBuffSpellIds },
+    { talismanIds, greatRuneId, crystalTearIds, buffSpellIds: [] },
   );
 
   return {

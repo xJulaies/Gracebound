@@ -97,11 +97,7 @@ export function useBuildEditorInteractions(editor: DraftState, ui: UiState) {
   const updateConfiguredWeapon = (configuration: EquippedWeapon) => {
     const slotId = ui.configuredWeaponSlotId;
     if (!slotId) return;
-    const previousAshOfWarId = editor.selectedWeapons[slotId]?.ashOfWarId;
     editor.setSelectedWeapons((current) => ({ ...current, [slotId]: configuration }));
-    if (configuration.ashOfWarId !== previousAshOfWarId) {
-      ui.setActiveSkillBuffSlotId((current) => current === slotId ? null : current);
-    }
   };
 
   const removeConfiguredWeapon = () => {
@@ -121,7 +117,6 @@ export function useBuildEditorInteractions(editor: DraftState, ui: UiState) {
     if (editor.activeCatalystSlotId === slotId) editor.setActiveCatalystSlotId(null);
     editor.setActiveWeaponBuff((current) => current?.targetSlotId === slotId
       || current?.catalystSlotId === slotId ? null : current);
-    ui.setActiveSkillBuffSlotId((current) => current === slotId ? null : current);
     ui.setConfiguredWeaponSlotId(null);
   };
 

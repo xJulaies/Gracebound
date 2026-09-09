@@ -827,6 +827,13 @@ stored spell, or a stored weapon-slot ID plus attack or skill and an optional
 boss ID. The backend derives a slot's Ash of War and rejects empty slots. Stats
 and equipment always come from the stored build rather than client duplicates.
 
+Saved-build damage requests may deactivate the stored Great Rune, Wondrous
+Physick, weapon buff, or individual stored aura/body buffs for one transient
+trial. The backend accepts only active buff IDs already present on the owned
+build as equipped spells or persisted buff selections; the damage service still
+rejects spells without a supported Aura or Body buff effect. Trial controls
+never mutate the persisted build or introduce arbitrary equipment effects.
+
 A draft build may keep `characterClassId: null`. In that state level derivation,
 resource curves, and spell requirements cannot be finalized, but all supplied
 catalog references remain mandatory and are validated against the active game

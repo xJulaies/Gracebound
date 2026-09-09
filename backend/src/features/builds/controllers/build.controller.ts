@@ -131,6 +131,12 @@ export const calculateOwnedBuildDamage: RequestHandler = async (_request, respon
   const build = await findOwnedBuildById(buildId, ownerId);
   if (!build) throw createError(404, "Build not found");
   const equipment = build.equipment;
+  const activeBuffSpellIds = selection.activeBuffSpellIds ?? equipment.buffSpellIds;
+  if (activeBuffSpellIds.some((id) => !build.spellIds.includes(id) && !equipment.buffSpellIds.includes(id))) {
+    throw createError(400, "An active buff spell is not equipped in this build");
+  }
+  const greatRuneId = selection.greatRuneActive ? equipment.greatRuneId ?? null : null;
+  const crystalTearIds = selection.wondrousPhysickActive ? equipment.crystalTearIds ?? [] : [];
   if ("spellId" in selection) {
     if (!build.spellIds.includes(selection.spellId) || !equipment.catalyst) {
       throw createError(400, "Spell or catalyst is not selected in this build");
@@ -147,15 +153,18 @@ export const calculateOwnedBuildDamage: RequestHandler = async (_request, respon
         arcane: build.stats.arcane,
       },
       talismanIds: equipment.talismanIds,
-      greatRuneId: equipment.greatRuneId ?? null,
-      crystalTearIds: equipment.crystalTearIds ?? [],
-      buffSpellIds: equipment.buffSpellIds,
+      greatRuneId,
+      crystalTearIds,
+      buffSpellIds: activeBuffSpellIds,
       ...(selection.bossId ? { bossId: selection.bossId } : {}),
     });
     response.status(200).json(createAnswer(200, "Build damage calculated", [result]));
     return;
   }
-  const { weaponSlotId, skillBuffActive, ...action } = selection;
+  const { weaponSlotId, skillBuffActive, weaponBuffActive } = selection;
+  const action = "attackId" in selection
+    ? { attackId: selection.attackId, ...(selection.bossId ? { bossId: selection.bossId } : {}) }
+    : { skillAttackId: selection.skillAttackId, ...(selection.bossId ? { bossId: selection.bossId } : {}) };
   const weaponSlot = equipment.weaponSlots[weaponSlotId];
   if (!weaponSlot) throw createError(400, "Selected build weapon slot is empty");
   const armorIds = [
@@ -172,11 +181,11 @@ export const calculateOwnedBuildDamage: RequestHandler = async (_request, respon
       arcane: build.stats.arcane,
     },
     talismanIds: equipment.talismanIds,
-    greatRuneId: equipment.greatRuneId ?? null,
-    crystalTearIds: equipment.crystalTearIds ?? [],
+    greatRuneId,
+    crystalTearIds,
     armorIds,
-    buffSpellIds: equipment.buffSpellIds,
-    weaponBuff: equipment.weaponBuff ?? null,
+    buffSpellIds: activeBuffSpellIds,
+    weaponBuff: weaponBuffActive ? equipment.weaponBuff ?? null : null,
     skillBuffAshOfWarId: skillBuffActive ? weaponSlot.ashOfWarId ?? null : null,
     ...action,
     ...("skillAttackId" in action && weaponSlot.ashOfWarId

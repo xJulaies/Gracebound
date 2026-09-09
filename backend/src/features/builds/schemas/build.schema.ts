@@ -168,10 +168,17 @@ export const weaponSlotIdSchema = z.enum([
   "rightHand1", "rightHand2", "rightHand3", "leftHand1", "leftHand2", "leftHand3",
 ]);
 
+const trialEffectsSchema = {
+  greatRuneActive: z.boolean().default(true),
+  wondrousPhysickActive: z.boolean().default(true),
+  activeBuffSpellIds: z.array(attackIdSchema).max(2).optional(),
+  weaponBuffActive: z.boolean().default(true),
+};
+
 export const savedBuildDamageSchema = z.union([
-  z.strictObject({ weaponSlotId: weaponSlotIdSchema, attackId: attackIdSchema, skillBuffActive: z.boolean().default(false), bossId: bossIdSchema }),
-  z.strictObject({ weaponSlotId: weaponSlotIdSchema, skillAttackId: attackIdSchema, skillBuffActive: z.boolean().default(false), bossId: bossIdSchema }),
-  z.strictObject({ spellId: attackIdSchema, charged: z.boolean().default(false), bossId: bossIdSchema }),
+  z.strictObject({ ...trialEffectsSchema, weaponSlotId: weaponSlotIdSchema, attackId: attackIdSchema, skillBuffActive: z.boolean().default(false), bossId: bossIdSchema }),
+  z.strictObject({ ...trialEffectsSchema, weaponSlotId: weaponSlotIdSchema, skillAttackId: attackIdSchema, skillBuffActive: z.boolean().default(false), bossId: bossIdSchema }),
+  z.strictObject({ ...trialEffectsSchema, spellId: attackIdSchema, charged: z.boolean().default(false), bossId: bossIdSchema }),
 ]);
 
 export type SavedBuildDamageInput = z.infer<typeof savedBuildDamageSchema>;

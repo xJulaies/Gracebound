@@ -30,6 +30,7 @@
     "data:icons:audit": "tsx src/scripts/auditIconAssets.ts",
     "data:class-images:import": "tsx src/scripts/importCharacterClassImageAssets.ts",
     "data:branding-image:import": "tsx src/scripts/importBrandingImageAsset.ts",
+    "data:boss-image:import": "tsx src/scripts/importBossImageAsset.ts",
     "data:branding-images:responsive": "tsx src/scripts/createResponsiveBrandingVariants.ts",
     "data:texts:import": "tsx src/scripts/importItemTexts.ts",
     "test": "vitest run",

@@ -50,6 +50,12 @@ describe("baseGameBossDefinitions", () => {
       encounters.every(({ region }) => region.length > 0))).toBe(true);
   });
 
+  it("provides a display location and category for every encounter", () => {
+    expect(baseGameBossDefinitions.every(({ encounters }) =>
+      encounters.every(({ location, locationType }) => Boolean(location) && Boolean(locationType)),
+    )).toBe(true);
+  });
+
   it("preserves multiple encounters that share one combat profile", () => {
     const nightsCavalry = baseGameBossDefinitions.find(
       ({ id }) => id === "nights-cavalry-31500020",

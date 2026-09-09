@@ -3,6 +3,7 @@ import { formatBossLabel } from "../../domain/formatBossLabel";
 import type { Boss } from "../../types/boss.types";
 import type { DamageType } from "../../../../shared/domain/damageTypes";
 import { DamageTypeStat } from "../../../../shared/ui/molecules/DamageTypeStat";
+import { BossPortrait } from "../atoms/BossPortrait";
 
 export function BossDetails({ boss }: { boss: Boss }) {
   const defenses = [
@@ -32,7 +33,9 @@ export function BossDetails({ boss }: { boss: Boss }) {
       >
         Back to bosses
       </Link>
-      <header className="mb-8 border-b border-border pb-6">
+      <header className="mb-8 flex items-start gap-5 border-b border-border pb-6">
+        <BossPortrait bossName={boss.name} className="size-24 shrink-0 sm:size-32" imageUrl={boss.imageUrl} />
+        <div className="min-w-0">
         <div className="mb-3 flex flex-wrap gap-2 text-sm text-foreground-muted">
           {boss.rank && <Tag>{formatBossLabel(boss.rank)}</Tag>}
           {boss.progression && <Tag>{formatBossLabel(boss.progression)}</Tag>}
@@ -41,6 +44,7 @@ export function BossDetails({ boss }: { boss: Boss }) {
         </div>
         <h1 className="mb-3 text-3xl sm:text-5xl">{boss.name}</h1>
         <p className="m-0 text-xl text-accent">{boss.health.toLocaleString()} HP</p>
+        </div>
       </header>
 
       <div className="grid gap-6 lg:grid-cols-2">

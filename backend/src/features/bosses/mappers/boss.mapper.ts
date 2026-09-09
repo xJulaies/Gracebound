@@ -1,9 +1,11 @@
 import type { BossRecord } from "../models/boss.model";
+import { getBossImageUrl } from "../domain/boss.types";
 
 export function mapBossResponse(record: BossRecord) {
   return {
     id: record.id,
     name: record.name,
+    imageUrl: getBossImageUrl(record.id),
     encounters: record.encounters?.map((encounter) => ({ ...encounter })) ?? [],
     rank: record.rank ?? null,
     progression: record.progression ?? null,

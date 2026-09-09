@@ -552,8 +552,13 @@ form. Its desktop presentation combines the following regions:
 - fixed head, body, arms, and legs armor slots
 - four talisman slots, one Great Rune slot, and two Crystal Tear slots
 - a spell-memory region constrained by the build's available memory slots
-- an active-buff strip that explains buff categories, compatibility, and replacement conflicts
+- equipped buff spells remain visible in the spell-memory region; activation is handled by the Damage Trial
 - a grouped, readable summary of calculated offense, resources, defenses, resistances, and equipment load
+
+The editor does not activate Aura, Body, weapon-skill, or temporary weapon
+buffs and excludes them from its offense preview. It records the spell and
+armament loadout; transient combat-effect activation belongs exclusively to
+the Damage Trial, where it can be changed without modifying the build.
 
 The main desktop workspace follows a three-region character-sheet layout. A
 compact portrait of the selected starting class and its editable attributes
@@ -770,6 +775,48 @@ Users should be able to select:
 The backend performs the actual damage calculation.
 
 The frontend displays the result.
+
+## Damage Trial
+
+The first interactive boss trial loads one authenticated user's saved build and
+one catalog boss. Each explicit attack-button activation represents one
+confirmed hit and creates exactly one protected backend request. Supported
+weapon attacks, skills, and equipped spells reduce a local simulated boss-health
+value and append an in-memory combat-log entry. Time, DPS, stamina, cumulative
+status buildup, boss actions, and automatic multi-hit assumptions are outside
+this simulation.
+
+The trial preserves the backend response for every log entry so attack rating,
+pre-mitigation output, final per-type damage, components, active modifiers, and
+limitations remain inspectable. Undo restores the health before the last entry;
+reset restores full boss health and clears the log without changing the selected
+build or target. Trial history is not persisted to MongoDB.
+
+The encounter remains linear on narrow viewports. On desktop it expands into a
+three-region combat workspace: saved Great Rune, Wondrous Physick, and buff
+toggles sit on the left; boss identity, health, attack selection, and combat
+history form the central fight area; and the target's defenses and absorptions
+remain visible in a dedicated right-hand panel. Effect toggles are transient
+trial state and never mutate the saved build. Every damage request sends the
+currently active subset, which the backend validates against the owned build
+before applying it.
+All equipped Aura and Body buff spells are offered in this panel even when the
+saved build did not mark them active. Persisted active buff IDs determine only
+their initial toggle state.
+
+Combat actions use a two-step source flow to keep the encounter compact. The
+user first selects one equipped armament and then chooses from that source's
+supported action cards. A Staff or Sacred Seal remains an armament source;
+selecting it reveals only equipped damaging spells whose Sorcery or Incantation
+type is supported by that catalyst's backend-provided casting types. Changing
+the source changes only the visible action cards and does not change the saved
+loadout.
+Clicking an available attack, skill, or spell card immediately represents one
+confirmed hit and sends its single damage request. There is no separate
+confirmation or perform-attack panel between the action cards and combat log.
+A successful response triggers a brief decorative slash across the boss-health
+bar and a restrained portrait impact. The feedback is never used as the only
+damage indication and is disabled when reduced motion is requested.
 
 ---
 

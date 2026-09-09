@@ -13,7 +13,6 @@ export function useBuildEditorUiState() {
   const [editorFocus, setEditorFocus] = useState<BuildEditorFocus | null>(null);
   const [isGreatRuneActive, setIsGreatRuneActive] = useState(false);
   const [isPhysickActive, setIsPhysickActive] = useState(false);
-  const [activeSkillBuffSlotId, setActiveSkillBuffSlotId] = useState<WeaponEditorSlotId | null>(null);
   const [activeTab, setActiveTab] = useState<BuildEditorTab>("equipment");
 
   return {
@@ -27,7 +26,6 @@ export function useBuildEditorUiState() {
     editorFocus, setEditorFocus,
     isGreatRuneActive, setIsGreatRuneActive,
     isPhysickActive, setIsPhysickActive,
-    activeSkillBuffSlotId, setActiveSkillBuffSlotId,
     activeTab, setActiveTab,
   };
 }

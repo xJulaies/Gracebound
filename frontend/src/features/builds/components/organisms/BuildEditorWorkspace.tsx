@@ -9,8 +9,6 @@ import { CrystalTearPicker } from "./CrystalTearPicker";
 import { SpellPicker } from "./SpellPicker";
 import { CharacterAttributePanel } from "./CharacterAttributePanel";
 import { CalculatedStatsPanel } from "./CalculatedStatsPanel";
-import { BuffSimulationBar } from "./BuffSimulationBar";
-import { toggleGeneralBuff } from "../../domain/toggleGeneralBuff";
 import {
   BuildEditorTabs,
 } from "../molecules/BuildEditorTabs";
@@ -54,8 +52,6 @@ export function BuildEditorWorkspace({
     selectedSpells,
     memoryStoneCount, setMemoryStoneCount,
     activeCatalystSlotId,
-    activeBuffSpellIds, setActiveBuffSpellIds,
-    activeWeaponBuff, setActiveWeaponBuff,
   } = editor;
   const ui = useBuildEditorUiState();
   const {
@@ -69,7 +65,6 @@ export function BuildEditorWorkspace({
     editorFocus,
     isGreatRuneActive, setIsGreatRuneActive,
     isPhysickActive, setIsPhysickActive,
-    activeSkillBuffSlotId, setActiveSkillBuffSlotId,
     activeTab, setActiveTab,
   } = ui;
   const interactions = useBuildEditorInteractions(editor, ui);
@@ -78,17 +73,13 @@ export function BuildEditorWorkspace({
     availableSpellSlots,
     focusedSpell,
     focusedWeapon,
-    focusedWeaponSlotId,
     minimumMemoryStoneCount,
     offenseQuery,
     spellOffenseQuery,
     statsPreview,
     statsQuery,
   } = useBuildEditorPreviews({
-    activeBuffSpellIds,
     activeCatalystSlotId,
-    activeSkillBuffSlotId,
-    activeWeaponBuff,
     editorFocus,
     isGreatRuneActive,
     isPhysickActive,
@@ -101,7 +92,6 @@ export function BuildEditorWorkspace({
     selectedTalismans,
     selectedWeapons,
     stats,
-    weaponBuff: draft?.weaponBuff ?? null,
   });
   const runeCosts = selectedClass
     ? calculateRuneCosts(selectedClass.level, characterLevel)
@@ -183,37 +173,6 @@ export function BuildEditorWorkspace({
               onChangeGreatRuneActive={setIsGreatRuneActive}
               onChangePhysickActive={setIsPhysickActive}
               currentStats={statsPreview?.effectiveStats ?? stats}
-            />
-            <BuffSimulationBar
-              activeIds={activeBuffSpellIds}
-              activeWeaponBuff={activeWeaponBuff}
-              activeSkillBuffSlotId={activeSkillBuffSlotId}
-              catalyst={activeCatalyst}
-              currentStats={statsPreview?.effectiveStats ?? stats}
-              onToggle={(spell) => setActiveBuffSpellIds((current) => toggleGeneralBuff(
-                current,
-                spell,
-                Object.values(selectedSpells),
-              ))}
-              onToggleWeaponBuff={(spell) => {
-                if (!focusedWeaponSlotId || !activeCatalystSlotId) return;
-                setActiveWeaponBuff((current) => current?.spellId === spell.id
-                  && current.targetSlotId === focusedWeaponSlotId
-                  ? null
-                  : {
-                      spellId: spell.id,
-                      targetSlotId: focusedWeaponSlotId,
-                      catalystSlotId: activeCatalystSlotId,
-                    });
-                setActiveSkillBuffSlotId(null);
-              }}
-              onToggleSkillBuff={(active) => {
-                setActiveSkillBuffSlotId(active ? focusedWeaponSlotId : null);
-                if (active) setActiveWeaponBuff(null);
-              }}
-              spells={Object.values(selectedSpells)}
-              target={focusedWeapon}
-              targetSlotId={focusedWeaponSlotId}
             />
           {configuredWeaponSlotId && configuredWeapon && (
             <WeaponInspector

@@ -109,6 +109,7 @@ describe("public boss API", () => {
       {
         id: "fire-giant",
         name: "Fire Giant",
+        imageUrl: null,
         encounters: [{
           region: "mountaintops-of-the-giants",
           location: "Flame Peak",

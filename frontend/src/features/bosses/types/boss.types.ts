@@ -32,6 +32,7 @@ export type BossFilterKey = Exclude<keyof BossCatalogSearch, "search">;
 export interface Boss {
   id: string;
   name: string;
+  imageUrl: string | null;
   encounters: Array<{
     region: BossRegion;
     location: string | null;

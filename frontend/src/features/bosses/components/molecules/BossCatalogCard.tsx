@@ -1,6 +1,7 @@
 import { formatBossLabel } from "../../domain/formatBossLabel";
 import type { Boss } from "../../types/boss.types";
 import { DamageTypeStat } from "../../../../shared/ui/molecules/DamageTypeStat";
+import { BossPortrait } from "../atoms/BossPortrait";
 
 export function BossCatalogCard({ boss }: { boss: Boss }) {
   return (
@@ -11,11 +12,14 @@ export function BossCatalogCard({ boss }: { boss: Boss }) {
         params={{ bossId: boss.id }}
         to="/bosses/$bossId"
       />
-      <div className="mb-4 flex flex-wrap gap-2 text-xs text-foreground-muted">
+      <div className="mb-4 flex items-start gap-4">
+        <BossPortrait bossName={boss.name} className="size-20 shrink-0" imageUrl={boss.imageUrl} />
+        <div className="flex min-w-0 flex-wrap gap-2 text-xs text-foreground-muted">
         {boss.rank && <BossTag>{formatBossLabel(boss.rank)}</BossTag>}
         {boss.progression && <BossTag>{formatBossLabel(boss.progression)}</BossTag>}
         {boss.rewardsGreatRune && <BossTag>Great Rune</BossTag>}
         {boss.rewardsRemembrance && <BossTag>Remembrance</BossTag>}
+        </div>
       </div>
       <h2 className="mb-3 text-xl leading-tight wrap-break-word">{boss.name}</h2>
       <p className="mb-4 text-sm text-accent">{boss.health.toLocaleString()} HP</p>

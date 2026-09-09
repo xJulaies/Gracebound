@@ -27,4 +27,18 @@ describe("getBosses", () => {
       expect.any(Object),
     );
   });
+
+  it("resolves boss portrait asset URLs", async () => {
+    vi.stubGlobal("fetch", vi.fn().mockResolvedValue(new Response(JSON.stringify({
+      status: 200,
+      message: "Bosses found",
+      data: [{ id: "margit-the-fell-omen", imageUrl: "/api/assets/bosses/margit-the-fell-omen" }],
+    }), { status: 200, headers: { "Content-Type": "application/json" } })));
+
+    const response = await getBosses();
+
+    expect(response.data[0]?.imageUrl).toBe(
+      "http://localhost:3000/api/assets/bosses/margit-the-fell-omen",
+    );
+  });
 });

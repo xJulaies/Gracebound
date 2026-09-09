@@ -1120,6 +1120,7 @@ describe("saved build damage calculation", () => {
       .send({
         name: "Buffed Longsword",
         level: 150,
+        spellIds: ["flame-grant-me-strength"],
         stats: {
           vigor: 50, mind: 25, endurance: 30, strength: 80,
           dexterity: 80, intelligence: 80, faith: 80, arcane: 80,
@@ -1172,6 +1173,51 @@ describe("saved build damage calculation", () => {
         addedStatusBuildup: { frost: 63 },
       },
     });
+
+    const effectsDisabledResponse = await request(authenticatedApp)
+      .post(`/api/me/builds/${createResponse.body.data[0].id}/calculate-damage`)
+      .set("x-test-user-id", "user-1")
+      .send({
+        weaponSlotId: "rightHand1",
+        attackId: "straight-sword-1h-light-1",
+        greatRuneActive: false,
+        wondrousPhysickActive: false,
+        activeBuffSpellIds: [],
+        weaponBuffActive: false,
+      });
+
+    expect(effectsDisabledResponse.status).toBe(200);
+    expect(effectsDisabledResponse.body.data[0]).toMatchObject({
+      greatRune: null,
+      buffs: [],
+      weaponBuff: null,
+    });
+
+    const equippedBuffResponse = await request(authenticatedApp)
+      .post(`/api/me/builds/${createResponse.body.data[0].id}/calculate-damage`)
+      .set("x-test-user-id", "user-1")
+      .send({
+        weaponSlotId: "rightHand1",
+        attackId: "straight-sword-1h-light-1",
+        activeBuffSpellIds: ["golden-vow", "flame-grant-me-strength"],
+      });
+
+    expect(equippedBuffResponse.status).toBe(200);
+    expect(equippedBuffResponse.body.data[0].buffs).toEqual(expect.arrayContaining([
+      expect.objectContaining({ id: "golden-vow", slot: "aura" }),
+      expect.objectContaining({ id: "flame-grant-me-strength", slot: "body" }),
+    ]));
+
+    const foreignBuffResponse = await request(authenticatedApp)
+      .post(`/api/me/builds/${createResponse.body.data[0].id}/calculate-damage`)
+      .set("x-test-user-id", "user-1")
+      .send({
+        weaponSlotId: "rightHand1",
+        attackId: "straight-sword-1h-light-1",
+        activeBuffSpellIds: ["howl-of-shabriri"],
+      });
+
+    expect(foreignBuffResponse.status).toBe(400);
 
     const leftHandResponse = await request(authenticatedApp)
       .post(`/api/me/builds/${createResponse.body.data[0].id}/calculate-damage`)
