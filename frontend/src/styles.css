@@ -92,7 +92,7 @@
   }
 
   body {
-    @apply m-0 min-h-screen min-w-80 overflow-x-clip bg-background font-body text-foreground antialiased;
+    @apply m-0 min-h-screen min-w-0 overflow-x-clip bg-background font-body text-foreground antialiased;
   }
 
   button {
@@ -161,7 +161,7 @@
   }
 
   .app-shell {
-    @apply mx-auto w-full max-w-5xl px-4;
+    @apply mx-auto min-w-0 w-full max-w-5xl px-4;
   }
 
   main {
@@ -340,7 +340,12 @@
   }
 
   .damage-trial-panel {
-    @apply rounded-panel border border-border bg-surface-elevated/95 p-5 shadow-2xl shadow-background/30 sm:p-7;
+    @apply min-w-0 max-w-full rounded-panel border border-border bg-surface-elevated/95 p-4 shadow-2xl shadow-background/30 sm:p-7;
+  }
+
+  .damage-trial-page,
+  .damage-trial-stage {
+    @apply min-w-0 max-w-full;
   }
 
   @media (min-width: 80rem) {
@@ -421,7 +426,8 @@
   }
 
   .damage-trial-boss-target {
-    @apply grid gap-6 rounded-panel border border-border bg-background/55 p-4 sm:p-5;
+    @apply sticky z-20 grid gap-6 rounded-panel border border-border bg-surface-elevated/98 p-3 shadow-xl shadow-background/35 md:static md:bg-background/55 md:p-5 md:shadow-none;
+    top: 5.5rem;
   }
 
   .boss-portrait {
@@ -437,7 +443,7 @@
   }
 
   .damage-trial-boss-portrait {
-    @apply size-24 shrink-0 sm:size-28;
+    @apply size-14 shrink-0 md:size-28;
   }
 
   .damage-trial-health-track {

@@ -24,7 +24,7 @@ describe("DamageTrialBossSelector", () => {
     const { container } = render(
       <DamageTrialBossSelector onSelect={onSelect} selectedBoss={null} />,
     );
-    await user.selectOptions(screen.getByRole("combobox", { name: "Boss" }), boss.id);
+    await user.selectOptions(screen.getAllByRole("combobox", { name: "Boss" })[0]!, boss.id);
     expect(onSelect).toHaveBeenCalledWith(boss);
 
     await expectNoAccessibilityViolations(container);

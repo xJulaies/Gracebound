@@ -20,8 +20,8 @@ export function BossHealthBar({
 
   return (
     <div className="grid gap-2">
-      <div className="flex items-end justify-between gap-4">
-        <h3 className="m-0 text-lg sm:text-xl">{name}</h3>
+      <div className="grid min-w-0 gap-1 sm:flex sm:items-end sm:justify-between sm:gap-4">
+        <h3 className="m-0 min-w-0 break-words text-lg sm:text-xl">{name}</h3>
         <span className="shrink-0 text-sm text-foreground-muted">
           {safeCurrent.toLocaleString()} / {safeMaximum.toLocaleString()} HP
         </span>

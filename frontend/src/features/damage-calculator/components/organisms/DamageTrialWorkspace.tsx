@@ -61,7 +61,7 @@ export function DamageTrialWorkspace() {
   }
 
   return (
-    <div className="grid gap-6">
+    <div className="grid min-w-0 max-w-full gap-6">
       <nav aria-label="Damage trial steps" className="damage-trial-mobile-tabs">
         <MobileStageButton active={mobileStage === "build"} label="Build" onClick={() => setMobileStage("build")} />
         <MobileStageButton active={mobileStage === "target"} disabled={!selectedBuild} label="Target" onClick={() => setMobileStage("target")} />

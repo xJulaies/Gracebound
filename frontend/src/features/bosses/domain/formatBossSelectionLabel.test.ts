@@ -1,6 +1,9 @@
 import { describe, expect, it } from "vitest";
 import type { Boss } from "../types/boss.types";
-import { formatBossSelectionLabel } from "./formatBossSelectionLabel";
+import {
+  formatBossSelectionLabel,
+  formatCompactBossSelectionLabel,
+} from "./formatBossSelectionLabel";
 
 describe("formatBossSelectionLabel", () => {
   it("includes encounter and health context for unique bosses", () => {
@@ -23,6 +26,14 @@ describe("formatBossSelectionLabel", () => {
 
     expect(formatBossSelectionLabel(second)).toBe(
       "Deathbird — Altus Plateau · 7,921 HP",
+    );
+  });
+
+  it("keeps mobile labels compact while retaining region and health", () => {
+    const boss = createBoss("margit", "Margit, the Fell Omen", "Stormveil Castle", "limgrave", 4174);
+
+    expect(formatCompactBossSelectionLabel(boss)).toBe(
+      "Margit, the Fell Omen · Limgrave · 4,174 HP",
     );
   });
 });
