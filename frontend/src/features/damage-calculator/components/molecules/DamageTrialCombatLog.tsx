@@ -9,7 +9,7 @@ export function DamageTrialCombatLog({
   onInspect: (entryId: string) => void;
   selectedEntryId: string | null;
 }) {
-  const totalDamage = entries.reduce((sum, entry) => sum + entry.result.damage.total, 0);
+  const totalDamage = entries.reduce((sum, entry) => sum + entry.result.totalDamage, 0);
 
   return (
     <section className="damage-trial-log" aria-labelledby="damage-trial-log-heading">
@@ -27,8 +27,11 @@ export function DamageTrialCombatLog({
               <span className="min-w-0">
                 <span className="block truncate text-sm text-foreground">{entry.action.label}</span>
                 <span className="block text-xs text-foreground-muted">{getSourceName(entry)}</span>
+                {entry.phaseTransition && (
+                  <span className="mt-1 block text-xs text-accent">→ {entry.phaseTransition}</span>
+                )}
               </span>
-              <strong className="font-heading text-danger">−{formatDamage(entry.result.damage.total)}</strong>
+              <strong className="font-heading text-danger">−{formatDamage(entry.result.totalDamage)}</strong>
               <button
                 aria-expanded={selectedEntryId === entry.id}
                 className="damage-trial-log-action col-span-3 sm:col-span-1"

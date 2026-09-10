@@ -152,6 +152,65 @@ export const standardAshOfWarSkillDefinitions = [
     },
   },
   {
+    sourceGemId: 22600,
+    definition: {
+      id: "spectral-lance",
+      swordArtId: 226,
+      behaviorVariationId: 0,
+      attacks: [
+        {
+          id: "spectral-lance",
+          name: "Spectral Lance",
+          fpCostField: "useMagicPoint_L2",
+          components: [{ kind: "projectile", sourceBehaviorId: 300000870, behaviorJudgeId: 870 }],
+        },
+      ],
+    },
+  },
+  {
+    sourceGemId: 50200,
+    definition: {
+      id: "storm-stomp",
+      swordArtId: 502,
+      behaviorVariationId: 0,
+      attacks: [
+        {
+          id: "storm-stomp",
+          name: "Storm Stomp",
+          fpCostField: "useMagicPoint_L2",
+          components: [{ kind: "projectile", sourceBehaviorId: 300000050, behaviorJudgeId: 50 }],
+        },
+      ],
+    },
+  },
+  {
+    sourceGemId: 65200,
+    definition: {
+      id: "beasts-roar",
+      swordArtId: 652,
+      behaviorVariationId: 0,
+      attacks: [
+        {
+          id: "beasts-roar",
+          name: "Beast's Roar",
+          fpCostField: "useMagicPoint_L2",
+          components: [{ kind: "projectile", sourceBehaviorId: 300000841, behaviorJudgeId: 841 }],
+        },
+        {
+          id: "beasts-roar-adjacent-shockwave",
+          name: "Beast's Roar (Adjacent Shockwave)",
+          fpCostField: "useMagicPoint_L2",
+          components: [{
+            kind: "projectile",
+            sourceBehaviorId: 300000841,
+            behaviorJudgeId: 841,
+            sourceBulletId: 2801,
+          }],
+        },
+      ],
+    },
+  },
+  {
     sourceGemId: 11400,
     definition: {
       id: "unsheathe",

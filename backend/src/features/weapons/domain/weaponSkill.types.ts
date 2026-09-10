@@ -25,6 +25,16 @@ export interface WeaponSkillAttack {
   name: string;
   fpCost: number;
   components: Array<WeaponHitSkillComponent | ProjectileSkillComponent>;
+  targetHealthEffects?: TargetHealthDamageEffect[];
+}
+
+export interface TargetHealthDamageEffect {
+  id: string;
+  name: string;
+  maximumHealthRate: number;
+  flatDamage: number;
+  durationSeconds: number;
+  applicationCount: number;
 }
 
 export interface WeaponSkillProfile {

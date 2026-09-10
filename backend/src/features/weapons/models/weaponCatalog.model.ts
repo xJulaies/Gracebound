@@ -4,7 +4,10 @@ import {
   type WeaponCatalogEntry,
   type WeaponVariantReference,
 } from "../domain/weaponCatalog.types";
-import type { WeaponAttackProfile } from "../domain/weaponAttack.types";
+import {
+  WEAPON_ATTACK_TRAITS,
+  type WeaponAttackProfile,
+} from "../domain/weaponAttack.types";
 import type {
   WeaponSkillAttack,
   WeaponSkillProfile,
@@ -48,6 +51,16 @@ const weaponAttackSchema = new Schema<WeaponAttackProfile>(
   {
     id: { type: String, required: true },
     name: { type: String, required: true },
+    traits: {
+      type: [String],
+      required: true,
+      default: [],
+      enum: WEAPON_ATTACK_TRAITS,
+      validate: {
+        validator: (traits: string[]) => new Set(traits).size === traits.length,
+        message: "Weapon attack traits must be unique",
+      },
+    },
     behaviorVariationId: { type: Number, required: true, min: 0 },
     behaviorJudgeId: { type: Number, required: true, min: 0 },
     sourceBehaviorId: { type: Number, required: true, min: 0 },
@@ -86,6 +99,18 @@ const weaponSkillAttackSchema = new Schema<WeaponSkillAttack>(
     name: { type: String, required: true },
     fpCost: { type: Number, required: true, min: 0 },
     components: { type: [weaponSkillComponentSchema], required: true },
+    targetHealthEffects: {
+      type: [new Schema({
+        id: { type: String, required: true },
+        name: { type: String, required: true },
+        maximumHealthRate: { type: Number, required: true, min: 0, max: 1 },
+        flatDamage: { type: Number, required: true, min: 0 },
+        durationSeconds: { type: Number, required: true, min: 0 },
+        applicationCount: { type: Number, required: true, min: 1 },
+      }, { _id: false })],
+      required: true,
+      default: [],
+    },
   },
   { _id: false },
 );

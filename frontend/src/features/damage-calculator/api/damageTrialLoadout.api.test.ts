@@ -35,7 +35,9 @@ describe("getDamageTrialActionOptions", () => {
       expect.objectContaining({
         action: expect.objectContaining({
           kind: "weapon-skill",
+          ashOfWarId: "storm-blade",
           skillAttackId: "storm-blade-projectile",
+          label: "L2 — Storm Blade",
         }),
       }),
       expect.objectContaining({ action: { kind: "spell", spellId: "comet", label: "Cast", charged: false } }),

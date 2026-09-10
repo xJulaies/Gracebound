@@ -11,16 +11,31 @@ import { DamageTrialEffectsPanel } from "./DamageTrialEffectsPanel";
 export function DamageTrialEncounter({ build, boss }: { build: Build; boss: Boss }) {
   const effects = useDamageTrialEffects(build);
   const session = useDamageTrialSession(build.id, boss, effects.selection);
+  const activeBoss = session.activePhase
+    ? {
+        ...boss,
+        name: session.activePhase.name,
+        health: session.currentMaximumHealth,
+        defense: session.activePhase.defense,
+        absorption: session.activePhase.absorption,
+      }
+    : boss;
 
   return (
     <div className="damage-trial-encounter-layout">
       <DamageTrialEffectsPanel effects={effects} />
-      <div className="grid min-w-0 gap-6">
+      <div className="damage-trial-main-column grid min-w-0 gap-6">
         <DamageTrialBossTarget
-          boss={boss}
+          boss={activeBoss}
           currentHealth={session.currentHealth}
           lastHitId={session.log.at(-1)?.id}
         />
+        {session.phaseTransition && (
+          <div aria-live="assertive" className="damage-trial-phase-alert" role="status">
+            <span>Encounter changed</span>
+            <strong>{session.phaseTransition}</strong>
+          </div>
+        )}
         <DamageTrialActionSelector
           build={build}
           disabled={session.currentHealth === 0}
@@ -28,7 +43,7 @@ export function DamageTrialEncounter({ build, boss }: { build: Build; boss: Boss
           onExecute={(action) => session.mutation.mutate(action)}
         />
         <DamageTrialCombatPanel
-          canReset={session.currentHealth < boss.health || session.log.length > 0}
+          canReset={session.currentHealth < session.currentMaximumHealth || session.log.length > 0}
           error={session.mutation.error}
           isAttacking={session.mutation.isPending}
           log={session.log}
@@ -37,7 +52,7 @@ export function DamageTrialEncounter({ build, boss }: { build: Build; boss: Boss
           onUndo={session.undoLastAttack}
         />
       </div>
-      <DamageTrialBossStats boss={boss} />
+      <DamageTrialBossStats boss={activeBoss} />
     </div>
   );
 }

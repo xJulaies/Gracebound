@@ -10,6 +10,7 @@ import { unclassifiedBossMetadata } from "../../../features/bosses/domain/boss.t
 import type { DamageTypes } from "../../../features/damage/domain/damage.types";
 import type { NpcParamRow } from "../schemas/npcParam.schema";
 import type { SpEffectParamRow } from "../schemas/spEffectParam.schema";
+import { applyBossPhaseProfile, applyLinkedBossPhaseProfiles } from "../data/bossPhaseProfiles";
 
 export interface RegulationBossDefinition {
   id: string;
@@ -47,7 +48,7 @@ export function mapRegulationBoss(
     throw new Error(`Unsupported physical defense modifiers for ${definition.name}`);
   }
 
-  return {
+  return applyBossPhaseProfile({
     ...unclassifiedBossMetadata,
     id: definition.id,
     name: definition.name,
@@ -61,7 +62,7 @@ export function mapRegulationBoss(
     absorption: mapAbsorption(npc),
     sourceNpcId: npc.ID,
     healthScalingEffectId: healthScalingEffect.ID,
-  };
+  });
 }
 
 export function mapRegulationBosses(
@@ -69,9 +70,9 @@ export function mapRegulationBosses(
   npcRows: NpcParamRow[],
   effectRows: SpEffectParamRow[],
 ): BossData[] {
-  return definitions.map((definition) =>
+  return applyLinkedBossPhaseProfiles(definitions.map((definition) =>
     mapRegulationBoss(definition, npcRows, effectRows),
-  );
+  ));
 }
 
 function mapDefense(

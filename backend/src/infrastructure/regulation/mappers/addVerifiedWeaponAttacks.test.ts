@@ -74,10 +74,10 @@ describe("addVerifiedWeaponAttacks", () => {
     };
     const definitions = definitionsFor("straight-sword");
     expect(definitions).toEqual(expect.arrayContaining([
-      expect.objectContaining({ id: "straight-sword-1h-jumping-light", behaviorJudgeId: 150 }),
-      expect.objectContaining({ id: "straight-sword-1h-jumping-heavy", behaviorJudgeId: 160 }),
-      expect.objectContaining({ id: "straight-sword-2h-jumping-light", behaviorJudgeId: 350 }),
-      expect.objectContaining({ id: "straight-sword-2h-jumping-heavy", behaviorJudgeId: 360 }),
+      expect.objectContaining({ id: "straight-sword-1h-jumping-light", behaviorJudgeId: 150, traits: ["jumping"] }),
+      expect.objectContaining({ id: "straight-sword-1h-jumping-heavy", behaviorJudgeId: 160, traits: ["jumping"] }),
+      expect.objectContaining({ id: "straight-sword-2h-jumping-light", behaviorJudgeId: 350, traits: ["jumping"] }),
+      expect.objectContaining({ id: "straight-sword-2h-jumping-heavy", behaviorJudgeId: 360, traits: ["jumping"] }),
     ]));
 
     const result = addVerifiedWeaponAttacks(

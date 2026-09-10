@@ -1,10 +1,12 @@
 import type { RegulationWeaponAttackDefinition } from "../mappers/mapRegulationWeaponAttacks";
+import type { WeaponAttackTrait } from "../../../features/weapons/domain/weaponAttack.types";
 
 interface AttackTemplate {
   suffix: string;
   name: string;
   behaviorJudgeId: number;
   chainPosition?: number;
+  traits?: WeaponAttackTrait[];
 }
 
 export interface MeleeWeaponClassDefinition {
@@ -22,15 +24,15 @@ const attackTemplates: AttackTemplate[] = [
   { suffix: "1h-light-4", name: "One-handed light attack 4", behaviorJudgeId: 30, chainPosition: 4 },
   { suffix: "1h-light-5", name: "One-handed light attack 5", behaviorJudgeId: 40, chainPosition: 5 },
   { suffix: "1h-heavy-1", name: "One-handed heavy attack 1", behaviorJudgeId: 100 },
-  { suffix: "1h-charged-heavy-1", name: "One-handed charged heavy attack 1", behaviorJudgeId: 105 },
+  { suffix: "1h-charged-heavy-1", name: "One-handed charged heavy attack 1", behaviorJudgeId: 105, traits: ["charged"] },
   { suffix: "1h-heavy-2", name: "One-handed heavy attack 2", behaviorJudgeId: 110 },
-  { suffix: "1h-charged-heavy-2", name: "One-handed charged heavy attack 2", behaviorJudgeId: 115 },
+  { suffix: "1h-charged-heavy-2", name: "One-handed charged heavy attack 2", behaviorJudgeId: 115, traits: ["charged"] },
   { suffix: "1h-running-light", name: "One-handed running light attack", behaviorJudgeId: 120 },
   { suffix: "1h-running-heavy", name: "One-handed running heavy attack", behaviorJudgeId: 125 },
   { suffix: "1h-rolling-light", name: "One-handed rolling light attack", behaviorJudgeId: 130 },
   { suffix: "1h-backstep-light", name: "One-handed backstep light attack", behaviorJudgeId: 140 },
-  { suffix: "1h-jumping-light", name: "One-handed jumping light attack", behaviorJudgeId: 150 },
-  { suffix: "1h-jumping-heavy", name: "One-handed jumping heavy attack", behaviorJudgeId: 160 },
+  { suffix: "1h-jumping-light", name: "One-handed jumping light attack", behaviorJudgeId: 150, traits: ["jumping"] },
+  { suffix: "1h-jumping-heavy", name: "One-handed jumping heavy attack", behaviorJudgeId: 160, traits: ["jumping"] },
   { suffix: "1h-guard-counter", name: "One-handed guard counter", behaviorJudgeId: 180 },
   { suffix: "2h-light-1", name: "Two-handed light attack 1", behaviorJudgeId: 200, chainPosition: 1 },
   { suffix: "2h-light-2", name: "Two-handed light attack 2", behaviorJudgeId: 210, chainPosition: 2 },
@@ -38,15 +40,15 @@ const attackTemplates: AttackTemplate[] = [
   { suffix: "2h-light-4", name: "Two-handed light attack 4", behaviorJudgeId: 230, chainPosition: 4 },
   { suffix: "2h-light-5", name: "Two-handed light attack 5", behaviorJudgeId: 240, chainPosition: 5 },
   { suffix: "2h-heavy-1", name: "Two-handed heavy attack 1", behaviorJudgeId: 300 },
-  { suffix: "2h-charged-heavy-1", name: "Two-handed charged heavy attack 1", behaviorJudgeId: 305 },
+  { suffix: "2h-charged-heavy-1", name: "Two-handed charged heavy attack 1", behaviorJudgeId: 305, traits: ["charged"] },
   { suffix: "2h-heavy-2", name: "Two-handed heavy attack 2", behaviorJudgeId: 310 },
-  { suffix: "2h-charged-heavy-2", name: "Two-handed charged heavy attack 2", behaviorJudgeId: 315 },
+  { suffix: "2h-charged-heavy-2", name: "Two-handed charged heavy attack 2", behaviorJudgeId: 315, traits: ["charged"] },
   { suffix: "2h-running-light", name: "Two-handed running light attack", behaviorJudgeId: 320 },
   { suffix: "2h-running-heavy", name: "Two-handed running heavy attack", behaviorJudgeId: 325 },
   { suffix: "2h-rolling-light", name: "Two-handed rolling light attack", behaviorJudgeId: 330 },
   { suffix: "2h-backstep-light", name: "Two-handed backstep light attack", behaviorJudgeId: 340 },
-  { suffix: "2h-jumping-light", name: "Two-handed jumping light attack", behaviorJudgeId: 350 },
-  { suffix: "2h-jumping-heavy", name: "Two-handed jumping heavy attack", behaviorJudgeId: 360 },
+  { suffix: "2h-jumping-light", name: "Two-handed jumping light attack", behaviorJudgeId: 350, traits: ["jumping"] },
+  { suffix: "2h-jumping-heavy", name: "Two-handed jumping heavy attack", behaviorJudgeId: 360, traits: ["jumping"] },
   { suffix: "2h-guard-counter", name: "Two-handed guard counter", behaviorJudgeId: 380 },
   { suffix: "offhand-light-1", name: "Offhand light attack 1", behaviorJudgeId: 400, chainPosition: 1 },
   { suffix: "offhand-light-2", name: "Offhand light attack 2", behaviorJudgeId: 410, chainPosition: 2 },
@@ -92,9 +94,10 @@ export function createMeleeAttackDefinitions(
 ): RegulationWeaponAttackDefinition[] {
   return attackTemplates
     .filter(({ chainPosition }) => !chainPosition || chainPosition <= weaponClassDefinition.lightChainLength)
-    .map(({ suffix, name, behaviorJudgeId }) => ({
+    .map(({ suffix, name, behaviorJudgeId, traits = [] }) => ({
       id: `${weaponClassDefinition.slug}-${suffix}`,
       name,
+      traits,
       sourceBehaviorId: 100000000 + weaponClassDefinition.behaviorVariationId * 1000 + behaviorJudgeId,
       behaviorVariationId: weaponClassDefinition.behaviorVariationId,
       behaviorJudgeId,

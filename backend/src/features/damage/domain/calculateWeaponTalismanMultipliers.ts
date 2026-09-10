@@ -1,14 +1,13 @@
 import type { TalismanEffects } from "../../talismans/domain/talisman.types";
 import type { DamageTypes } from "./damage.types";
-
-interface WeaponAction {
-  attackId?: string;
-  skillAttackId?: string;
-}
+import {
+  hasWeaponAttackTrait,
+  type WeaponDamageAction,
+} from "./weaponDamageAction";
 
 export function calculateWeaponTalismanMultipliers(
   talismanEffects: TalismanEffects[],
-  action: WeaponAction,
+  action: WeaponDamageAction,
 ): DamageTypes {
   return talismanEffects.reduce((total, effects) => {
     const actionMultiplier = getActionMultiplier(effects, action);
@@ -22,16 +21,18 @@ export function calculateWeaponTalismanMultipliers(
 
 function getActionMultiplier(
   effects: TalismanEffects,
-  action: WeaponAction,
+  action: WeaponDamageAction,
 ): DamageTypes {
-  if (action.skillAttackId) return effects.skillDamageMultipliers;
-  if (action.attackId?.includes("charged-heavy")) {
-    return effects.chargedAttackDamageMultipliers;
-  }
-  if (action.attackId?.includes("jumping")) {
-    return effects.conditionalAttackDamageMultipliers.jumping;
-  }
-  return unitDamageTypes();
+  if (action.kind === "skill") return effects.skillDamageMultipliers;
+
+  return multiplyDamageTypes(
+    hasWeaponAttackTrait(action, "charged")
+      ? effects.chargedAttackDamageMultipliers
+      : unitDamageTypes(),
+    hasWeaponAttackTrait(action, "jumping")
+      ? effects.conditionalAttackDamageMultipliers.jumping
+      : unitDamageTypes(),
+  );
 }
 
 function multiplyDamageTypes(...multipliers: DamageTypes[]): DamageTypes {

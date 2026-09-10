@@ -16,7 +16,7 @@ export const ASH_OF_WAR_COMPATIBILITY_FIELDS = {
   canMountWep_Flail: "flail",
   canMountWep_SpearNormal: "spear",
   canMountWep_SpearLarge: "great-spear",
-  canMountWep_SpearHeavy: "heavy-spear",
+  canMountWep_SpearHeavy: "great-spear",
   canMountWep_SpearAxe: "halberd",
   canMountWep_Sickle: "reaper",
   canMountWep_Knuckle: "fist",

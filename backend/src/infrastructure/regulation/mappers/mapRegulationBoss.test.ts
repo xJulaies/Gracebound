@@ -97,6 +97,7 @@ describe("mapRegulationBoss", () => {
         lightning: 0,
         holy: 40,
       },
+      phases: [],
       sourceNpcId: 21300014,
       healthScalingEffectId: 7030,
     });

@@ -17,6 +17,7 @@ const DAMAGE_TYPES = [
 export interface DamageTarget {
   id: string;
   name: string;
+  maximumHealth: number;
   defense: DamageTypes;
   absorption: BossAbsorption;
 }
@@ -79,6 +80,22 @@ export function calculateAttackOutput(
         }),
       )
     : undefined;
+  const specialDamage = (attack.targetHealthEffects ?? []).map((effect) => {
+    const damagePerApplication = target
+      ? Math.floor(target.maximumHealth * effect.maximumHealthRate + effect.flatDamage)
+      : null;
+    return {
+      ...effect,
+      damagePerApplication,
+      totalDamage: damagePerApplication === null
+        ? null
+        : damagePerApplication * effect.applicationCount,
+    };
+  });
+  const specialDamageTotal = specialDamage.reduce(
+    (total, effect) => total + (effect.totalDamage ?? 0),
+    0,
+  );
 
   return {
     attack: {
@@ -90,6 +107,8 @@ export function calculateAttackOutput(
     components,
     offensiveOutput,
     ...(target ? { target: { id: target.id, name: target.name }, damage } : {}),
+    specialDamage,
+    ...(target ? { totalDamage: damage!.total + specialDamageTotal } : {}),
     accuracy: "estimated" as const,
   };
 }

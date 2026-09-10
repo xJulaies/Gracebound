@@ -8,10 +8,12 @@ describe("calculateWeaponTalismanMultipliers", () => {
     effects.conditionalAttackDamageMultipliers.jumping = damageTypes(1.15);
 
     expect(calculateWeaponTalismanMultipliers([effects], {
-      attackId: "straight-sword-1h-light-1",
+      kind: "weapon",
+      traits: [],
     })).toEqual(damageTypes(1));
     expect(calculateWeaponTalismanMultipliers([effects], {
-      attackId: "straight-sword-jumping-light-1",
+      kind: "weapon",
+      traits: ["jumping"],
     })).toEqual(damageTypes(1.15));
   });
 
@@ -21,8 +23,18 @@ describe("calculateWeaponTalismanMultipliers", () => {
     effects.chargedAttackDamageMultipliers = damageTypes(1.2);
 
     expect(calculateWeaponTalismanMultipliers([effects], {
-      attackId: "straight-sword-1h-charged-heavy-1",
+      kind: "weapon",
+      traits: ["charged"],
     })).toEqual(damageTypes(1.32));
+  });
+
+  it("applies skill multipliers from the explicit action kind", () => {
+    const effects = neutralEffects();
+    effects.skillDamageMultipliers = damageTypes(1.15);
+
+    expect(calculateWeaponTalismanMultipliers([effects], {
+      kind: "skill",
+    })).toEqual(damageTypes(1.15));
   });
 });
 

@@ -31,10 +31,17 @@ import {
 import { findCrystalTearsByIds } from "../../crystalTears/repositories/crystalTear.repository";
 import { combineCrystalTearEffects } from "../../crystalTears/domain/combineCrystalTearEffects";
 import { calculateWeaponTalismanMultipliers } from "../domain/calculateWeaponTalismanMultipliers";
+import {
+  hasWeaponAttackTrait,
+  type WeaponDamageAction,
+} from "../domain/weaponDamageAction";
 
 export async function calculateDamageFromInput(input: CalculateDamageInput) {
+  if (input.bossPhaseId && !input.bossId) {
+    throw createError(400, "Boss phase requires a selected boss");
+  }
   const target = input.bossId
-    ? await findDamageTarget(input.bossId)
+    ? await findDamageTarget(input.bossId, input.bossPhaseId)
     : undefined;
 
   if ("attackRating" in input) {
@@ -139,6 +146,7 @@ async function calculateSpellDamage(
       addedDamage: emptyDamageTypes(),
       finalDamageRates: component.finalDamageRates,
     })),
+    targetHealthEffects: [],
   }, target, damageMultipliers);
   const calculatedComponents = calculation.components.map((component, index) => ({
     ...component,
@@ -181,7 +189,7 @@ async function calculateWeaponDamage(
   input: WeaponDamageInput,
   target?: Awaited<ReturnType<typeof findDamageTarget>>,
 ) {
-  const [calculationData, weaponCatalog, attack, talismans, armor, buffs, greatRune, crystalTears] = await Promise.all([
+  const [calculationData, weaponCatalog, selectedAttack, talismans, armor, buffs, greatRune, crystalTears] = await Promise.all([
     findWeaponCalculationData(
       input.weaponVariantId,
       settings.SUPPORTED_GAME_VERSION,
@@ -201,7 +209,7 @@ async function calculateWeaponDamage(
   const selectedVariant = weaponCatalog.variants.find(({ id }) => id === input.weaponVariantId);
   if (!selectedVariant) throw createError(400, "Weapon variant does not belong to selected weapon");
 
-  if (!attack) {
+  if (!selectedAttack) {
     throw createError(404, "Weapon attack not found");
   }
 
@@ -253,9 +261,11 @@ async function calculateWeaponDamage(
     : skillAdjustedAttackRating;
   const talismanDamageMultipliers = calculateWeaponTalismanMultipliers(
     talismans.map(({ effects }) => effects!),
-    input,
+    selectedAttack.action,
   );
-  const physickDamageMultipliers = "attackId" in input && input.attackId.includes("charged-heavy")
+  const isChargedAttack = hasWeaponAttackTrait(selectedAttack.action, "charged");
+  const isJumpingAttack = hasWeaponAttackTrait(selectedAttack.action, "jumping");
+  const physickDamageMultipliers = isChargedAttack
     ? multiplyDamageTypes(physickEffects.outgoingDamageMultipliers, physickEffects.chargedAttackDamageMultipliers)
     : physickEffects.outgoingDamageMultipliers;
   const appliedDamageMultipliers = multiplyDamageTypes(
@@ -263,7 +273,7 @@ async function calculateWeaponDamage(
       applyOutgoingBuffMultipliers(applySupportedArmorDamageMultipliers(
         talismanDamageMultipliers,
         armorStats.passiveEffects.scopedDamageBoosts,
-        "attackId" in input && input.attackId.includes("jumping"),
+        isJumpingAttack,
       ), selectedBuffs),
       physickDamageMultipliers,
     ),
@@ -271,7 +281,7 @@ async function calculateWeaponDamage(
   );
   const calculation = calculateAttackOutput(
     attackRating,
-    attack,
+    selectedAttack.attack,
     target,
     appliedDamageMultipliers,
   );
@@ -454,7 +464,7 @@ function applySupportedArmorDamageMultipliers(
 
 async function findSelectedAttack(
   input: WeaponDamageInput,
-): Promise<WeaponSkillAttack | null> {
+): Promise<SelectedWeaponAttack | null> {
   if ("ashOfWarId" in input) {
     const weapon = await findWeaponCatalogById(
       input.weaponId,
@@ -465,21 +475,23 @@ async function findSelectedAttack(
     const variant = weapon.variants.find(({ id }) => id === input.weaponVariantId);
     if (!variant) return null;
 
-    return findCompatibleAshOfWarAttack(
+    const attack = await findCompatibleAshOfWarAttack(
       input.ashOfWarId,
       input.skillAttackId,
       weapon.weaponType,
       variant.affinity,
       settings.SUPPORTED_GAME_VERSION,
     );
+    return attack ? { attack, action: { kind: "skill" } } : null;
   }
 
   if ("skillAttackId" in input) {
-    return findWeaponSkillAttack(
+    const attack = await findWeaponSkillAttack(
       input.weaponId,
       input.skillAttackId,
       settings.SUPPORTED_GAME_VERSION,
     );
+    return attack ? { attack, action: { kind: "skill" } } : null;
   }
 
   const attack = await findWeaponAttackProfile(
@@ -489,23 +501,35 @@ async function findSelectedAttack(
   );
 
   if (!attack) return null;
+  if (!Array.isArray(attack.traits)) {
+    throw createError(409, "Weapon attack data is outdated; re-import Regulation weapon data");
+  }
 
   return {
-    id: attack.id,
-    name: attack.name,
-    fpCost: 0,
-    components: [
-      {
-        kind: "weapon-hit",
-        sourceBehaviorId: attack.sourceBehaviorId,
-        sourceAttackId: attack.sourceAttackId,
-        physicalAttackType: attack.physicalAttackType,
-        motionValues: attack.motionValues,
-        addedDamage: emptyDamageTypes(),
-        finalDamageRates: unitDamageTypes(),
-      },
-    ],
+    action: { kind: "weapon", traits: attack.traits },
+    attack: {
+      id: attack.id,
+      name: attack.name,
+      fpCost: 0,
+      components: [
+        {
+          kind: "weapon-hit",
+          sourceBehaviorId: attack.sourceBehaviorId,
+          sourceAttackId: attack.sourceAttackId,
+          physicalAttackType: attack.physicalAttackType,
+          motionValues: attack.motionValues,
+          addedDamage: emptyDamageTypes(),
+          finalDamageRates: unitDamageTypes(),
+        },
+      ],
+      targetHealthEffects: [],
+    },
   };
+}
+
+interface SelectedWeaponAttack {
+  attack: WeaponSkillAttack;
+  action: WeaponDamageAction;
 }
 
 function emptyDamageTypes() {
@@ -516,17 +540,26 @@ function unitDamageTypes() {
   return { physical: 1, magic: 1, fire: 1, lightning: 1, holy: 1 };
 }
 
-async function findDamageTarget(bossId: string) {
+async function findDamageTarget(bossId: string, bossPhaseId?: string) {
   const boss = await findBossById(bossId, settings.SUPPORTED_GAME_VERSION);
 
   if (!boss) {
     throw createError(404, "Boss not found");
   }
 
+  const phase = bossPhaseId
+    ? boss.phases?.find((candidate) => candidate.id === bossPhaseId)
+    : undefined;
+
+  if (bossPhaseId && !phase) {
+    throw createError(400, "Boss phase does not belong to the selected boss");
+  }
+
   return {
     id: boss.id,
-    name: boss.name,
-    defense: boss.defense,
-    absorption: boss.absorption,
+    name: phase?.name ?? boss.name,
+    maximumHealth: phase?.health ?? boss.health,
+    defense: phase?.defense ?? boss.defense,
+    absorption: phase?.absorption ?? boss.absorption,
   };
 }

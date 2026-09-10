@@ -3,7 +3,7 @@ import type { Boss } from "../../../bosses/types/boss.types";
 
 export function DamageTrialBossStats({ boss }: { boss: Boss }) {
   return (
-    <aside aria-labelledby="damage-trial-boss-stats-heading" className="damage-trial-side-panel xl:sticky xl:top-28 xl:self-start">
+    <aside aria-labelledby="damage-trial-boss-stats-heading" className="damage-trial-boss-stats-panel damage-trial-side-panel">
       <div>
         <h2 className="mb-2 text-xl" id="damage-trial-boss-stats-heading">Boss defenses</h2>
         <p className="m-0 text-sm text-foreground-muted">Values applied to every confirmed hit.</p>

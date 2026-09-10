@@ -22,8 +22,25 @@ export function DamageTrialResultDetails({ entry }: { entry: DamageTrialLogEntry
       <div className="grid gap-5 xl:grid-cols-3">
         <DamageBreakdownGroup label="Attack rating" values={result.attackRating} />
         <DamageBreakdownGroup label="Before mitigation" values={result.offensiveOutput} />
-        <DamageBreakdownGroup label="Damage dealt" values={result.damage} />
+        <DamageBreakdownGroup label="Direct damage" values={result.damage} />
       </div>
+
+      {result.specialDamage.length > 0 && (
+        <section aria-labelledby={`special-damage-${entry.id}`}>
+          <div className="mb-2 flex items-center justify-between gap-3">
+            <h5 className="m-0 text-base text-accent" id={`special-damage-${entry.id}`}>Special damage</h5>
+            <strong>{formatNumber(result.totalDamage)} total damage</strong>
+          </div>
+          <ul className="m-0 grid list-none gap-2 p-0">
+            {result.specialDamage.map((effect) => (
+              <li className="flex justify-between gap-4 border-b border-border pb-2 text-sm" key={effect.id}>
+                <span>{effect.name} · {effect.applicationCount} × {formatNumber(effect.damagePerApplication)} over {effect.durationSeconds}s</span>
+                <strong>{formatNumber(effect.totalDamage)}</strong>
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
 
       {result.components.length > 0 && (
         <section aria-labelledby={`components-${entry.id}`}>

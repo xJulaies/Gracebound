@@ -8,13 +8,15 @@ export function toSavedBuildDamageRequest(
   action: DamageTrialAction,
   bossId: string,
   effects: DamageTrialEffectsSelection,
+  bossPhaseId?: string,
 ): SavedBuildDamageRequest {
+  const target = { bossId, ...(bossPhaseId ? { bossPhaseId } : {}) };
   if (action.kind === "weapon-attack") {
     return {
       weaponSlotId: action.weaponSlotId,
       attackId: action.attackId,
       skillBuffActive: action.skillBuffActive,
-      bossId,
+      ...target,
       ...effects,
     };
   }
@@ -23,9 +25,9 @@ export function toSavedBuildDamageRequest(
       weaponSlotId: action.weaponSlotId,
       skillAttackId: action.skillAttackId,
       skillBuffActive: action.skillBuffActive,
-      bossId,
+      ...target,
       ...effects,
     };
   }
-  return { spellId: action.spellId, charged: action.charged, bossId, ...effects };
+  return { spellId: action.spellId, charged: action.charged, ...target, ...effects };
 }

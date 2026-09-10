@@ -94,6 +94,9 @@ describe("mapRegulationWeaponSkill", () => {
         { ...behavior(300000891, 891, 0, 300000892), variationId: 0 },
         { ...behavior(300000150, 150, 0, 301700910), variationId: 0 },
         { ...behavior(300000350, 350, 1, 2080), variationId: 0 },
+        { ...behavior(300000870, 870, 1, 2930), variationId: 0 },
+        { ...behavior(300000050, 50, 1, 2280), variationId: 0 },
+        { ...behavior(300000841, 841, 1, 2800), variationId: 0 },
         { ...behavior(300000560, 560, 0, 300000560), variationId: 0 },
         { ...behavior(300000565, 565, 0, 300000565), variationId: 0 },
       ],
@@ -112,6 +115,10 @@ describe("mapRegulationWeaponSkill", () => {
         attack(300000892, 112, 0, 0, 0, 10000),
         attack(301700910, 220, 0, 1, 0, 10000),
         { ...attack(301600840, 0, 0, 3, 1, 10000), atkThun: 120 },
+        { ...attack(300000870, 0, 0, 2, 1, 10000), atkPhys: 132 },
+        { ...attack(30300870, 0, 0, 0, 1, 10000), atkPhys: 50 },
+        { ...attack(30000841, 0, 0, 1, 1, 10000), atkPhys: 110 },
+        { ...attack(30000842, 0, 0, 1, 1, 10000), atkPhys: 80 },
         attack(300000560, 190, 0, 253, 0, 10000),
         attack(300000565, 245, 0, 253, 0, 10000),
       ],
@@ -124,11 +131,18 @@ describe("mapRegulationWeaponSkill", () => {
         swordArt(107, "Stamp (Sweep)", 5, 8),
         swordArt(116, "Giant Hunt", 16, -1),
         swordArt(216, "Thunderbolt", 10, 10),
+        swordArt(226, "Spectral Lance", 9, -1),
+        swordArt(502, "Storm Stomp", 6, -1),
+        swordArt(652, "Beast's Roar", 10, -1),
         swordArt(114, "Unsheathe", 0, 15, 10),
       ],
       bullets: [
         ...tables.bullets,
         { ID: 2080, Name: "Thunderbolt", atkId_Bullet: 301600840, intervalCreateBulletId: -1 },
+        { ID: 2930, Name: "Spectral Lance", atkId_Bullet: 300000870, intervalCreateBulletId: -1 },
+        { ID: 2280, Name: "Storm Stomp", atkId_Bullet: 30300870, intervalCreateBulletId: -1 },
+        { ID: 2800, Name: "Beast's Roar", atkId_Bullet: 30000841, intervalCreateBulletId: -1, HitBulletID: 2801 },
+        { ID: 2801, Name: "Beast's Roar impact", atkId_Bullet: 30000842, intervalCreateBulletId: -1, HitBulletID: -1 },
       ],
     };
 
@@ -145,6 +159,9 @@ describe("mapRegulationWeaponSkill", () => {
       "stamp-sweep",
       "giant-hunt",
       "thunderbolt",
+      "spectral-lance",
+      "storm-stomp",
+      "beasts-roar",
       "unsheathe",
     ]);
     expect(skills.flatMap(({ attacks: skillAttacks }) => skillAttacks)).toMatchObject([
@@ -171,6 +188,22 @@ describe("mapRegulationWeaponSkill", () => {
       {
         fpCost: 10,
         components: [{ kind: "projectile", sourceBulletId: 2080, addedDamage: { lightning: 120 } }],
+      },
+      {
+        fpCost: 9,
+        components: [{ kind: "projectile", sourceBulletId: 2930, addedDamage: { physical: 132 } }],
+      },
+      {
+        fpCost: 6,
+        components: [{ kind: "projectile", sourceBulletId: 2280, addedDamage: { physical: 50 } }],
+      },
+      {
+        fpCost: 10,
+        components: [{ kind: "projectile", sourceBulletId: 2800, addedDamage: { physical: 110 } }],
+      },
+      {
+        fpCost: 10,
+        components: [{ kind: "projectile", sourceBulletId: 2801, addedDamage: { physical: 80 } }],
       },
       { fpCost: 10, components: [{ motionValues: allDamage(190) }] },
       { fpCost: 15, components: [{ motionValues: allDamage(245) }] },

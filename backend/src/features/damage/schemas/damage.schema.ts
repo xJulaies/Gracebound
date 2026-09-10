@@ -18,6 +18,10 @@ const bossIdSchema = z
   .string()
   .regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/)
   .optional();
+const bossPhaseIdSchema = z
+  .string()
+  .regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/)
+  .optional();
 const talismanIdsSchema = z
   .array(z.string().regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/))
   .max(4)
@@ -57,6 +61,7 @@ export const manualDamageSchema = z.strictObject({
   motionValue: motionValueSchema,
   physicalAttackType: physicalAttackTypeSchema,
   bossId: bossIdSchema,
+  bossPhaseId: bossPhaseIdSchema,
 });
 
 const weaponDamageFields = {
@@ -71,6 +76,7 @@ const weaponDamageFields = {
     arcane: z.number().int().min(1).max(99),
   }),
   bossId: bossIdSchema,
+  bossPhaseId: bossPhaseIdSchema,
   talismanIds: talismanIdsSchema,
   armorIds: armorIdsSchema,
   greatRuneId: greatRuneIdSchema,
@@ -88,6 +94,7 @@ const spellDamageSchema = z.strictObject({
   charged: z.boolean().default(false),
   stats: weaponDamageFields.stats,
   bossId: bossIdSchema,
+  bossPhaseId: bossPhaseIdSchema,
   talismanIds: talismanIdsSchema,
   greatRuneId: greatRuneIdSchema,
   crystalTearIds: crystalTearIdsSchema,

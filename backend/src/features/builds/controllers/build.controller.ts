@@ -157,14 +157,19 @@ export const calculateOwnedBuildDamage: RequestHandler = async (_request, respon
       crystalTearIds,
       buffSpellIds: activeBuffSpellIds,
       ...(selection.bossId ? { bossId: selection.bossId } : {}),
+      ...(selection.bossPhaseId ? { bossPhaseId: selection.bossPhaseId } : {}),
     });
     response.status(200).json(createAnswer(200, "Build damage calculated", [result]));
     return;
   }
   const { weaponSlotId, skillBuffActive, weaponBuffActive } = selection;
+  const targetSelection = {
+    ...(selection.bossId ? { bossId: selection.bossId } : {}),
+    ...(selection.bossPhaseId ? { bossPhaseId: selection.bossPhaseId } : {}),
+  };
   const action = "attackId" in selection
-    ? { attackId: selection.attackId, ...(selection.bossId ? { bossId: selection.bossId } : {}) }
-    : { skillAttackId: selection.skillAttackId, ...(selection.bossId ? { bossId: selection.bossId } : {}) };
+    ? { attackId: selection.attackId, ...targetSelection }
+    : { skillAttackId: selection.skillAttackId, ...targetSelection };
   const weaponSlot = equipment.weaponSlots[weaponSlotId];
   if (!weaponSlot) throw createError(400, "Selected build weapon slot is empty");
   const armorIds = [

@@ -51,5 +51,20 @@ export interface Boss {
     lightning: number;
     holy: number;
   };
+  phases?: Array<{
+    id: string;
+    name: string;
+    phaseNumber: number;
+    trigger: { type: "health-percentage"; threshold: number } | { type: "health-depleted" } | null;
+    health: number;
+    defense: DamageTypes;
+    absorption: {
+      physical: { standard: number; slash: number; strike: number; pierce: number };
+      magic: number;
+      fire: number;
+      lightning: number;
+      holy: number;
+    };
+  }>;
   gameVersion: string;
 }

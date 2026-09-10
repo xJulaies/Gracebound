@@ -62,11 +62,18 @@ async function getWeaponOptions(
   const actions = selectWeaponAttacks(weapon);
   const ashOfWar = ashResponse ? getFirst(ashResponse.data, "Ash of War") : null;
   const skills = ashOfWar?.attacks.length
-    ? ashOfWar.attacks.map((attack) => ({ id: attack.id, label: ashOfWar.name }))
-    : weapon.skills.flatMap((skill) => skill.attacks.map((attack) => ({
+    ? ashOfWar.attacks.map((attack) => ({
         id: attack.id,
-        label: skill.name,
-      })));
+        label: `L2 — ${attack.name}`,
+        ashOfWarId: ashOfWar.id,
+        kind: "Ash of War",
+      }))
+    : weapon.skills.flatMap((skill) => skill.attacks.map((attack) => ({
+      id: attack.id,
+      label: `L2 — ${attack.name}`,
+      ashOfWarId: undefined,
+      kind: "Unique skill",
+    })));
 
   return [
     ...actions.map(({ id, label }) => ({
@@ -81,16 +88,23 @@ async function getWeaponOptions(
       detail: formatWeaponSlot(slotId),
       group: "armament" as const,
     })),
-    ...skills.map(({ id, label }) => ({
+    ...skills.map(({ ashOfWarId, id, kind, label }) => ({
       id: `${slotId}:skill:${id}`,
       sourceId: `armament:${slotId}`,
       sourceLabel: sourceName,
       sourceIconUrl: weapon.iconUrl,
       sourceDetail: formatWeaponSlot(slotId),
-      action: { kind: "weapon-skill" as const, weaponSlotId: slotId, skillAttackId: id, label, skillBuffActive: false },
+      action: {
+        kind: "weapon-skill" as const,
+        weaponSlotId: slotId,
+        skillAttackId: id,
+        ...(ashOfWarId ? { ashOfWarId } : {}),
+        label,
+        skillBuffActive: false,
+      },
       sourceName,
       iconUrl: ashOfWar?.iconUrl ?? weapon.iconUrl,
-      detail: `Skill · ${formatWeaponSlot(slotId)}`,
+      detail: `${kind} · ${formatWeaponSlot(slotId)}`,
       group: "armament" as const,
     })),
   ];

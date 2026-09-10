@@ -134,6 +134,7 @@ describe("public boss API", () => {
           lightning: 0,
           holy: 20,
         },
+        phases: [],
         gameVersion: "1.17.0",
       },
     ]);

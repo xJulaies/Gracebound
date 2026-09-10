@@ -1,6 +1,7 @@
 import type {
   PhysicalAttackType,
   WeaponAttackProfile,
+  WeaponAttackTrait,
 } from "../../../features/weapons/domain/weaponAttack.types";
 import type { WeaponParamRow } from "../schemas/weaponParam.schema";
 import type {
@@ -11,6 +12,7 @@ import type {
 export interface RegulationWeaponAttackDefinition {
   id: string;
   name: string;
+  traits: WeaponAttackTrait[];
   sourceBehaviorId: number;
   behaviorVariationId: number;
   behaviorJudgeId: number;

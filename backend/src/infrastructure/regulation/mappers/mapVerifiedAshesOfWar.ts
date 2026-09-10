@@ -6,6 +6,9 @@ import { squareOffSkillDefinition } from "../data/squareOffSkillDefinition";
 import { standardAshOfWarSkillDefinitions } from "../data/standardAshOfWarSkillDefinitions";
 import { wildStrikesSkillDefinitions } from "../data/wildStrikesSkillDefinitions";
 import { prayerfulStrikeSkillDefinitions } from "../data/prayerfulStrikeSkillDefinitions";
+import { blackFlameTornadoSkillDefinitions } from "../data/blackFlameTornadoSkillDefinitions";
+import { stormBladeSkillDefinitions } from "../data/stormBladeSkillDefinitions";
+import { vacuumSliceSkillDefinitions } from "../data/vacuumSliceSkillDefinitions";
 import type { WeaponParamRow } from "../schemas/weaponParam.schema";
 import type { EquipParamGemRow } from "../schemas/weaponSkillParam.schema";
 import type { ArmorEffectRow } from "../schemas/armor.schema";
@@ -26,6 +29,20 @@ const verifiedAshes = new Map<number, RegulationWeaponSkillDefinition>([
   ...standardAshOfWarSkillDefinitions,
 ].map(({ sourceGemId, definition }) => [sourceGemId, definition]));
 
+interface WeaponClassSkillDefinition {
+  weaponType: string;
+  motionCategoryId: number;
+  definition: RegulationWeaponSkillDefinition;
+}
+
+const verifiedSkillVariants = new Map<number, readonly WeaponClassSkillDefinition[]>([
+  [11000, wildStrikesSkillDefinitions],
+  [20800, prayerfulStrikeSkillDefinitions],
+  [21000, stormBladeSkillDefinitions],
+  [22000, vacuumSliceSkillDefinitions],
+  [22100, blackFlameTornadoSkillDefinitions],
+]);
+
 type SkillTables = Parameters<typeof mapRegulationWeaponSkill>[2];
 
 export function mapVerifiedAshesOfWar(
@@ -41,11 +58,7 @@ export function mapVerifiedAshesOfWar(
     .map((gem) => {
     const definition = verifiedAshes.get(gem.ID);
     const buffEffect = mapSkillBuffEffect(gem.ID, effects);
-    const variantDefinitions = gem.ID === 11000
-      ? wildStrikesSkillDefinitions
-      : gem.ID === 20800
-        ? prayerfulStrikeSkillDefinitions
-        : [];
+    const variantDefinitions = verifiedSkillVariants.get(gem.ID) ?? [];
     const skillVariants = variantDefinitions.map(
       ({ weaponType, motionCategoryId, definition: variantDefinition }) => ({
         weaponTypes: [weaponType],

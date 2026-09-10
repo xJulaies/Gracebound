@@ -5,7 +5,7 @@ export function DamageTrialEffectsPanel({ effects }: { effects: DamageTrialEffec
   const hasEffects = effects.greatRune || effects.crystalTears.length > 0 || effects.buffs.length > 0 || effects.weaponBuff;
 
   return (
-    <aside aria-labelledby="damage-trial-effects-heading" className="damage-trial-side-panel">
+    <aside aria-labelledby="damage-trial-effects-heading" className="damage-trial-effects-panel damage-trial-side-panel">
       <div>
         <h2 className="mb-2 text-xl" id="damage-trial-effects-heading">Active effects</h2>
         <p className="m-0 text-sm leading-6 text-foreground-muted">

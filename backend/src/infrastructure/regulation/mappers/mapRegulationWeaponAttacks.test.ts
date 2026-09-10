@@ -33,11 +33,26 @@ describe("mapRegulationWeaponAttacks", () => {
     expect(() =>
       mapRegulationWeaponAttacks(
         moonveil,
-        [{ id: "skill", name: "Skill", sourceBehaviorId: 300905900, behaviorVariationId: 905, behaviorJudgeId: 900 }],
+        [{ id: "skill", name: "Skill", traits: [], sourceBehaviorId: 300905900, behaviorVariationId: 905, behaviorJudgeId: 900 }],
         [{ ID: 300905900, Name: "Transient Moonlight", variationId: 905, behaviorJudgeId: 900, refType: 1, refId: 2950 }],
         attacks,
       ),
     ).toThrow("Expected direct attack behavior 300905900, found 0");
+  });
+
+  it("preserves explicit attack traits without deriving them from display text", () => {
+    const chargedDefinition = katanaAttackDefinitions.find(
+      ({ behaviorJudgeId }) => behaviorJudgeId === 105,
+    )!;
+    const profiles = mapRegulationWeaponAttacks(
+      moonveil,
+      [chargedDefinition],
+      [behavior(105, 900105)],
+      [attack(900105, 160, 252)],
+    );
+
+    expect(chargedDefinition.traits).toEqual(["charged"]);
+    expect(profiles[0]?.traits).toEqual(["charged"]);
   });
 
   it("rejects ambiguous behavior mappings", () => {

@@ -54,7 +54,7 @@ export function DamageTrialActionSelector({ build, disabled, isAttacking, onExec
           <h3 className="m-0 text-lg text-accent">
             {selectedOptions.every(({ group }) => group === "spell") ? "Available spells" : "Available attacks"}
           </h3>
-          <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
+          <div className="damage-trial-action-grid">
             {selectedOptions.map((option) => (
               <DamageTrialActionButton
                 disabled={disabled || isAttacking}
@@ -87,7 +87,7 @@ function SourceGroup({ label, onSelect, selectedSourceId, sources }: {
   return (
     <div className="grid gap-3">
       <h3 className="m-0 text-lg text-accent">{label}</h3>
-      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+      <div className="damage-trial-source-grid">
         {sources.map((source) => (
           <DamageTrialSourceButton
             active={selectedSourceId === source.id}

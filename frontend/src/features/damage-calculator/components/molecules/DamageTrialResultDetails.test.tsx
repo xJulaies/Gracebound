@@ -9,7 +9,7 @@ describe("DamageTrialResultDetails", () => {
 
     expect(screen.getByText("Attack rating")).toBeInTheDocument();
     expect(screen.getByText("Before mitigation")).toBeInTheDocument();
-    expect(screen.getByText("Damage dealt")).toBeInTheDocument();
+    expect(screen.getByText("Direct damage")).toBeInTheDocument();
     expect(screen.getByText("Projectile")).toBeInTheDocument();
     expect(screen.getByText("Godrick's Great Rune")).toBeInTheDocument();
     expect(screen.getByText("One occurrence per component is assumed.")).toBeInTheDocument();
@@ -33,6 +33,8 @@ const entry = {
     attackRating: damage(680),
     offensiveOutput: damage(640),
     damage: damage(560),
+    totalDamage: 560,
+    specialDamage: [],
     components: [{
       kind: "projectile",
       id: "projectile",

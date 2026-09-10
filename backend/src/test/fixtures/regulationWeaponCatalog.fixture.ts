@@ -137,6 +137,7 @@ function catalogWeapon(
 const moonveilAttack: WeaponAttackProfile = {
   id: "katana-1h-heavy-1",
   name: "One-handed heavy attack 1",
+  traits: [],
   behaviorVariationId: 900,
   behaviorJudgeId: 100,
   sourceBehaviorId: 100900100,
@@ -155,6 +156,7 @@ const moonveilChargedAttack: WeaponAttackProfile = {
   ...moonveilAttack,
   id: "katana-1h-charged-heavy-1",
   name: "One-handed charged heavy attack 1",
+  traits: ["charged"],
   behaviorJudgeId: 105,
   sourceBehaviorId: 100900105,
   sourceAttackId: 900105,

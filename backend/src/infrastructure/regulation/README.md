@@ -37,20 +37,25 @@ The importer also reads `SwordArtsParam.csv`, `Bullet.csv`, and
 Moonlight attacks into separate projectile and weapon-hit components.
 
 The generic mapper is additionally verified against pure weapon-hit, pure
-projectile, mixed, and weapon-class-dependent definitions. Thirteen standalone
+projectile, mixed, and weapon-class-dependent definitions. Nineteen standalone
 Ashes currently have verified damage profiles: Square Off, Flame of the
 Redmanes, Lion's Claw, Impaling Thrust, Piercing Fang, Stamp (Upward Cut), Stamp
 (Sweep), Giant Hunt, Wild Strikes, Charge Forth, Unsheathe, Prayerful Strike,
-and Thunderbolt. Wild Strikes
+Thunderbolt, Black Flame Tornado, Spectral Lance, Storm Stomp, Storm Blade,
+Beast's Roar, and Vacuum Slice. Wild Strikes
 keeps separate Regulation-derived skill profiles for all nine compatible weapon
 types. Prayerful Strike retains class-specific physical attack types; its
 healing effect remains outside the stateless damage calculation. Thunderbolt is
 a verified pure projectile with 120 added lightning damage and a 10 FP cost.
+Black Flame Tornado exposes normal and fully charged sequences. The charged
+sequence uses the Regulation-confirmed maximum of five tornado ticks; its
+percentage-based Black Flame damage-over-time remains outside the stateless hit
+calculation.
 
 Regulation 1.17.0 contributes 116 playable Ash-of-War rows. Every entry exposes
 weapon-type and affinity compatibility. Unverified entries are imported as
 `catalog-only` with no damage or buff profile; only `supported` entries may be
-used by the damage endpoint. Twenty are supported: thirteen damage profiles and
+used by the damage endpoint. Twenty-six are supported: nineteen damage profiles and
 seven verified weapon-buff profiles. Buff values come from their named
 `SpEffectParam` rows, including duration, next-hit consumption, attack-power and
 outgoing multipliers, flat added damage, status buildup, and poise damage.
@@ -210,6 +215,13 @@ boss health-bar events through map entities to `NpcParam` rows and English game
 text. Its transaction replaces only the selected game version in the `bosses`
 collection. DLC bosses remain excluded until their local map files are
 available and verified.
+
+Absorption is read from each NPC's damage-cut rates. Multi-stage encounters
+whose phases use different NPC profiles are linked at import time (Rennala,
+Rykard, Maliketh, Radagon/Elden Beast). Godfrey/Hoarah Loux and both Malenia
+forms share an NPC row, so their verified encounter transitions live in
+`bossPhaseProfiles.ts`. Phase records retain their own health, defense, and
+absorption, and the damage API validates the requested phase against its boss.
 
 Append `--dry-run` to either import command to validate and map the complete
 dataset without connecting to or changing MongoDB.

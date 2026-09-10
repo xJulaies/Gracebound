@@ -15,6 +15,20 @@ export interface BossAbsorption {
   holy: number;
 }
 
+export type BossPhaseTrigger =
+  | { type: "health-percentage"; threshold: number }
+  | { type: "health-depleted" };
+
+export interface BossPhase {
+  id: string;
+  name: string;
+  phaseNumber: number;
+  trigger: BossPhaseTrigger | null;
+  health: number;
+  defense: DamageTypes;
+  absorption: BossAbsorption;
+}
+
 export interface BossData {
   id: string;
   name: string;
@@ -26,6 +40,7 @@ export interface BossData {
   health: number;
   defense: DamageTypes;
   absorption: BossAbsorption;
+  phases?: BossPhase[];
   sourceNpcId: number;
   healthScalingEffectId: number;
 }

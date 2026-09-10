@@ -20,6 +20,21 @@ export function mapBossResponse(record: BossRecord) {
       lightning: record.absorption.lightning,
       holy: record.absorption.holy,
     },
+    phases: record.phases?.map((phase) => ({
+      id: phase.id,
+      name: phase.name,
+      phaseNumber: phase.phaseNumber,
+      trigger: phase.trigger ? { ...phase.trigger } : null,
+      health: phase.health,
+      defense: { ...phase.defense },
+      absorption: {
+        physical: { ...phase.absorption.physical },
+        magic: phase.absorption.magic,
+        fire: phase.absorption.fire,
+        lightning: phase.absorption.lightning,
+        holy: phase.absorption.holy,
+      },
+    })) ?? [],
     gameVersion: record.gameVersion,
   };
 }

@@ -26,6 +26,7 @@ export type DamageTrialAction =
       kind: "weapon-skill";
       weaponSlotId: WeaponSlotId;
       skillAttackId: string;
+      ashOfWarId?: string;
       label: string;
       skillBuffActive: boolean;
     }
@@ -44,24 +45,22 @@ export interface DamageTrialEffectsSelection {
 }
 
 type SavedBuildDamageEffects = DamageTrialEffectsSelection;
+type SavedBuildDamageTarget = { bossId: string; bossPhaseId?: string };
 
 export type SavedBuildDamageRequest =
-  | SavedBuildDamageEffects & {
+  | SavedBuildDamageEffects & SavedBuildDamageTarget & {
       weaponSlotId: WeaponSlotId;
       attackId: string;
       skillBuffActive: boolean;
-      bossId: string;
     }
-  | SavedBuildDamageEffects & {
+  | SavedBuildDamageEffects & SavedBuildDamageTarget & {
       weaponSlotId: WeaponSlotId;
       skillAttackId: string;
       skillBuffActive: boolean;
-      bossId: string;
     }
-  | SavedBuildDamageEffects & {
+  | SavedBuildDamageEffects & SavedBuildDamageTarget & {
       spellId: string;
       charged: boolean;
-      bossId: string;
     };
 
 export interface DamageBreakdown extends DamageTypes {
@@ -87,6 +86,17 @@ interface DamageTrialResultBase {
   attackRating: DamageBreakdown;
   offensiveOutput: DamageBreakdown;
   damage: DamageBreakdown;
+  totalDamage: number;
+  specialDamage: Array<{
+    id: string;
+    name: string;
+    maximumHealthRate: number;
+    flatDamage: number;
+    durationSeconds: number;
+    applicationCount: number;
+    damagePerApplication: number;
+    totalDamage: number;
+  }>;
   components: DamageTrialComponent[];
   target: {
     id: string;
@@ -141,6 +151,12 @@ export interface DamageTrialLogEntry {
   result: DamageTrialResult;
   bossHealthBefore: number;
   bossHealthAfter: number;
+  bossMaximumHealthBefore?: number;
+  bossMaximumHealthAfter?: number;
+  phaseIndexBefore?: number;
+  phaseIndexAfter?: number;
+  phaseName?: string;
+  phaseTransition?: string;
 }
 
 export interface DamageTrialSession {

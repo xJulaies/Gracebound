@@ -66,6 +66,7 @@ describe("calculateAttackOutput", () => {
       {
         id: "test-boss",
         name: "Test Boss",
+        maximumHealth: 1_000,
         defense: damage(100),
         absorption: {
           physical: { standard: 20, slash: 10, strike: 0, pierce: -10 },
@@ -90,6 +91,47 @@ describe("calculateAttackOutput", () => {
       holy: 0,
       total: 111,
     });
+    expect(result.totalDamage).toBe(111);
+  });
+
+  it("adds target-health effects outside elemental mitigation", () => {
+    const result = calculateAttackOutput(
+      attackRating,
+      {
+        ...transientMoonlightLight,
+        targetHealthEffects: [{
+          id: "black-flame-damage-over-time",
+          name: "Black Flame damage over time",
+          maximumHealthRate: 0.02,
+          flatDamage: 20,
+          durationSeconds: 2,
+          applicationCount: 5,
+        }],
+      },
+      {
+        id: "test-boss",
+        name: "Test Boss",
+        maximumHealth: 1_000,
+        defense: damage(100),
+        absorption: {
+          physical: { standard: 20, slash: 10, strike: 0, pierce: -10 },
+          magic: 40, fire: 0, lightning: 0, holy: 0,
+        },
+      },
+    );
+
+    expect(result.specialDamage).toEqual([{
+      id: "black-flame-damage-over-time",
+      name: "Black Flame damage over time",
+      maximumHealthRate: 0.02,
+      flatDamage: 20,
+      durationSeconds: 2,
+      applicationCount: 5,
+      damagePerApplication: 40,
+      totalDamage: 200,
+    }]);
+    expect(result.damage?.total).toBe(111);
+    expect(result.totalDamage).toBe(311);
   });
 });
 

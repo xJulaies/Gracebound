@@ -46,10 +46,12 @@ describe("saveWeaponCatalog", () => {
         expect.objectContaining({
           id: "katana-1h-heavy-1",
           sourceAttackId: 900100,
+          traits: [],
         }),
         expect.objectContaining({
           id: "katana-1h-charged-heavy-1",
           sourceAttackId: 900105,
+          traits: ["charged"],
         }),
       ],
     });

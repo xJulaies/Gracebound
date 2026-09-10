@@ -30,7 +30,7 @@ export function DamageTrialCombatPanel({
       {(latestEntry || error) && <div aria-atomic="true" aria-live="polite">
         {latestEntry && (
           <p className="m-0 text-accent">
-            {latestEntry.action.label} dealt <strong>{Math.round(latestEntry.result.damage.total).toLocaleString()} damage</strong>.
+            {latestEntry.action.label} dealt <strong>{Math.round(latestEntry.result.totalDamage).toLocaleString()} damage</strong>.
           </p>
         )}
         {error && (

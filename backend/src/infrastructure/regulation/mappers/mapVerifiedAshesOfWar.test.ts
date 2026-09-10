@@ -79,6 +79,149 @@ describe("mapVerifiedAshesOfWar skill buffs", () => {
       { weaponType: "colossal-weapon", fpCost: 20, motionValue: 235, physicalAttackType: "strike" },
     ]);
   });
+
+  it("maps Black Flame Tornado normal and fully charged sequences for every compatible weapon class", () => {
+    const blackFlameTornado = mapVerifiedAshesOfWar(
+      [gem(22100, "Black Flame Tornado", 221)],
+      [
+        longsword,
+        referenceWeapon(24, 3), referenceWeapon(36, 3),
+        referenceWeapon(37, 3), referenceWeapon(38, 3), referenceWeapon(50, 2),
+      ],
+      {
+        behaviors: [
+          behavior(300000300, 300, 1, 2430),
+          behavior(300000301, 301, 1, 2431),
+          behavior(300000305, 305, 0, 300000305),
+          behavior(300000306, 306, 0, 300000306),
+        ],
+        attacks: [
+          attack(300000300, 1, 3, 0, 65),
+          attack(300000301, 1, 3, 0, 170),
+          attack(300000305, 0, 253, 50, 0),
+          attack(300000306, 0, 2, 100, 0),
+        ],
+        bullets: [
+          { ID: 2430, Name: "Black Flame Tornado", atkId_Bullet: 300000300, intervalCreateBulletId: -1 },
+          { ID: 2431, Name: "Black Flame Tornado finish", atkId_Bullet: 300000301, intervalCreateBulletId: -1 },
+        ],
+        swordArts: [{
+          ID: 221, Name: "Black Flame Tornado", useMagicPoint_L1: -1,
+          useMagicPoint_L2: 30, useMagicPoint_R1: -1, useMagicPoint_R2: -1,
+        }],
+        finalDamageRates: [{
+          ID: 10000, Name: "", physRate: 1, magRate: 1,
+          fireRate: 1, thunRate: 1, darkRate: 1,
+        }],
+      },
+    )[0]!;
+
+    expect(blackFlameTornado.calculationStatus).toBe("supported");
+    expect(blackFlameTornado.skill).toBeNull();
+    expect(blackFlameTornado.skillVariants).toHaveLength(5);
+    expect(blackFlameTornado.skillVariants.map(({ weaponTypes, skill }) => ({
+      weaponType: weaponTypes[0],
+      attackIds: skill.attacks.map(({ id }) => id),
+      componentCounts: skill.attacks.map(({ components }) => components.length),
+      fpCosts: skill.attacks.map(({ fpCost }) => fpCost),
+      effectCounts: skill.attacks.map(({ targetHealthEffects }) => targetHealthEffects?.[0]?.applicationCount),
+      initialAttackType: skill.attacks[0]?.components[0]?.physicalAttackType,
+      finishingAttackType: skill.attacks[0]?.components[1]?.physicalAttackType,
+    }))).toEqual([
+      { weaponType: "twinblade", attackIds: ["black-flame-tornado", "black-flame-tornado-fully-charged"], componentCounts: [3, 8], fpCosts: [30, 30], effectCounts: [1, 5], initialAttackType: "pierce", finishingAttackType: "slash" },
+      { weaponType: "spear", attackIds: ["black-flame-tornado", "black-flame-tornado-fully-charged"], componentCounts: [3, 8], fpCosts: [30, 30], effectCounts: [1, 5], initialAttackType: "pierce", finishingAttackType: "slash" },
+      { weaponType: "great-spear", attackIds: ["black-flame-tornado", "black-flame-tornado-fully-charged"], componentCounts: [3, 8], fpCosts: [30, 30], effectCounts: [1, 5], initialAttackType: "pierce", finishingAttackType: "slash" },
+      { weaponType: "halberd", attackIds: ["black-flame-tornado", "black-flame-tornado-fully-charged"], componentCounts: [3, 8], fpCosts: [30, 30], effectCounts: [1, 5], initialAttackType: "pierce", finishingAttackType: "slash" },
+      { weaponType: "reaper", attackIds: ["black-flame-tornado", "black-flame-tornado-fully-charged"], componentCounts: [3, 8], fpCosts: [30, 30], effectCounts: [1, 5], initialAttackType: "slash", finishingAttackType: "slash" },
+    ]);
+  });
+
+  it("maps all three Storm Blade combo stages with their weapon and projectile hits", () => {
+    const stormBlade = mapVerifiedAshesOfWar(
+      [gem(21000, "Storm Blade", 210)],
+      [
+        longsword,
+        ...[20, 23, 25, 28, 40, 29, 27, 39, 60, 61].map((category) =>
+          referenceWeapon(category, category === 27 || category === 39 ? 3 : 0)),
+      ],
+      {
+        behaviors: [
+          behavior(300000407, 407, 0, 300000407),
+          behavior(300000408, 408, 0, 300000408),
+          behavior(300000409, 409, 0, 300000409),
+          behavior(300000410, 410, 1, 2060),
+        ],
+        attacks: [
+          attack(300000407, 0, 253, 65, 0),
+          attack(300000408, 0, 253, 66, 0),
+          attack(300000409, 0, 253, 67, 0),
+          {
+            ...attack(300000410, 1, 3, 0, 0),
+            atkPhys: 150,
+          },
+        ],
+        bullets: [{ ID: 2060, Name: "Storm Blade", atkId_Bullet: 300000410, intervalCreateBulletId: -1 }],
+        swordArts: [{
+          ID: 210, Name: "Storm Blade", useMagicPoint_L1: -1,
+          useMagicPoint_L2: 10, useMagicPoint_R1: -1, useMagicPoint_R2: 6,
+        }],
+        finalDamageRates: [{
+          ID: 10000, Name: "", physRate: 1, magRate: 1,
+          fireRate: 1, thunRate: 1, darkRate: 1,
+        }],
+      },
+    )[0]!;
+
+    expect(stormBlade.calculationStatus).toBe("supported");
+    expect(stormBlade.skillVariants).toHaveLength(10);
+    expect(stormBlade.skillVariants[0]?.skill.attacks.map(({ id, fpCost, components }) => ({
+      id,
+      fpCost,
+      motionValue: components[0]?.motionValues.physical,
+      projectileDamage: components[1]?.addedDamage.physical,
+    }))).toEqual([
+      { id: "storm-blade-1", fpCost: 10, motionValue: 65, projectileDamage: 150 },
+      { id: "storm-blade-2", fpCost: 6, motionValue: 66, projectileDamage: 150 },
+      { id: "storm-blade-3", fpCost: 6, motionValue: 67, projectileDamage: 150 },
+    ]);
+  });
+
+  it("maps Vacuum Slice as a combined close-range weapon and projectile hit", () => {
+    const categories = [20, 23, 25, 26, 28, 40, 29, 24, 27, 39, 30, 32, 60, 61];
+    const vacuumSlice = mapVerifiedAshesOfWar(
+      [gem(22000, "Vacuum Slice", 220)],
+      [longsword, ...categories.filter((category) => category !== 20).map((category) => referenceWeapon(category, 0))],
+      {
+        behaviors: [
+          behavior(300000415, 415, 1, 2061),
+          behavior(300000417, 417, 0, 300000417),
+        ],
+        attacks: [
+          attack(300000417, 0, 253, 75, 0),
+          { ...attack(300000415, 1, 3, 0, 0), atkPhys: 200 },
+        ],
+        bullets: [{ ID: 2061, Name: "Vacuum Slice", atkId_Bullet: 300000415, intervalCreateBulletId: -1 }],
+        swordArts: [{
+          ID: 220, Name: "Vacuum Slice", useMagicPoint_L1: -1,
+          useMagicPoint_L2: 14, useMagicPoint_R1: -1, useMagicPoint_R2: -1,
+        }],
+        finalDamageRates: [{
+          ID: 10000, Name: "", physRate: 1, magRate: 1,
+          fireRate: 1, thunRate: 1, darkRate: 1,
+        }],
+      },
+    )[0]!;
+
+    expect(vacuumSlice.skillVariants).toHaveLength(14);
+    expect(vacuumSlice.skillVariants[0]?.skill.attacks[0]).toMatchObject({
+      id: "vacuum-slice",
+      fpCost: 14,
+      components: [
+        { kind: "weapon-hit", motionValues: { physical: 75 } },
+        { kind: "projectile", addedDamage: { physical: 200 } },
+      ],
+    });
+  });
 });
 
 function gem(ID: number, name: string, swordArtsParamId: number): EquipParamGemRow {
@@ -86,7 +229,7 @@ function gem(ID: number, name: string, swordArtsParamId: number): EquipParamGemR
 }
 
 const longsword = {
-  ID: 1000000, Name: "Longsword", originEquipWep: 1000000, wepmotionCategory: 20,
+  ID: 1000000, Name: "Longsword", originEquipWep: 1000000, wepmotionCategory: 20, atkAttribute: 0,
 } as WeaponParamRow;
 
 function referenceWeapon(wepmotionCategory: number, atkAttribute: number): WeaponParamRow {
@@ -97,6 +240,27 @@ function referenceWeapon(wepmotionCategory: number, atkAttribute: number): Weapo
 }
 
 const emptySkillTables = { behaviors: [], attacks: [], bullets: [], swordArts: [], finalDamageRates: [] };
+
+function behavior(ID: number, behaviorJudgeId: number, refType: number, refId: number) {
+  return { ID, Name: "Black Flame Tornado", variationId: 0, behaviorJudgeId, refType, refId };
+}
+
+function attack(
+  ID: number,
+  isAddBaseAtk: number,
+  atkAttribute: number,
+  weaponMotionValue: number,
+  addedFire: number,
+) {
+  return {
+    ID, Name: "Black Flame Tornado", isAddBaseAtk, atkAttribute,
+    atkPhysCorrection: weaponMotionValue, atkMagCorrection: weaponMotionValue,
+    atkFireCorrection: weaponMotionValue, atkThunCorrection: weaponMotionValue,
+    atkDarkCorrection: weaponMotionValue,
+    atkPhys: 0, atkMag: 0, atkFire: addedFire, atkThun: 0, atkDark: 0,
+    finalDamageRateId: 10000,
+  };
+}
 
 function effect(
   ID: number,

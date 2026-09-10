@@ -21,12 +21,21 @@ interface SkillAttackDefinition {
     | "useMagicPoint_R1"
     | "useMagicPoint_R2";
   components: readonly SkillComponentDefinition[];
+  targetHealthEffects?: readonly {
+    id: string;
+    name: string;
+    maximumHealthRate: number;
+    flatDamage: number;
+    durationSeconds: number;
+    applicationCount: number;
+  }[];
 }
 
 interface SkillComponentDefinition {
   kind: "projectile" | "weapon-hit";
   sourceBehaviorId: number;
   behaviorJudgeId: number;
+  sourceBulletId?: number;
 }
 
 export interface RegulationWeaponSkillDefinition {
@@ -61,13 +70,22 @@ export function mapRegulationWeaponSkill(
       fpCost: swordArt[attackDefinition.fpCostField],
       components: attackDefinition.components.map((component) =>
         component.kind === "projectile"
-          ? mapProjectileComponent(
+          ? component.sourceBulletId === undefined
+            ? mapProjectileComponent(
             weapon,
             component.sourceBehaviorId,
             definition.behaviorVariationId,
             component.behaviorJudgeId,
             tables,
           )
+            : mapLinkedProjectileComponent(
+              weapon,
+              component.sourceBehaviorId,
+              component.sourceBulletId,
+              definition.behaviorVariationId,
+              component.behaviorJudgeId,
+              tables,
+            )
           : mapWeaponHitComponent(
             weapon,
             component.sourceBehaviorId,
@@ -76,7 +94,34 @@ export function mapRegulationWeaponSkill(
             tables,
           ),
       ),
+      targetHealthEffects: [...(attackDefinition.targetHealthEffects ?? [])],
     })),
+  };
+}
+
+function mapLinkedProjectileComponent(
+  weapon: WeaponParamRow,
+  sourceBehaviorId: number,
+  sourceBulletId: number,
+  variationId: number,
+  judgeId: number,
+  tables: WeaponSkillTables,
+) {
+  const behavior = findBehavior(tables.behaviors, sourceBehaviorId, variationId, judgeId, 1);
+  const parentBullet = findOne(tables.bullets, behavior.refId, "Bullet");
+  if (parentBullet.HitBulletID !== sourceBulletId) {
+    throw new Error(`Expected Bullet ${parentBullet.ID} to link to ${sourceBulletId}`);
+  }
+  const bullet = findOne(tables.bullets, sourceBulletId, "Bullet");
+  const attack = findOne(tables.attacks, bullet.atkId_Bullet, "AtkParam_Pc");
+  if (attack.isAddBaseAtk !== 1) {
+    throw new Error(`Expected additive projectile attack ${attack.ID}`);
+  }
+  return {
+    kind: "projectile" as const,
+    sourceBehaviorId: behavior.ID,
+    sourceBulletId: bullet.ID,
+    ...mapDamageComponent(weapon, attack, tables.finalDamageRates),
   };
 }
 
