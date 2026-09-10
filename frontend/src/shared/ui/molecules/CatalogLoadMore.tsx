@@ -33,7 +33,7 @@ export function CatalogLoadMore({
   return (
     <div aria-live="polite" className="mt-6 flex justify-center" ref={triggerRef}>
       <button
-        className="cursor-pointer rounded-panel border border-border px-5 py-2 text-accent transition-colors hover:border-accent hover:bg-surface-elevated disabled:cursor-wait disabled:opacity-60"
+        className="min-h-11 cursor-pointer rounded-panel border border-border px-5 py-2 text-accent transition-colors hover:border-accent hover:bg-surface-elevated disabled:cursor-wait disabled:opacity-60"
         disabled={isFetching}
         onClick={onLoadMore}
         type="button"

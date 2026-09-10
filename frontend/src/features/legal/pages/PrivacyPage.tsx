@@ -1,6 +1,6 @@
 export function PrivacyPage() {
   return (
-    <main className="legal-page">
+    <main className="legal-page" lang="de">
       <header className="legal-page-header">
         <h1>Datenschutzerklärung</h1>
         <p>Stand: 8. September 2026</p>

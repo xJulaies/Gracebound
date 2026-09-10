@@ -1,4 +1,5 @@
 import { useRef } from "react";
+import { createPortal } from "react-dom";
 import { useModalDialog } from "../../../../shared/hooks/useModalDialog";
 import { ItemDetailsPreview } from "../../../../shared/ui/organisms/ItemDetailsPreview";
 import type { Spell } from "../../types/spell.types";
@@ -15,7 +16,7 @@ export function SpellDetailsDialog({ spell, onClose }: {
   const type = spell.type === "sorcery" ? "Sorcery" : "Incantation";
   const schools = spell.schools.map(formatSpellLabel).join(" · ");
 
-  return (
+  return createPortal(
     <div className="fixed inset-0 z-50 bg-background/75" role="presentation">
       <button
         aria-label="Close spell details"
@@ -45,6 +46,7 @@ export function SpellDetailsDialog({ spell, onClose }: {
           <SpellDetailsContent spell={spell} />
         </ItemDetailsPreview>
       </div>
-    </div>
+    </div>,
+    document.body,
   );
 }

@@ -121,11 +121,11 @@ export function BuildEditorWorkspace({
           <BuildEditorTabs activeTab={activeTab} onChange={setActiveTab} />
           <div className="build-editor-grid">
             <div
-              aria-labelledby="build-editor-character-tab"
+              aria-label="Leveling"
               className="build-editor-region"
               data-active={activeTab === "character"}
               id="build-editor-character-panel"
-              role="tabpanel"
+              role="region"
             >
               <CharacterAttributePanel
                 characterClass={selectedClass}
@@ -139,11 +139,11 @@ export function BuildEditorWorkspace({
               />
             </div>
             <div
-              aria-labelledby="build-editor-equipment-tab"
+              aria-label="Equipment"
               className="build-editor-region min-w-0"
               data-active={activeTab === "equipment"}
               id="build-editor-equipment-panel"
-              role="tabpanel"
+              role="region"
             >
             <EquipmentLoadout
               activeSlotId={activeWeaponSlotId
@@ -248,11 +248,11 @@ export function BuildEditorWorkspace({
           )}
             </div>
             <div
-              aria-labelledby="build-editor-status-tab"
+              aria-label="Status"
               className="build-editor-region build-editor-status-region"
               data-active={activeTab === "status"}
               id="build-editor-status-panel"
-              role="tabpanel"
+              role="region"
             >
               <CalculatedStatsPanel
                 focus={editorFocus}

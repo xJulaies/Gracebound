@@ -1,4 +1,5 @@
 import { useRef } from "react";
+import { createPortal } from "react-dom";
 import { ArmorStatsGrid } from "../../../armor/components/molecules/ArmorStatsGrid";
 import { TalismanDetailsContent } from "../../../talismans/components/molecules/TalismanDetailsContent";
 import { WeaponDetailsContent } from "../../../weapons/components/molecules/WeaponDetailsContent";
@@ -17,7 +18,7 @@ export function EquipmentDetailsDialog({
   const closeButtonRef = useRef<HTMLButtonElement>(null);
   useModalDialog({ dialogRef, initialFocusRef: closeButtonRef, onClose });
 
-  return (
+  return createPortal(
     <div className="fixed inset-0 z-50 bg-background/75" role="presentation">
       <button
         aria-label="Close equipment details"
@@ -47,7 +48,8 @@ export function EquipmentDetailsDialog({
           <EquipmentDetailsContent item={item} />
         </ItemDetailsPreview>
       </div>
-    </div>
+    </div>,
+    document.body,
   );
 }
 

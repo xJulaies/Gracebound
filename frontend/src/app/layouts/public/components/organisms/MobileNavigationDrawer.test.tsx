@@ -23,11 +23,12 @@ vi.mock("../../../../../features/auth/components/AuthControls", () => ({
 describe("MobileNavigationDrawer", () => {
   it("contains focus and restores it to the menu trigger", async () => {
     const user = userEvent.setup();
-    render(<DrawerHarness />);
+    const { container } = render(<DrawerHarness />);
 
     const opener = screen.getByRole("button", { name: "Open navigation" });
     await user.click(opener);
     const close = screen.getByRole("button", { name: "Close navigation" });
+    expect(container).not.toContainElement(screen.getByRole("dialog"));
     const first = screen.getByRole("link", { name: "Gracebound" });
     const last = screen.getByRole("button", { name: "Sign in" });
     expect(close).toHaveFocus();
@@ -45,11 +46,11 @@ describe("MobileNavigationDrawer", () => {
 
   it("has no automatically detectable accessibility violations while open", async () => {
     const user = userEvent.setup();
-    const { container } = render(<DrawerHarness />);
+    const { baseElement } = render(<DrawerHarness />);
 
     await user.click(screen.getByRole("button", { name: "Open navigation" }));
 
-    await expectNoAccessibilityViolations(container);
+    await expectNoAccessibilityViolations(baseElement);
   });
 });
 

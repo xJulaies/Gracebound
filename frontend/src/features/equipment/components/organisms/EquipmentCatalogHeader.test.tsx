@@ -45,14 +45,10 @@ describe("EquipmentCatalogHeader", () => {
 
     expect(screen.getByRole("group", { name: "Equipment filters" }))
       .toBeInTheDocument();
-    await user.selectOptions(
-      screen.getByRole("combobox", { name: "Weapon type" }),
-      "katana",
-    );
-    await user.selectOptions(
-      screen.getByRole("combobox", { name: "Affinity" }),
-      "cold",
-    );
+    await user.click(screen.getByRole("button", { name: /^Weapon type:/ }));
+    await user.click(screen.getByRole("button", { name: "Katana" }));
+    await user.click(screen.getByRole("button", { name: /^Affinity:/ }));
+    await user.click(screen.getByRole("button", { name: "Cold" }));
 
     expect(onFilterChange).toHaveBeenCalledWith("weaponType", "katana");
     expect(onFilterChange).toHaveBeenCalledWith("affinity", "cold");

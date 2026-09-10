@@ -3,6 +3,7 @@ import type {
   EquipmentFilterKey,
 } from "../../types/equipmentCatalog.types";
 import { WEAPON_TYPE_ORDER } from "../../../weapons/domain/weaponTypes";
+import { ResponsiveSelect } from "../../../../shared/ui/molecules/ResponsiveSelect";
 
 const affinities = [
   "standard", "heavy", "keen", "quality", "fire", "flame-art",
@@ -71,19 +72,15 @@ function FilterSelect({
   value?: string;
 }) {
   return (
-    <label className="grid min-w-44 gap-1 text-sm text-foreground-muted">
-      {label}
-      <select
-        className="min-h-11 cursor-pointer rounded-panel border border-border bg-background px-3 text-foreground outline-none focus:border-accent focus:ring-2 focus:ring-focus"
-        onChange={(event) => onChange(event.target.value || undefined)}
+    <div className="min-w-44">
+      <ResponsiveSelect
+        emptyLabel="All"
+        label={label}
+        onChange={(nextValue) => onChange(nextValue || undefined)}
+        options={options.map((option) => ({ value: option, label: formatLabel(option) }))}
         value={value ?? ""}
-      >
-        <option value="">All</option>
-        {options.map((option) => (
-          <option key={option} value={option}>{formatLabel(option)}</option>
-        ))}
-      </select>
-    </label>
+      />
+    </div>
   );
 }
 

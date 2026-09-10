@@ -5,6 +5,7 @@ import {
   type SpellTypeFilter,
 } from "../../types/spell.types";
 import { formatSpellLabel } from "../../domain/formatSpellLabel";
+import { ResponsiveSelect } from "../../../../shared/ui/molecules/ResponsiveSelect";
 
 export function SpellSchoolFilter({
   onChange,
@@ -21,21 +22,15 @@ export function SpellSchoolFilter({
   return (
     <fieldset className="m-0 border-0 p-0">
       <legend className="sr-only">Spell filters</legend>
-      <label className="grid max-w-xs gap-1 text-sm text-foreground-muted">
-        School
-        <select
-          className="min-h-11 cursor-pointer rounded-panel border border-border bg-background px-3 text-foreground outline-none focus:border-accent focus:ring-2 focus:ring-focus"
-          onChange={(event) => onChange(
-            (event.currentTarget.value || undefined) as SpellSchool | undefined,
-          )}
+      <div className="max-w-xs">
+        <ResponsiveSelect
+          emptyLabel="All schools"
+          label="School"
+          onChange={(value) => onChange((value || undefined) as SpellSchool | undefined)}
+          options={schools.map((option) => ({ value: option, label: formatSpellLabel(option) }))}
           value={school ?? ""}
-        >
-          <option value="">All schools</option>
-          {schools.map((option) => (
-            <option key={option} value={option}>{formatSpellLabel(option)}</option>
-          ))}
-        </select>
-      </label>
+        />
+      </div>
     </fieldset>
   );
 }

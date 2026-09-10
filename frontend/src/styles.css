@@ -32,11 +32,11 @@
   --theme-surface-elevated: #2a261d;
   --theme-foreground: #eee5d1;
   --theme-foreground-muted: #b9ae96;
-  --theme-border: #625a46;
+  --theme-border: #7b7056;
   --theme-accent: #c2a767;
   --theme-accent-hover: #d6bd7e;
   --theme-focus: #e2cb91;
-  --theme-danger: #bd7467;
+  --theme-danger: #c57c70;
   --theme-success: #8fa17b;
   --theme-moon: #7f93a8;
   --theme-damage-physical: #b9b3a7;
@@ -53,11 +53,11 @@
   --theme-surface-elevated: #152235;
   --theme-foreground: #e4e8ed;
   --theme-foreground-muted: #9aa8b8;
-  --theme-border: #34475f;
+  --theme-border: #56708f;
   --theme-accent: #bda66f;
   --theme-accent-hover: #d2bb82;
   --theme-focus: #8fb4d9;
-  --theme-danger: #ba6d68;
+  --theme-danger: #c57c70;
   --theme-success: #789b91;
   --theme-moon: #6f9bc7;
   --theme-damage-physical: #b8c0c9;
@@ -714,7 +714,8 @@
     @apply min-h-11 border-transparent bg-transparent px-2 py-2 text-sm text-foreground-muted;
   }
 
-  .build-editor-tab[aria-selected="true"] {
+  .build-editor-tab[aria-selected="true"],
+  .build-editor-tab[aria-pressed="true"] {
     @apply border-accent bg-surface-elevated text-accent;
   }
 

@@ -23,8 +23,7 @@ export function ThemeToggle() {
   return (
     <button
       aria-label={`Switch to ${nextTheme} theme`}
-      aria-pressed={theme === "night"}
-      className="inline-flex items-center gap-2 border-border bg-surface px-3 py-2 text-sm text-foreground-muted hover:border-moon hover:text-foreground"
+      className="inline-flex min-h-11 items-center gap-2 border-border bg-surface px-3 py-2 text-sm text-foreground-muted hover:border-moon hover:text-foreground"
       onClick={toggleTheme}
       onFocus={prepareNextBackground}
       onPointerEnter={prepareNextBackground}

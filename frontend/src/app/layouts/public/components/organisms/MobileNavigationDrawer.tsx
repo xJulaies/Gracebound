@@ -1,4 +1,5 @@
 import { useRef } from "react";
+import { createPortal } from "react-dom";
 import { AuthControls } from "../../../../../features/auth/components/AuthControls";
 import { useModalDialog } from "../../../../../shared/hooks/useModalDialog";
 import { DrawerBackdrop } from "../atoms/DrawerBackdrop";
@@ -14,7 +15,7 @@ export function MobileNavigationDrawer({
   const closeButtonRef = useRef<HTMLButtonElement>(null);
   useModalDialog({ dialogRef, initialFocusRef: closeButtonRef, onClose });
 
-  return (
+  return createPortal(
     <>
       <DrawerBackdrop onClick={onClose} />
       <div
@@ -30,7 +31,7 @@ export function MobileNavigationDrawer({
           <BrandLink />
           <button
             aria-label="Close navigation"
-            className="size-10 border-border bg-surface p-0 text-xl"
+            className="size-11 border-border bg-surface p-0 text-xl"
             onClick={onClose}
             ref={closeButtonRef}
             type="button"
@@ -45,6 +46,7 @@ export function MobileNavigationDrawer({
           </div>
         </div>
       </div>
-    </>
+    </>,
+    document.body,
   );
 }

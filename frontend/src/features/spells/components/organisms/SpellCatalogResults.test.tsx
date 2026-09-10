@@ -1,13 +1,14 @@
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { describe, expect, it, vi } from "vitest";
+import { expectNoAccessibilityViolations } from "../../../../test/accessibility";
 import type { Spell } from "../../types/spell.types";
 import { SpellCatalogResults } from "./SpellCatalogResults";
 
 describe("SpellCatalogResults", () => {
   it("opens and closes spell details while restoring focus", async () => {
     const user = userEvent.setup();
-    render(
+    const { baseElement, container } = render(
       <SpellCatalogResults
         hasNextPage={false}
         isError={false}
@@ -21,11 +22,13 @@ describe("SpellCatalogResults", () => {
     const opener = screen.getByRole("button", { name: "View details for Gravity Well" });
     await user.click(opener);
 
-    expect(screen.getByRole("dialog", { name: "Gravity Well details dialog" }))
-      .toBeInTheDocument();
+    const dialog = screen.getByRole("dialog", { name: "Gravity Well details dialog" });
+    expect(dialog).toBeInTheDocument();
+    expect(container).not.toContainElement(dialog);
     expect(screen.getByRole("heading", { name: "Required attributes" }))
       .toBeInTheDocument();
     expect(screen.getByText("Gravity")).toBeInTheDocument();
+    await expectNoAccessibilityViolations(baseElement);
     await user.keyboard("{Escape}");
     expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
     expect(opener).toHaveFocus();

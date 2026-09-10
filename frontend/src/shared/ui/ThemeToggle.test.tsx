@@ -15,6 +15,7 @@ describe("ThemeToggle", () => {
 
     const toggle = screen.getByRole("button", { name: "Switch to grace theme" });
     expect(toggle).toHaveTextContent("Night");
+    expect(toggle).not.toHaveAttribute("aria-pressed");
 
     await user.click(toggle);
 

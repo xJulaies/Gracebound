@@ -18,11 +18,12 @@ describe("SpellCatalogHeader", () => {
       />,
     );
 
-    const school = screen.getByRole("combobox", { name: "School" });
-    expect(screen.getByRole("option", { name: "Gravity" })).toBeInTheDocument();
-    expect(screen.queryByRole("option", { name: "Frenzied Flame" }))
+    const school = screen.getByRole("button", { name: /^School:/ });
+    await user.click(school);
+    expect(screen.getByRole("button", { name: "Gravity" })).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Frenzied Flame" }))
       .not.toBeInTheDocument();
-    await user.selectOptions(school, "carian");
+    await user.click(screen.getByRole("button", { name: "Carian" }));
     await user.click(screen.getByRole("button", { name: "Incantations" }));
 
     expect(onSchoolChange).toHaveBeenCalledWith("carian");

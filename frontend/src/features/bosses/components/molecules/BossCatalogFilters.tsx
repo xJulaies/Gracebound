@@ -9,6 +9,7 @@ import {
   type BossRank,
   type BossRegion,
 } from "../../types/boss.types";
+import { ResponsiveSelect } from "../../../../shared/ui/molecules/ResponsiveSelect";
 
 export function BossCatalogFilters({ filters, onChange }: {
   filters: BossCatalogSearch;
@@ -67,19 +68,13 @@ function CatalogSelect({ label, onChange, options, value }: {
   value: string;
 }) {
   return (
-    <label className="grid gap-2 text-sm text-foreground-muted">
-      <span>{label}</span>
-      <select
-        className="cursor-pointer rounded-panel border border-border bg-background px-3 py-3 text-foreground outline-none focus:border-focus focus:ring-2 focus:ring-focus/30"
-        onChange={(event) => onChange(event.target.value)}
-        value={value}
-      >
-        <option value="">All</option>
-        {options.map((option) => (
-          <option key={option} value={option}>{formatBossLabel(option)}</option>
-        ))}
-      </select>
-    </label>
+    <ResponsiveSelect
+      emptyLabel="All"
+      label={label}
+      onChange={onChange}
+      options={options.map((option) => ({ value: option, label: formatBossLabel(option) }))}
+      value={value}
+    />
   );
 }
 

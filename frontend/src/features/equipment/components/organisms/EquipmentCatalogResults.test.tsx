@@ -1,6 +1,7 @@
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { describe, expect, it, vi } from "vitest";
+import { expectNoAccessibilityViolations } from "../../../../test/accessibility";
 import { EquipmentCatalogResults } from "./EquipmentCatalogResults";
 
 describe("EquipmentCatalogResults", () => {
@@ -8,7 +9,7 @@ describe("EquipmentCatalogResults", () => {
     const user = userEvent.setup();
     const scrollTo = vi.spyOn(window, "scrollTo").mockImplementation(() => undefined);
     Object.defineProperty(window, "scrollY", { configurable: true, value: 640 });
-    render(<EquipmentCatalogResults groups={[
+    const { baseElement, container } = render(<EquipmentCatalogResults groups={[
       {
         category: "armaments",
         label: "Armaments",
@@ -82,9 +83,12 @@ describe("EquipmentCatalogResults", () => {
     expect(screen.getByRole("alert")).toHaveTextContent("Talismans are currently unavailable.");
     const openDetails = screen.getByRole("button", { name: "View details for Longsword" });
     await user.click(openDetails);
-    expect(screen.getByRole("dialog", { name: "Longsword details dialog" })).toBeInTheDocument();
+    const dialog = screen.getByRole("dialog", { name: "Longsword details dialog" });
+    expect(dialog).toBeInTheDocument();
+    expect(container).not.toContainElement(dialog);
     expect(screen.getByRole("heading", { name: "Required attributes" })).toBeInTheDocument();
     expect(document.body).toHaveStyle({ overflow: "hidden" });
+    await expectNoAccessibilityViolations(baseElement);
     const closeDetails = screen.getByRole("button", { name: "Close" });
     expect(closeDetails).toHaveFocus();
     await user.tab();

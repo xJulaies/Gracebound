@@ -34,22 +34,19 @@ export function BuildEditorTabs({ activeTab, onChange }: BuildEditorTabsProps) {
 
   return (
     <div
-      aria-label="Build editor sections"
-      aria-orientation="horizontal"
+      aria-label="Build editor views"
       className="build-editor-tabs"
-      role="tablist"
+      role="group"
     >
       {tabs.map((tab) => (
         <button
           aria-controls={`build-editor-${tab.id}-panel`}
-          aria-selected={activeTab === tab.id}
+          aria-pressed={activeTab === tab.id}
           className="build-editor-tab"
           id={`build-editor-${tab.id}-tab`}
           key={tab.id}
           onKeyDown={(event) => handleKeyDown(event, tab.id)}
           onClick={() => onChange(tab.id)}
-          role="tab"
-          tabIndex={activeTab === tab.id ? 0 : -1}
           type="button"
         >
           {tab.label}

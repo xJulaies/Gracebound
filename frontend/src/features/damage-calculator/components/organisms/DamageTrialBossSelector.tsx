@@ -5,6 +5,7 @@ import {
   formatBossSelectionLabel,
   formatCompactBossSelectionLabel,
 } from "../../../bosses/domain/formatBossSelectionLabel";
+import { ResponsiveSelect } from "../../../../shared/ui/molecules/ResponsiveSelect";
 
 export function DamageTrialBossSelector({
   onSelect,
@@ -39,38 +40,19 @@ export function DamageTrialBossSelector({
           Enemy health and defenses form the target profile for every attack in this trial.
         </p>
       </div>
-      <label className="grid min-w-0 max-w-2xl gap-2 md:hidden" htmlFor="damage-trial-boss-mobile">
-        <span className="font-heading text-sm text-accent">Boss</span>
-        <select
-          className="min-h-11 min-w-0 w-full max-w-full rounded-panel border border-border bg-background px-3 py-2 text-foreground focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus"
-          id="damage-trial-boss-mobile"
-          onChange={(event) => {
-            onSelect(bosses.find((boss) => boss.id === event.target.value) ?? null);
-          }}
+      <div className="min-w-0 max-w-2xl [&>span]:font-heading [&>span]:text-accent">
+        <ResponsiveSelect
+          emptyLabel="Select a boss…"
+          label="Boss"
+          onChange={(value) => onSelect(bosses.find((boss) => boss.id === value) ?? null)}
+          options={bosses.map((boss) => ({
+            value: boss.id,
+            label: formatBossSelectionLabel(boss),
+            compactLabel: formatCompactBossSelectionLabel(boss),
+          }))}
           value={selectedBoss?.id ?? ""}
-        >
-          <option value="">Select a boss…</option>
-          {bosses.map((boss) => (
-            <option key={boss.id} value={boss.id}>{formatCompactBossSelectionLabel(boss)}</option>
-          ))}
-        </select>
-      </label>
-      <label className="hidden min-w-0 max-w-2xl gap-2 md:grid" htmlFor="damage-trial-boss-desktop">
-        <span className="font-heading text-sm text-accent">Boss</span>
-        <select
-          className="min-h-11 min-w-0 w-full max-w-full rounded-panel border border-border bg-background px-4 py-2 text-foreground focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus"
-          id="damage-trial-boss-desktop"
-          onChange={(event) => {
-            onSelect(bosses.find((boss) => boss.id === event.target.value) ?? null);
-          }}
-          value={selectedBoss?.id ?? ""}
-        >
-          <option value="">Select a boss…</option>
-          {bosses.map((boss) => (
-            <option key={boss.id} value={boss.id}>{formatBossSelectionLabel(boss)}</option>
-          ))}
-        </select>
-      </label>
+        />
+      </div>
     </section>
   );
 }
