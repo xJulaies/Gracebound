@@ -55,8 +55,19 @@ describe("BuildModel", () => {
   it("defines indexes for owner and public build queries", () => {
     const indexes = BuildModel.schema.indexes().map(([fields]) => fields);
 
-    expect(indexes).toContainEqual({ ownerId: 1, updatedAt: -1 });
-    expect(indexes).toContainEqual({ visibility: 1, createdAt: -1 });
-    expect(indexes).toContainEqual({ gameVersion: 1, visibility: 1, createdAt: -1 });
+    expect(indexes).toContainEqual({ ownerId: 1, updatedAt: -1, _id: -1 });
+    expect(indexes).toContainEqual({
+      ownerId: 1,
+      visibility: 1,
+      updatedAt: -1,
+      _id: -1,
+    });
+    expect(indexes).toContainEqual({ visibility: 1, createdAt: -1, _id: -1 });
+    expect(indexes).toContainEqual({
+      gameVersion: 1,
+      visibility: 1,
+      createdAt: -1,
+      _id: -1,
+    });
   });
 });

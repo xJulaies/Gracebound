@@ -30,7 +30,8 @@ describe("GET /api/health", () => {
     expect(response.headers["x-content-type-options"]).toBe("nosniff");
     expect(response.headers["referrer-policy"]).toBe("strict-origin-when-cross-origin");
     expect(response.headers["cross-origin-resource-policy"]).toBe("cross-origin");
-    expect(response.headers["content-security-policy"]).toBeUndefined();
+    expect(response.headers["content-security-policy"]).toContain("default-src 'none'");
+    expect(response.headers["content-security-policy"]).toContain("frame-ancestors 'none'");
   });
 
   it("allows the configured frontend origin", async () => {

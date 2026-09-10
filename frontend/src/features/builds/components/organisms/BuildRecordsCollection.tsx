@@ -12,17 +12,17 @@ import {
 } from "../molecules/BuildRecordFilter";
 import { BuildRecordCard } from "../molecules/BuildRecordCard";
 import { DeleteBuildDialog } from "./DeleteBuildDialog";
+import { CatalogLoadMore } from "../../../../shared/ui/molecules/CatalogLoadMore";
 
 export function BuildRecordsCollection() {
-  const { query } = useOwnedBuildsQuery();
+  const [visibility, setVisibility] = useState<BuildRecordVisibility>("all");
+  const { query } = useOwnedBuildsQuery(
+    visibility === "all" ? undefined : visibility,
+  );
   const duplicateBuild = useDuplicateBuildMutation();
   const deleteBuild = useDeleteBuildMutation();
-  const [visibility, setVisibility] = useState<BuildRecordVisibility>("all");
   const [pendingDeletion, setPendingDeletion] = useState<Build | null>(null);
-  const builds = query.data?.data ?? [];
-  const visibleBuilds = visibility === "all"
-    ? builds
-    : builds.filter((build) => build.visibility === visibility);
+  const builds = query.data?.pages.flatMap((page) => page.data) ?? [];
   const actionError = duplicateBuild.error ?? deleteBuild.error;
 
   return (
@@ -52,14 +52,15 @@ export function BuildRecordsCollection() {
         </p>
       )}
       {query.data && builds.length === 0 && (
-        <p className="build-record-message">No records yet. Forge your first build to begin this archive.</p>
+        <p className="build-record-message">
+          {visibility === "all"
+            ? "No records yet. Forge your first build to begin this archive."
+            : `No ${visibility} builds match this archive view.`}
+        </p>
       )}
-      {query.data && builds.length > 0 && visibleBuilds.length === 0 && (
-        <p className="build-record-message">No {visibility} builds match this archive view.</p>
-      )}
-      {visibleBuilds.length > 0 && (
+      {builds.length > 0 && (
         <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-          {visibleBuilds.map((build) => (
+          {builds.map((build) => (
             <BuildRecordCard
               build={build}
               isDeleting={deleteBuild.isPending && deleteBuild.variables === build.id}
@@ -71,6 +72,12 @@ export function BuildRecordsCollection() {
           ))}
         </div>
       )}
+      <CatalogLoadMore
+        hasNextPage={Boolean(query.hasNextPage)}
+        isFetching={query.isFetchingNextPage}
+        label="build records"
+        onLoadMore={() => void query.fetchNextPage()}
+      />
 
       {pendingDeletion && (
         <DeleteBuildDialog

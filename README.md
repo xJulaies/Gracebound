@@ -81,6 +81,7 @@ CORS_ORIGIN=http://localhost:5173
 MONGODB_URL=mongodb+srv://<user>:<password>@<cluster>/gracebound?retryWrites=true&w=majority
 CLERK_PUBLISHABLE_KEY=<your-publishable-key>
 CLERK_SECRET_KEY=<your-secret-key>
+MAX_BUILDS_PER_USER=100
 SUPPORTED_GAME_VERSION=1.17.0
 ERDB_BASE_URL=http://127.0.0.1:8107/v1
 ```
@@ -108,9 +109,37 @@ npm run dev
 
 The frontend is then available at `http://localhost:5173`; the API runs at `http://localhost:3000/api` by default.
 
+### Production and Lighthouse builds
+
+The normal frontend production build fails closed unless `VITE_API_URL` is an
+explicit HTTPS URL and `VITE_CLERK_PUBLISHABLE_KEY` is a `pk_live_` key. The
+backend likewise requires `pk_live_` and `sk_live_` Clerk keys, an HTTPS CORS
+origin, and encrypted MongoDB transport when `NODE_ENV=production`.
+
+For an optimized local Lighthouse build with localhost and Clerk development
+keys, use the deliberately non-deployable Lighthouse mode:
+
+```powershell
+cd frontend
+npm run build:lighthouse
+npm run preview:lighthouse
+```
+
+Vite development and preview responses apply the base document headers defined
+in `frontend/src/shared/config/securityHeaders.ts`. The production frontend
+host must apply the same headers at the edge. Before public deployment, extend
+the CSP fetch directives with the exact production Clerk and API origins and
+enable HSTS on the HTTPS host; these values depend on the selected hosting and
+Clerk domains and must not be guessed in application code.
+
 ## API overview
 
 Public routes expose catalogs and individual records for the supported game-data domains, plus health, public builds, calculations, and binary assets. Authenticated `/api/me/builds` routes manage the signed-in user's builds.
+
+Build collections use `page` and `limit` query parameters (24 and 100 by
+default/maximum) and return the matching total in `X-Total-Count`. Owned build
+collections additionally accept `visibility=public|private`. The per-user build
+quota is configured with `MAX_BUILDS_PER_USER` and defaults to 100.
 
 JSON endpoints use a consistent envelope:
 

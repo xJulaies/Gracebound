@@ -121,6 +121,9 @@ describe("BuildIntegrationPanel", () => {
     renderPanel();
 
     expect(await screen.findByText(/Owned Build/)).toBeInTheDocument();
-    expect(getOwnedBuilds).toHaveBeenCalledWith(getToken);
+    expect(getOwnedBuilds).toHaveBeenCalledWith(getToken, {
+      page: 1,
+      visibility: undefined,
+    });
   });
 });

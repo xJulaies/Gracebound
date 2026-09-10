@@ -8,16 +8,22 @@ import type {
 
 type GetToken = () => Promise<string | null>;
 
-export function getPublicBuilds() {
-  return apiRequest<Build>("/builds");
+export interface BuildListQuery {
+  page?: number;
+  limit?: number;
+  visibility?: Build["visibility"];
+}
+
+export function getPublicBuilds(query: Omit<BuildListQuery, "visibility"> = {}) {
+  return apiRequest<Build>(createBuildListPath("/builds", query));
 }
 
 export function getPublicBuild(buildId: string) {
   return apiRequest<Build>(`/builds/${encodeURIComponent(buildId)}`);
 }
 
-export function getOwnedBuilds(getToken: GetToken) {
-  return apiRequest<Build>("/me/builds", { getToken });
+export function getOwnedBuilds(getToken: GetToken, query: BuildListQuery = {}) {
+  return apiRequest<Build>(createBuildListPath("/me/builds", query), { getToken });
 }
 
 export function getOwnedBuild(buildId: string, getToken: GetToken) {
@@ -57,4 +63,12 @@ export function calculateBuildStats(input: BuildStatsInput, signal?: AbortSignal
     body: JSON.stringify(input),
     signal,
   });
+}
+
+function createBuildListPath(basePath: string, query: BuildListQuery) {
+  const parameters = new URLSearchParams();
+  for (const [key, value] of Object.entries(query)) {
+    if (value !== undefined) parameters.set(key, String(value));
+  }
+  return parameters.size > 0 ? `${basePath}?${parameters.toString()}` : basePath;
 }

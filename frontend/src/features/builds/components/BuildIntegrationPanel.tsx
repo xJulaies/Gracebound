@@ -28,6 +28,8 @@ function BuildList({ builds, emptyMessage }: BuildListProps) {
 export function BuildIntegrationPanel() {
   const publicBuilds = usePublicBuildsQuery();
   const ownedBuilds = useOwnedBuildsQuery();
+  const publicBuildRecords = publicBuilds.data?.pages.flatMap((page) => page.data) ?? [];
+  const ownedBuildRecords = ownedBuilds.query.data?.pages.flatMap((page) => page.data) ?? [];
 
   return (
     <section aria-labelledby="build-integration-heading">
@@ -39,7 +41,7 @@ export function BuildIntegrationPanel() {
         {publicBuilds.isError && <p role="alert">Public builds unavailable.</p>}
         {publicBuilds.data && (
           <BuildList
-            builds={publicBuilds.data.data}
+            builds={publicBuildRecords}
             emptyMessage="No public builds found."
           />
         )}
@@ -59,7 +61,7 @@ export function BuildIntegrationPanel() {
         )}
         {ownedBuilds.query.data && ownedBuilds.isSignedIn && (
           <BuildList
-            builds={ownedBuilds.query.data.data}
+            builds={ownedBuildRecords}
             emptyMessage="No owned builds found."
           />
         )}

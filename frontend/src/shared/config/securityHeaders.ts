@@ -1,0 +1,7 @@
+export const FRONTEND_SECURITY_HEADERS = {
+  "Content-Security-Policy": "base-uri 'self'; frame-ancestors 'none'; object-src 'none'",
+  "Permissions-Policy": "camera=(), geolocation=(), microphone=(), payment=(), usb=()",
+  "Referrer-Policy": "strict-origin-when-cross-origin",
+  "X-Content-Type-Options": "nosniff",
+  "X-Frame-Options": "DENY",
+} as const;

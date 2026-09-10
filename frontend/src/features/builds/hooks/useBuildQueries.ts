@@ -1,12 +1,15 @@
 import { useAuth } from "@clerk/react";
-import { useQuery } from "@tanstack/react-query";
+import { useInfiniteQuery, useQuery } from "@tanstack/react-query";
 import { getOwnedBuild, getOwnedBuilds, getPublicBuild, getPublicBuilds } from "../api/builds.api";
+import type { Build } from "../types/build.types";
 import { hydrateBuildEditor } from "../domain/hydrateBuildEditor";
 
 export function usePublicBuildsQuery() {
-  return useQuery({
-    queryKey: ["builds", "public"],
-    queryFn: getPublicBuilds,
+  return useInfiniteQuery({
+    queryKey: ["builds", "public", "infinite"],
+    queryFn: ({ pageParam }) => getPublicBuilds({ page: pageParam }),
+    initialPageParam: 1,
+    getNextPageParam: getNextBuildPage,
   });
 }
 
@@ -26,18 +29,33 @@ export function usePublicBuildEditorQuery(buildId: string) {
   return { buildQuery, editorQuery };
 }
 
-export function useOwnedBuildsQuery() {
+export function useOwnedBuildsQuery(visibility?: Build["visibility"]) {
   const { getToken, isLoaded, isSignedIn, userId } = useAuth();
 
   return {
     isAuthLoaded: isLoaded,
     isSignedIn: Boolean(isSignedIn),
-    query: useQuery({
-      queryKey: ["builds", "owned", userId],
-      queryFn: () => getOwnedBuilds(getToken),
+    query: useInfiniteQuery({
+      queryKey: ["builds", "owned", userId, "infinite", visibility],
+      queryFn: ({ pageParam }) => getOwnedBuilds(getToken, {
+        page: pageParam,
+        visibility,
+      }),
+      initialPageParam: 1,
+      getNextPageParam: getNextBuildPage,
       enabled: isLoaded && Boolean(isSignedIn),
     }),
   };
+}
+
+function getNextBuildPage(
+  lastPage: Awaited<ReturnType<typeof getPublicBuilds>>,
+  pages: Array<Awaited<ReturnType<typeof getPublicBuilds>>>,
+) {
+  const loadedCount = pages.reduce((total, page) => total + page.data.length, 0);
+  return loadedCount < (lastPage.totalCount ?? loadedCount)
+    ? pages.length + 1
+    : undefined;
 }
 
 export function useOwnedBuildEditorQuery(buildId: string) {

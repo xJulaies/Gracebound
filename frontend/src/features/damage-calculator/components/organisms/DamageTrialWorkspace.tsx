@@ -6,13 +6,14 @@ import type { Boss } from "../../../bosses/types/boss.types";
 import { DamageTrialEncounter } from "./DamageTrialEncounter";
 import { DamageTrialBuildSelector } from "./DamageTrialBuildSelector";
 import { DamageTrialBossSelector } from "./DamageTrialBossSelector";
+import { CatalogLoadMore } from "../../../../shared/ui/molecules/CatalogLoadMore";
 
 export function DamageTrialWorkspace() {
   const { isAuthLoaded, isSignedIn, query } = useOwnedBuildsQuery();
   const [selectedBuildId, setSelectedBuildId] = useState<string | null>(null);
   const [selectedBoss, setSelectedBoss] = useState<Boss | null>(null);
   const [mobileStage, setMobileStage] = useState<"build" | "target" | "attack">("build");
-  const builds = query.data?.data ?? [];
+  const builds = query.data?.pages.flatMap((page) => page.data) ?? [];
   const selectedBuild = builds.find(({ id }) => id === selectedBuildId) ?? null;
 
   if (!isAuthLoaded) {
@@ -76,6 +77,12 @@ export function DamageTrialWorkspace() {
             setMobileStage("target");
           }}
           selectedBuildId={selectedBuildId}
+        />
+        <CatalogLoadMore
+          hasNextPage={Boolean(query.hasNextPage)}
+          isFetching={query.isFetchingNextPage}
+          label="saved builds"
+          onLoadMore={() => void query.fetchNextPage()}
         />
       </div>
       {selectedBuildId && (

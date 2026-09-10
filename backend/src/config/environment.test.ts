@@ -8,8 +8,9 @@ describe("parseEnvironment", () => {
       PORT: "4000",
       CORS_ORIGIN: "https://gracebound.example",
       MONGODB_URL: "mongodb+srv://cluster.example/gracebound",
-      CLERK_PUBLISHABLE_KEY: "pk_test_publishable",
-      CLERK_SECRET_KEY: "sk_test_secret",
+      CLERK_PUBLISHABLE_KEY: "pk_live_publishable",
+      CLERK_SECRET_KEY: "sk_live_secret",
+      MAX_BUILDS_PER_USER: "250",
       SUPPORTED_GAME_VERSION: "1.10.0",
       ERDB_BASE_URL: "http://127.0.0.1:8107/v1",
     });
@@ -19,8 +20,9 @@ describe("parseEnvironment", () => {
       PORT: 4000,
       CORS_ORIGIN: "https://gracebound.example",
       MONGODB_URL: "mongodb+srv://cluster.example/gracebound",
-      CLERK_PUBLISHABLE_KEY: "pk_test_publishable",
-      CLERK_SECRET_KEY: "sk_test_secret",
+      CLERK_PUBLISHABLE_KEY: "pk_live_publishable",
+      CLERK_SECRET_KEY: "sk_live_secret",
+      MAX_BUILDS_PER_USER: 250,
       SUPPORTED_GAME_VERSION: "1.10.0",
       ERDB_BASE_URL: "http://127.0.0.1:8107/v1",
     });
@@ -36,6 +38,7 @@ describe("parseEnvironment", () => {
     expect(result.NODE_ENV).toBe("development");
     expect(result.PORT).toBe(3000);
     expect(result.CORS_ORIGIN).toBe("http://localhost:5173");
+    expect(result.MAX_BUILDS_PER_USER).toBe(100);
     expect(result.SUPPORTED_GAME_VERSION).toBe("1.17.0");
     expect(result.ERDB_BASE_URL).toBe("http://127.0.0.1:8107/v1");
   });
@@ -51,6 +54,20 @@ describe("parseEnvironment", () => {
           CLERK_SECRET_KEY: "sk_test_secret",
         }),
       ).toThrow("Invalid environment configuration: PORT");
+    },
+  );
+
+  it.each(["0", "1001", "not-a-number"])(
+    "rejects invalid per-user build limit %s",
+    (limit) => {
+      expect(() =>
+        parseEnvironment({
+          MAX_BUILDS_PER_USER: limit,
+          MONGODB_URL: "mongodb://127.0.0.1:27017/gracebound",
+          CLERK_PUBLISHABLE_KEY: "pk_test_publishable",
+          CLERK_SECRET_KEY: "sk_test_secret",
+        }),
+      ).toThrow("Invalid environment configuration: MAX_BUILDS_PER_USER");
     },
   );
 
@@ -105,8 +122,8 @@ describe("parseEnvironment", () => {
         NODE_ENV: "production",
         CORS_ORIGIN: "http://gracebound.example",
         MONGODB_URL: "mongodb+srv://cluster.example/gracebound",
-        CLERK_PUBLISHABLE_KEY: "pk_test_publishable",
-        CLERK_SECRET_KEY: "sk_test_secret",
+        CLERK_PUBLISHABLE_KEY: "pk_live_publishable",
+        CLERK_SECRET_KEY: "sk_live_secret",
       }),
     ).toThrow("Invalid environment configuration: CORS_ORIGIN");
   });
@@ -117,10 +134,24 @@ describe("parseEnvironment", () => {
         NODE_ENV: "production",
         CORS_ORIGIN: "https://gracebound.example",
         MONGODB_URL: "mongodb://database.example:27017/gracebound",
+        CLERK_PUBLISHABLE_KEY: "pk_live_publishable",
+        CLERK_SECRET_KEY: "sk_live_secret",
+      }),
+    ).toThrow("Invalid environment configuration: MONGODB_URL");
+  });
+
+  it("requires live Clerk keys in production", () => {
+    expect(() =>
+      parseEnvironment({
+        NODE_ENV: "production",
+        CORS_ORIGIN: "https://gracebound.example",
+        MONGODB_URL: "mongodb+srv://cluster.example/gracebound",
         CLERK_PUBLISHABLE_KEY: "pk_test_publishable",
         CLERK_SECRET_KEY: "sk_test_secret",
       }),
-    ).toThrow("Invalid environment configuration: MONGODB_URL");
+    ).toThrow(
+      "Invalid environment configuration: CLERK_PUBLISHABLE_KEY, CLERK_SECRET_KEY",
+    );
   });
 
   it("rejects an invalid supported game version", () => {

@@ -1,6 +1,8 @@
 import { z } from "zod";
 
 const BUILD_VISIBILITIES = ["public", "private"] as const;
+export const DEFAULT_BUILD_PAGE_SIZE = 24;
+export const MAX_BUILD_PAGE_SIZE = 100;
 
 const nullableEquipmentIdSchema = z
   .string()
@@ -111,6 +113,20 @@ const nameSchema = z.string().trim().min(1).max(80);
 const descriptionSchema = z.string().trim().max(1000);
 const levelSchema = z.number().int().min(1).max(713);
 const visibilitySchema = z.enum(BUILD_VISIBILITIES);
+
+const buildPaginationSchema = z.strictObject({
+  page: z.coerce.number().int().min(1).default(1),
+  limit: z.coerce.number().int().min(1).max(MAX_BUILD_PAGE_SIZE)
+    .default(DEFAULT_BUILD_PAGE_SIZE),
+});
+
+export const publicBuildListQuerySchema = buildPaginationSchema;
+export const ownedBuildListQuerySchema = buildPaginationSchema.extend({
+  visibility: visibilitySchema.optional(),
+});
+
+export type PublicBuildListQuery = z.infer<typeof publicBuildListQuerySchema>;
+export type OwnedBuildListQuery = z.infer<typeof ownedBuildListQuerySchema>;
 
 export const createBuildSchema = z.strictObject({
   name: nameSchema,

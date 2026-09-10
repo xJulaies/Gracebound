@@ -1,5 +1,7 @@
 import type {
   CreateBuildData,
+  OwnedBuildListQuery,
+  PublicBuildListQuery,
   UpdateBuildInput,
 } from "../schemas/build.schema";
 import { BuildModel } from "../models/build.model";
@@ -8,8 +10,24 @@ export function createBuild(data: CreateBuildData) {
   return BuildModel.create(data);
 }
 
-export function findAllBuildsByOwner(ownerId: string) {
-  return BuildModel.find({ ownerId }).sort({ updatedAt: -1 }).exec();
+export async function findBuildPageByOwner(
+  ownerId: string,
+  { page, limit, visibility }: OwnedBuildListQuery,
+) {
+  const filter = { ownerId, ...(visibility && { visibility }) };
+  const [builds, total] = await Promise.all([
+    BuildModel.find(filter)
+      .sort({ updatedAt: -1, _id: -1 })
+      .skip((page - 1) * limit)
+      .limit(limit)
+      .exec(),
+    BuildModel.countDocuments(filter).exec(),
+  ]);
+  return { builds, total };
+}
+
+export function countBuildsByOwner(ownerId: string) {
+  return BuildModel.countDocuments({ ownerId }).exec();
 }
 
 export function findOwnedBuildById(buildId: string, ownerId: string) {
@@ -31,10 +49,17 @@ export function deleteOwnedBuildById(buildId: string, ownerId: string) {
   return BuildModel.findOneAndDelete({ _id: buildId, ownerId }).exec();
 }
 
-export function findAllPublicBuilds() {
-  return BuildModel.find({ visibility: "public" })
-    .sort({ createdAt: -1 })
-    .exec();
+export async function findPublicBuildPage({ page, limit }: PublicBuildListQuery) {
+  const filter = { visibility: "public" } as const;
+  const [builds, total] = await Promise.all([
+    BuildModel.find(filter)
+      .sort({ createdAt: -1, _id: -1 })
+      .skip((page - 1) * limit)
+      .limit(limit)
+      .exec(),
+    BuildModel.countDocuments(filter).exec(),
+  ]);
+  return { builds, total };
 }
 
 export function findPublicBuildById(buildId: string) {

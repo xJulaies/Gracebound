@@ -2,11 +2,12 @@ import { describe, expect, it } from "vitest";
 import { useMongoMemoryServer } from "../../../test/useMongoMemoryServer";
 import { BuildModel } from "../models/build.model";
 import {
+  countBuildsByOwner,
   createBuild,
   deleteOwnedBuildById,
-  findAllBuildsByOwner,
-  findAllPublicBuilds,
+  findBuildPageByOwner,
   findOwnedBuildById,
+  findPublicBuildPage,
   findPublicBuildById,
   updateOwnedBuildById,
 } from "./build.repository";
@@ -63,17 +64,38 @@ describe("buildRepository", () => {
     expect(await BuildModel.countDocuments()).toBe(1);
   });
 
-  it("returns only builds owned by the requested user", async () => {
+  it("returns a stable page of builds owned by the requested user", async () => {
     await BuildModel.create([
       { ownerId: "user-1", gameVersion, name: "First", level: 100, stats },
       { ownerId: "user-1", gameVersion, name: "Second", level: 100, stats },
       { ownerId: "user-2", gameVersion, name: "Foreign", level: 100, stats },
     ]);
 
-    const builds = await findAllBuildsByOwner("user-1");
+    const { builds, total } = await findBuildPageByOwner("user-1", {
+      page: 1,
+      limit: 1,
+    });
 
-    expect(builds).toHaveLength(2);
-    expect(builds.every((build) => build.ownerId === "user-1")).toBe(true);
+    expect(total).toBe(2);
+    expect(builds).toHaveLength(1);
+    expect(builds[0]?.ownerId).toBe("user-1");
+    expect(await countBuildsByOwner("user-1")).toBe(2);
+  });
+
+  it("filters owned build pages by visibility", async () => {
+    await BuildModel.create([
+      { ownerId: "user-1", gameVersion, name: "Public", level: 100, stats, visibility: "public" },
+      { ownerId: "user-1", gameVersion, name: "Private", level: 100, stats, visibility: "private" },
+    ]);
+
+    const { builds, total } = await findBuildPageByOwner("user-1", {
+      page: 1,
+      limit: 24,
+      visibility: "private",
+    });
+
+    expect(total).toBe(1);
+    expect(builds.map((build) => build.name)).toEqual(["Private"]);
   });
 
   it("cannot read another user's build through an owned query", async () => {
@@ -148,8 +170,12 @@ describe("buildRepository", () => {
       },
     ]);
 
-    const publicBuilds = await findAllPublicBuilds();
+    const { builds: publicBuilds, total } = await findPublicBuildPage({
+      page: 1,
+      limit: 24,
+    });
 
+    expect(total).toBe(1);
     expect(publicBuilds).toHaveLength(1);
     expect(publicBuilds[0]?.id).toBe(publicBuild.id);
     expect(await findPublicBuildById(publicBuild.id)).not.toBeNull();

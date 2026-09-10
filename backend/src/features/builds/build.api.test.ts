@@ -8,6 +8,7 @@ import { saveWeaponCatalog } from "../../infrastructure/regulation/services/save
 import { createRegulationWeaponCatalogFixture, REGULATION_TEST_GAME_VERSION, REGULATION_TEST_SOURCE_HASH } from "../../test/fixtures/regulationWeaponCatalog.fixture";
 import { saveTalismanCatalog } from "../../infrastructure/regulation/services/saveTalismanCatalog";
 import { createTalismanFixture } from "../../test/fixtures/talisman.fixture";
+import { settings } from "../../config/settings";
 
 useMongoMemoryServer({ replicaSet: true });
 
@@ -112,6 +113,29 @@ describe("protected build API", () => {
     expect(storedBuild?.gameVersion).toBe(REGULATION_TEST_GAME_VERSION);
   });
 
+  it("rejects new builds after the per-user quota is reached", async () => {
+    await BuildModel.insertMany(Array.from(
+      { length: settings.MAX_BUILDS_PER_USER },
+      (_, index) => ({
+        ownerId: "quota-user",
+        gameVersion: REGULATION_TEST_GAME_VERSION,
+        name: `Build ${index + 1}`,
+        level: 100,
+        stats,
+      }),
+    ));
+
+    const response = await request(app)
+      .post("/api/me/builds")
+      .set("x-test-user-id", "quota-user")
+      .send(createBuildRequest());
+
+    expect(response.status).toBe(409);
+    expect(response.body.message).toBe("Build limit reached");
+    expect(await BuildModel.countDocuments({ ownerId: "quota-user" }))
+      .toBe(settings.MAX_BUILDS_PER_USER);
+  });
+
   it("rejects client-controlled ownership", async () => {
     const response = await request(app)
       .post("/api/me/builds")
@@ -168,6 +192,39 @@ describe("protected build API", () => {
     expect(response.status).toBe(200);
     expect(response.body.data).toHaveLength(1);
     expect(response.body.data[0].name).toBe("Owned");
+    expect(response.headers["x-total-count"]).toBe("1");
+  });
+
+  it("paginates and filters owned builds on the server", async () => {
+    await BuildModel.create([
+      { ownerId: "user-1", gameVersion: REGULATION_TEST_GAME_VERSION, name: "Public", level: 100, stats, visibility: "public" },
+      { ownerId: "user-1", gameVersion: REGULATION_TEST_GAME_VERSION, name: "Private One", level: 100, stats, visibility: "private" },
+      { ownerId: "user-1", gameVersion: REGULATION_TEST_GAME_VERSION, name: "Private Two", level: 100, stats, visibility: "private" },
+      { ownerId: "user-2", gameVersion: REGULATION_TEST_GAME_VERSION, name: "Foreign", level: 100, stats, visibility: "private" },
+    ]);
+
+    const response = await request(app)
+      .get("/api/me/builds?page=2&limit=1&visibility=private")
+      .set("x-test-user-id", "user-1");
+
+    expect(response.status).toBe(200);
+    expect(response.body.data).toHaveLength(1);
+    expect(response.body.data[0].visibility).toBe("private");
+    expect(response.headers["x-total-count"]).toBe("2");
+  });
+
+  it.each([
+    "page=0",
+    "limit=101",
+    "visibility=secret",
+    "unknown=value",
+  ])("rejects invalid owned build query %s", async (query) => {
+    const response = await request(app)
+      .get(`/api/me/builds?${query}`)
+      .set("x-test-user-id", "user-1");
+
+    expect(response.status).toBe(400);
+    expect(response.body.message).toBe("Invalid build query");
   });
 
   it("does not expose another user's build", async () => {
@@ -364,7 +421,32 @@ describe("public build API", () => {
     expect(response.body.data).toHaveLength(1);
     expect(response.body.data[0].name).toBe("Public");
     expect(response.body.data[0]).not.toHaveProperty("ownerId");
+    expect(response.headers["x-total-count"]).toBe("1");
   });
+
+  it("paginates public builds", async () => {
+    await BuildModel.create([
+      { ownerId: "user-1", gameVersion: REGULATION_TEST_GAME_VERSION, name: "Public One", level: 100, stats, visibility: "public" },
+      { ownerId: "user-2", gameVersion: REGULATION_TEST_GAME_VERSION, name: "Public Two", level: 100, stats, visibility: "public" },
+      { ownerId: "user-3", gameVersion: REGULATION_TEST_GAME_VERSION, name: "Private", level: 100, stats, visibility: "private" },
+    ]);
+
+    const response = await request(app).get("/api/builds?page=2&limit=1");
+
+    expect(response.status).toBe(200);
+    expect(response.body.data).toHaveLength(1);
+    expect(response.headers["x-total-count"]).toBe("2");
+  });
+
+  it.each(["page=0", "limit=101", "visibility=public"])(
+    "rejects invalid public build query %s",
+    async (query) => {
+      const response = await request(app).get(`/api/builds?${query}`);
+
+      expect(response.status).toBe(400);
+      expect(response.body.message).toBe("Invalid build query");
+    },
+  );
 
   it("returns a public build but hides a private build", async () => {
     const [publicBuild, privateBuild] = await BuildModel.create([

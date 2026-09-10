@@ -11,6 +11,7 @@ const environmentSchema = z.object({
     .regex(/^mongodb(?:\+srv)?:\/\//, "Must be a MongoDB connection URL"),
   CLERK_PUBLISHABLE_KEY: z.string().startsWith("pk_").min(1),
   CLERK_SECRET_KEY: z.string().startsWith("sk_").min(1),
+  MAX_BUILDS_PER_USER: z.coerce.number().int().min(1).max(1_000).default(100),
   SUPPORTED_GAME_VERSION: z
     .string()
     .regex(/^\d+\.\d+\.\d+$/)
@@ -48,6 +49,22 @@ const environmentSchema = z.object({
       code: "custom",
       path: ["MONGODB_URL"],
       message: "Must use an encrypted MongoDB connection in production",
+    });
+  }
+
+  if (!environment.CLERK_PUBLISHABLE_KEY.startsWith("pk_live_")) {
+    context.addIssue({
+      code: "custom",
+      path: ["CLERK_PUBLISHABLE_KEY"],
+      message: "Must use a live Clerk publishable key in production",
+    });
+  }
+
+  if (!environment.CLERK_SECRET_KEY.startsWith("sk_live_")) {
+    context.addIssue({
+      code: "custom",
+      path: ["CLERK_SECRET_KEY"],
+      message: "Must use a live Clerk secret key in production",
     });
   }
 });

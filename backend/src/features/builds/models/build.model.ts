@@ -95,9 +95,10 @@ const buildSchema = new Schema(
   },
 );
 
-buildSchema.index({ ownerId: 1, updatedAt: -1 });
-buildSchema.index({ visibility: 1, createdAt: -1 });
-buildSchema.index({ gameVersion: 1, visibility: 1, createdAt: -1 });
+buildSchema.index({ ownerId: 1, updatedAt: -1, _id: -1 });
+buildSchema.index({ ownerId: 1, visibility: 1, updatedAt: -1, _id: -1 });
+buildSchema.index({ visibility: 1, createdAt: -1, _id: -1 });
+buildSchema.index({ gameVersion: 1, visibility: 1, createdAt: -1, _id: -1 });
 
 export type Build = InferSchemaType<typeof buildSchema>;
 export const BuildModel = model<Build>("Build", buildSchema);

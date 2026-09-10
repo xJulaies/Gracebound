@@ -63,7 +63,13 @@ describe("PublicBuildGallery", () => {
     vi.mocked(usePublicBuildsQuery).mockReturnValue({
       isPending: false,
       isError: false,
-      data: { status: 200, message: "Builds found", data: [publicBuild] },
+      data: {
+        pages: [{ status: 200, message: "Builds found", data: [publicBuild] }],
+        pageParams: [1],
+      },
+      hasNextPage: false,
+      isFetchingNextPage: false,
+      fetchNextPage: vi.fn(),
     } as unknown as ReturnType<typeof usePublicBuildsQuery>);
 
     render(<PublicBuildGallery />);
@@ -77,7 +83,13 @@ describe("PublicBuildGallery", () => {
     vi.mocked(usePublicBuildsQuery).mockReturnValue({
       isPending: false,
       isError: false,
-      data: { status: 200, message: "Builds found", data: [] },
+      data: {
+        pages: [{ status: 200, message: "Builds found", data: [] }],
+        pageParams: [1],
+      },
+      hasNextPage: false,
+      isFetchingNextPage: false,
+      fetchNextPage: vi.fn(),
     } as unknown as ReturnType<typeof usePublicBuildsQuery>);
 
     render(<PublicBuildGallery />);
@@ -91,6 +103,9 @@ describe("PublicBuildGallery", () => {
       isPending: false,
       isError: true,
       refetch,
+      hasNextPage: false,
+      isFetchingNextPage: false,
+      fetchNextPage: vi.fn(),
     } as unknown as ReturnType<typeof usePublicBuildsQuery>);
     const user = userEvent.setup();
 
@@ -98,5 +113,26 @@ describe("PublicBuildGallery", () => {
     await user.click(screen.getByRole("button", { name: "Try again" }));
 
     expect(refetch).toHaveBeenCalledOnce();
+  });
+
+  it("loads the next build page on request", async () => {
+    const fetchNextPage = vi.fn();
+    vi.mocked(usePublicBuildsQuery).mockReturnValue({
+      isPending: false,
+      isError: false,
+      data: {
+        pages: [{ status: 200, message: "Builds found", data: [publicBuild] }],
+        pageParams: [1],
+      },
+      hasNextPage: true,
+      isFetchingNextPage: false,
+      fetchNextPage,
+    } as unknown as ReturnType<typeof usePublicBuildsQuery>);
+    const user = userEvent.setup();
+
+    render(<PublicBuildGallery />);
+    await user.click(screen.getByRole("button", { name: "Load more public builds" }));
+
+    expect(fetchNextPage).toHaveBeenCalledOnce();
   });
 });

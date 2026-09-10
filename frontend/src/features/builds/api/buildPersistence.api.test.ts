@@ -4,7 +4,9 @@ import {
   createOwnedBuild,
   deleteOwnedBuild,
   getOwnedBuild,
+  getOwnedBuilds,
   getPublicBuild,
+  getPublicBuilds,
   updateOwnedBuild,
 } from "./builds.api";
 
@@ -38,6 +40,42 @@ const input: BuildWriteInput = {
 afterEach(() => vi.unstubAllGlobals());
 
 describe("build persistence API", () => {
+  it("serializes pagination and visibility filters for build lists", async () => {
+    const fetchMock = vi.fn().mockImplementation(async () =>
+      new Response(
+        JSON.stringify({ status: 200, message: "Builds found", data: [] }),
+        {
+          status: 200,
+          headers: {
+            "Content-Type": "application/json",
+            "X-Total-Count": "42",
+          },
+        },
+      ));
+    vi.stubGlobal("fetch", fetchMock);
+    const getToken = vi.fn().mockResolvedValue("clerk-session-token");
+
+    const publicResponse = await getPublicBuilds({ page: 2, limit: 12 });
+    const ownedResponse = await getOwnedBuilds(getToken, {
+      page: 3,
+      limit: 10,
+      visibility: "private",
+    });
+
+    expect(fetchMock).toHaveBeenNthCalledWith(
+      1,
+      "http://localhost:3000/api/builds?page=2&limit=12",
+      expect.any(Object),
+    );
+    expect(fetchMock).toHaveBeenNthCalledWith(
+      2,
+      "http://localhost:3000/api/me/builds?page=3&limit=10&visibility=private",
+      expect.any(Object),
+    );
+    expect(publicResponse.totalCount).toBe(42);
+    expect(ownedResponse.totalCount).toBe(42);
+  });
+
   it("loads a public build without authentication", async () => {
     const fetchMock = vi.fn().mockResolvedValue(new Response(
       JSON.stringify({ status: 200, message: "Build found", data: [] }),

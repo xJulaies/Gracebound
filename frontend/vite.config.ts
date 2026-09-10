@@ -2,27 +2,24 @@ import react from "@vitejs/plugin-react";
 import tailwindcss from "@tailwindcss/vite";
 import { loadEnv, type Plugin } from "vite";
 import { defineConfig } from "vitest/config";
-
-const DEFAULT_API_URL = "http://localhost:3000/api";
+import { parseFrontendEnvironment } from "./src/shared/config/parseFrontendEnvironment.ts";
+import { FRONTEND_SECURITY_HEADERS } from "./src/shared/config/securityHeaders.ts";
 
 export default defineConfig(({ mode }) => {
-  const environment = loadEnv(mode, ".", "");
-  const apiOrigin = resolveHttpOrigin(environment.VITE_API_URL || DEFAULT_API_URL);
+  const environment = parseFrontendEnvironment(loadEnv(mode, ".", "VITE_"), mode);
+  const apiOrigin = /^https?:\/\/[^/]+/i.exec(environment.apiUrl)?.[0];
+  if (!apiOrigin) throw new Error("Validated API URL is missing its origin");
 
   return {
     plugins: [apiPreconnectPlugin(apiOrigin), react(), tailwindcss()],
+    preview: { headers: FRONTEND_SECURITY_HEADERS },
+    server: { headers: FRONTEND_SECURITY_HEADERS },
     test: {
       environment: "jsdom",
       setupFiles: ["./src/test/setup.ts"],
     },
   };
 });
-
-function resolveHttpOrigin(apiUrl: string) {
-  const origin = /^https?:\/\/[^/]+/i.exec(apiUrl)?.[0];
-  if (!origin) throw new Error("VITE_API_URL must be an absolute HTTP(S) URL");
-  return origin;
-}
 
 function apiPreconnectPlugin(apiOrigin: string): Plugin {
   return {

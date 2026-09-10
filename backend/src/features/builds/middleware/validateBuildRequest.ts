@@ -1,6 +1,12 @@
 import type { RequestHandler } from "express";
 import { createError } from "../../../shared/errors/createError";
-import { createBuildSchema, savedBuildDamageSchema, updateBuildSchema } from "../schemas/build.schema";
+import {
+  createBuildSchema,
+  ownedBuildListQuerySchema,
+  publicBuildListQuerySchema,
+  savedBuildDamageSchema,
+  updateBuildSchema,
+} from "../schemas/build.schema";
 import { buildIdSchema } from "../schemas/buildId.schema";
 
 export const validateCreateBuild: RequestHandler = (
@@ -54,5 +60,33 @@ export const validateSavedBuildDamage: RequestHandler = (request, response, next
     return;
   }
   response.locals.validatedSavedBuildDamage = result.data;
+  next();
+};
+
+export const validatePublicBuildListQuery: RequestHandler = (
+  request,
+  response,
+  next,
+) => {
+  const result = publicBuildListQuerySchema.safeParse(request.query);
+  if (!result.success) {
+    next(createError(400, "Invalid build query"));
+    return;
+  }
+  response.locals.buildListQuery = result.data;
+  next();
+};
+
+export const validateOwnedBuildListQuery: RequestHandler = (
+  request,
+  response,
+  next,
+) => {
+  const result = ownedBuildListQuerySchema.safeParse(request.query);
+  if (!result.success) {
+    next(createError(400, "Invalid build query"));
+    return;
+  }
+  response.locals.buildListQuery = result.data;
   next();
 };

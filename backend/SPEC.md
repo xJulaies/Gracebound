@@ -1047,6 +1047,7 @@ Requirements:
 
 - only public builds may be returned
 - private builds must never leak through these routes
+- list requests accept `page` and `limit` and return `X-Total-Count`
 
 ---
 
@@ -1069,6 +1070,11 @@ DELETE /api/me/builds/:buildId
 ```
 
 Every route requires valid Clerk authentication.
+
+`GET /api/me/builds` accepts `page`, `limit`, and an optional
+`visibility=public|private` filter. Collection responses return the filtered
+total in `X-Total-Count`. A user may persist no more than the configured
+`MAX_BUILDS_PER_USER` quota.
 
 For individual build access, the backend must verify:
 
@@ -1472,6 +1478,9 @@ contract. Weapons support `page`, `limit`, `search`, `affinity`, and
 supports `page`, `limit`, `search`, and `slot`; talismans support `page`,
 `limit`, `search`, and `calculationStatus`. These endpoints return the matching
 total through `X-Total-Count` and use stable alphabetical server-owned sorting.
+Public and owned build collections always use `page` and `limit`, return
+`X-Total-Count`, and use stable newest-first sorting; owned collections also
+support `visibility`.
 Armor and talisman list
 requests without pagination parameters temporarily retain their complete-array
 behavior while existing clients migrate. Spells and Ashes of War support their

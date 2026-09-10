@@ -9,6 +9,8 @@
   "scripts": {
     "dev": "vite",
     "build": "tsc -b && vite build",
+    "build:lighthouse": "tsc -b && vite build --mode lighthouse",
+    "preview:lighthouse": "vite preview --mode lighthouse",
     "typecheck": "tsc -b --noEmit",
     "lint": "eslint src",
     "lint:fix": "eslint src --fix",

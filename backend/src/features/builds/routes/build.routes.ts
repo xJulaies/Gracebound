@@ -14,17 +14,26 @@ import {
 import {
   validateBuildId,
   validateCreateBuild,
+  validateOwnedBuildListQuery,
+  validatePublicBuildListQuery,
   validateSavedBuildDamage,
   validateUpdateBuild,
 } from "../middleware/validateBuildRequest";
 import { calculateSelectedBuildStats } from "../controllers/buildStats.controller";
 import { validateBuildStatsRequest } from "../middleware/validateBuildStatsRequest";
+import {
+  createBuildListRateLimiter,
+  createBuildMutationRateLimiter,
+} from "../../../shared/middleware/rateLimiters";
 
 export function createBuildRouter(
   getAuthenticatedUserId: GetAuthenticatedUserId,
   calculationRateLimiter: RequestHandler,
 ) {
   const router = Router();
+  const publicBuildListRateLimiter = createBuildListRateLimiter();
+  const ownedBuildListRateLimiter = createBuildListRateLimiter();
+  const buildMutationRateLimiter = createBuildMutationRateLimiter();
 
   router.post(
     "/builds/calculate-stats",
@@ -32,12 +41,27 @@ export function createBuildRouter(
     validateBuildStatsRequest,
     calculateSelectedBuildStats,
   );
-  router.get("/builds", listPublicBuilds);
+  router.get(
+    "/builds",
+    publicBuildListRateLimiter,
+    validatePublicBuildListQuery,
+    listPublicBuilds,
+  );
   router.get("/builds/:buildId", validateBuildId, getPublicBuild);
 
   router.use("/me/builds", requireAuthenticatedUser(getAuthenticatedUserId));
-  router.get("/me/builds", listOwnedBuilds);
-  router.post("/me/builds", validateCreateBuild, createOwnedBuild);
+  router.get(
+    "/me/builds",
+    ownedBuildListRateLimiter,
+    validateOwnedBuildListQuery,
+    listOwnedBuilds,
+  );
+  router.post(
+    "/me/builds",
+    buildMutationRateLimiter,
+    validateCreateBuild,
+    createOwnedBuild,
+  );
   router.get("/me/builds/:buildId", validateBuildId, getOwnedBuild);
   router.post(
     "/me/builds/:buildId/calculate-damage",
@@ -48,11 +72,17 @@ export function createBuildRouter(
   );
   router.patch(
     "/me/builds/:buildId",
+    buildMutationRateLimiter,
     validateBuildId,
     validateUpdateBuild,
     updateOwnedBuild,
   );
-  router.delete("/me/builds/:buildId", validateBuildId, deleteOwnedBuild);
+  router.delete(
+    "/me/builds/:buildId",
+    buildMutationRateLimiter,
+    validateBuildId,
+    deleteOwnedBuild,
+  );
 
   return router;
 }

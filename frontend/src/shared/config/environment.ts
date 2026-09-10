@@ -1,11 +1,11 @@
-const DEFAULT_API_URL = "http://localhost:3000/api";
+import { parseFrontendEnvironment } from "./parseFrontendEnvironment";
 
-export const API_URL = (
-  import.meta.env.VITE_API_URL || DEFAULT_API_URL
-).replace(/\/$/, "");
+const environment = parseFrontendEnvironment(import.meta.env, import.meta.env.MODE);
+
+export const API_URL = environment.apiUrl;
 
 export function getClerkPublishableKey() {
-  const publishableKey = import.meta.env.VITE_CLERK_PUBLISHABLE_KEY;
+  const publishableKey = environment.clerkPublishableKey;
 
   if (!publishableKey) {
     throw new Error("VITE_CLERK_PUBLISHABLE_KEY is missing");

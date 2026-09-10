@@ -27,16 +27,30 @@ const remove = vi.fn();
 
 beforeEach(() => {
   vi.clearAllMocks();
-  vi.mocked(useOwnedBuildsQuery).mockReturnValue({
+  vi.mocked(useOwnedBuildsQuery).mockImplementation((visibility) => ({
     isAuthLoaded: true,
     isSignedIn: true,
     query: {
-      data: { status: 200, message: "Builds found", data: [publicBuild, privateBuild] },
+      data: {
+        pages: [{
+          status: 200,
+          message: "Builds found",
+          data: visibility === "public"
+            ? [publicBuild]
+            : visibility === "private"
+              ? [privateBuild]
+              : [publicBuild, privateBuild],
+        }],
+        pageParams: [1],
+      },
       isPending: false,
       isError: false,
       refetch: vi.fn(),
+      hasNextPage: false,
+      isFetchingNextPage: false,
+      fetchNextPage: vi.fn(),
     },
-  } as unknown as ReturnType<typeof useOwnedBuildsQuery>);
+  } as unknown as ReturnType<typeof useOwnedBuildsQuery>));
   vi.mocked(useDuplicateBuildMutation).mockReturnValue({
     mutate: duplicate,
     isPending: false,
@@ -60,6 +74,7 @@ describe("BuildRecordsCollection", () => {
     expect(screen.getByRole("heading", { name: "Hidden Blade" })).toBeInTheDocument();
     expect(screen.queryByRole("heading", { name: "Golden Order" })).not.toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Private" })).toHaveAttribute("aria-pressed", "true");
+    expect(useOwnedBuildsQuery).toHaveBeenLastCalledWith("private");
     expect(screen.getByRole("link", { name: "Edit" })).toHaveAttribute(
       "href",
       "/my-builds/private-build/edit",

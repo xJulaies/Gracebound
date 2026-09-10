@@ -5,15 +5,18 @@ import { createAnswer } from "../../../shared/http/createAnswer";
 import { mapBuildResponse } from "../mappers/build.mapper";
 import {
   createBuild,
+  countBuildsByOwner,
   deleteOwnedBuildById,
-  findAllBuildsByOwner,
-  findAllPublicBuilds,
+  findBuildPageByOwner,
+  findPublicBuildPage,
   findOwnedBuildById,
   findPublicBuildById,
   updateOwnedBuildById,
 } from "../repositories/build.repository";
 import type {
   CreateBuildInput,
+  OwnedBuildListQuery,
+  PublicBuildListQuery,
   SavedBuildDamageInput,
   UpdateBuildInput,
 } from "../schemas/build.schema";
@@ -23,8 +26,10 @@ import { calculateDamageFromInput } from "../../damage/services/calculateDamage.
 
 export const listOwnedBuilds: RequestHandler = async (_request, response) => {
   const ownerId = response.locals.authenticatedUserId as string;
-  const builds = await findAllBuildsByOwner(ownerId);
+  const query = response.locals.buildListQuery as OwnedBuildListQuery;
+  const { builds, total } = await findBuildPageByOwner(ownerId, query);
 
+  response.set("X-Total-Count", total.toString());
   response
     .status(200)
     .json(createAnswer(200, "Builds found", builds.map(mapBuildResponse)));
@@ -33,6 +38,10 @@ export const listOwnedBuilds: RequestHandler = async (_request, response) => {
 export const createOwnedBuild: RequestHandler = async (_request, response) => {
   const ownerId = response.locals.authenticatedUserId as string;
   const input = response.locals.validatedBuild as CreateBuildInput;
+  const existingBuildCount = await countBuildsByOwner(ownerId);
+  if (existingBuildCount >= settings.MAX_BUILDS_PER_USER) {
+    throw createError(409, "Build limit reached");
+  }
   await validateBuildCatalogSelections(input);
   const build = await createBuild({
     ...input,
@@ -104,8 +113,10 @@ export const deleteOwnedBuild: RequestHandler = async (_request, response) => {
 };
 
 export const listPublicBuilds: RequestHandler = async (_request, response) => {
-  const builds = await findAllPublicBuilds();
+  const query = response.locals.buildListQuery as PublicBuildListQuery;
+  const { builds, total } = await findPublicBuildPage(query);
 
+  response.set("X-Total-Count", total.toString());
   response
     .status(200)
     .json(createAnswer(200, "Builds found", builds.map(mapBuildResponse)));

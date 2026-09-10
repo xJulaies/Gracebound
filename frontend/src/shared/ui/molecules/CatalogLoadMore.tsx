@@ -15,7 +15,12 @@ export function CatalogLoadMore({
 
   useEffect(() => {
     const trigger = triggerRef.current;
-    if (!trigger || !hasNextPage || isFetching) return;
+    if (
+      !trigger
+      || !hasNextPage
+      || isFetching
+      || typeof IntersectionObserver === "undefined"
+    ) return;
     const observer = new IntersectionObserver(([entry]) => {
       if (entry?.isIntersecting) onLoadMore();
     }, { rootMargin: "50%" });
