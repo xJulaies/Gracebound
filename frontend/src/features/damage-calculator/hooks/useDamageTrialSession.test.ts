@@ -82,7 +82,7 @@ function initialState(health: number) {
 
 function phase(name: string, phaseNumber: number, trigger: null | { type: "health-percentage"; threshold: number } | { type: "health-depleted" }, health: number) {
   return {
-    id: name, name, phaseNumber, trigger, health,
+    id: name, name, imageUrl: null, phaseNumber, trigger, health,
     defense: { physical: 100, magic: 100, fire: 100, lightning: 100, holy: 100 },
     absorption: { physical: { standard: 0, slash: 0, strike: 0, pierce: 0 }, magic: 0, fire: 0, lightning: 0, holy: 0 },
   };

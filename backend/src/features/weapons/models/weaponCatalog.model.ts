@@ -1,6 +1,7 @@
 import { model, Schema } from "mongoose";
 import {
   WEAPON_AFFINITIES,
+  WEAPON_TYPES,
   type WeaponCatalogEntry,
   type WeaponVariantReference,
 } from "../domain/weaponCatalog.types";
@@ -134,9 +135,9 @@ const weaponCatalogSchema = new Schema<WeaponCatalogRecord>(
     name: { type: String, required: true },
     summary: { type: String, default: null },
     description: { type: String, default: null },
-    categoryId: { type: Number, required: true, min: 1 },
+    categoryId: { type: Number, required: true, min: 0 },
     weaponTypeId: { type: Number, required: true, min: 0 },
-    weaponType: { type: String, default: null },
+    weaponType: { type: String, required: true, enum: WEAPON_TYPES },
     weight: { type: Number, required: true, min: 0 },
     iconId: { type: Number, required: true, min: 0 },
     swordArtId: { type: Number, min: 0, default: null },

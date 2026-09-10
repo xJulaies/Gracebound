@@ -5,8 +5,8 @@ describe("validateWeaponCatalogVersion", () => {
   it("accepts the verified 1.17 catalog size", () => {
     expect(() =>
       validateWeaponCatalogVersion("1.17.0", {
-        canonicalWeapons: 468,
-        calculationVariants: 3192,
+        canonicalWeapons: 487,
+        calculationVariants: 3343,
       }),
     ).not.toThrow();
   });
@@ -14,11 +14,11 @@ describe("validateWeaponCatalogVersion", () => {
   it("blocks an incomplete 1.17 catalog before database access", () => {
     expect(() =>
       validateWeaponCatalogVersion("1.17.0", {
-        canonicalWeapons: 460,
-        calculationVariants: 3112,
+        canonicalWeapons: 468,
+        calculationVariants: 3192,
       }),
     ).toThrow(
-      "Incomplete weapon catalog for 1.17.0: expected 468 weapons and 3192 variants, mapped 460 weapons and 3112 variants",
+      "Incomplete weapon catalog for 1.17.0: expected 487 weapons and 3343 variants, mapped 468 weapons and 3192 variants",
     );
   });
 

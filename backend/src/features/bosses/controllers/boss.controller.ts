@@ -1,5 +1,6 @@
 import type { RequestHandler } from "express";
 import { settings } from "../../../config/settings";
+import { findAvailableBossImageIds } from "../../assets/repositories/bossImageAsset.repository";
 import { createError } from "../../../shared/errors/createError";
 import { createAnswer } from "../../../shared/http/createAnswer";
 import { mapBossResponse } from "../mappers/boss.mapper";
@@ -11,11 +12,19 @@ export const listBosses: RequestHandler = async (_request, response) => {
     settings.SUPPORTED_GAME_VERSION,
     response.locals.bossListQuery as BossListQuery,
   );
+  const availableImageIds = await findAvailableBossImageIds(
+    collectBossImageIds(result.bosses),
+    settings.SUPPORTED_GAME_VERSION,
+  );
 
   response.set("X-Total-Count", result.total.toString());
   response
     .status(200)
-    .json(createAnswer(200, "Bosses found", result.bosses.map(mapBossResponse)));
+    .json(createAnswer(
+      200,
+      "Bosses found",
+      result.bosses.map((boss) => mapBossResponse(boss, availableImageIds)),
+    ));
 };
 
 export const getBoss: RequestHandler = async (_request, response) => {
@@ -26,7 +35,23 @@ export const getBoss: RequestHandler = async (_request, response) => {
     throw createError(404, "Boss not found");
   }
 
+  const availableImageIds = await findAvailableBossImageIds(
+    collectBossImageIds([boss]),
+    settings.SUPPORTED_GAME_VERSION,
+  );
+
   response
     .status(200)
-    .json(createAnswer(200, "Boss found", [mapBossResponse(boss)]));
+    .json(createAnswer(200, "Boss found", [
+      mapBossResponse(boss, availableImageIds),
+    ]));
 };
+
+function collectBossImageIds(
+  bosses: Array<{ id: string; phases?: Array<{ id: string }> }>,
+): string[] {
+  return bosses.flatMap((boss) => [
+    boss.id,
+    ...(boss.phases?.map(({ id }) => id) ?? []),
+  ]);
+}

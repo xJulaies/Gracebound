@@ -11,7 +11,7 @@ import type {
   WeaponCalculationData,
   WeaponDataSet,
 } from "../domain/weapon.types";
-import type { WeaponAffinity } from "../domain/weaponCatalog.types";
+import type { WeaponAffinity, WeaponType } from "../domain/weaponCatalog.types";
 import {
   WeaponCatalogModel,
   type WeaponCatalogRecord,
@@ -23,7 +23,7 @@ export interface WeaponCatalogQuery {
   limit: number;
   search?: string;
   affinity?: WeaponAffinity;
-  weaponType?: string;
+  weaponType?: WeaponType;
 }
 
 export interface WeaponCatalogPage {

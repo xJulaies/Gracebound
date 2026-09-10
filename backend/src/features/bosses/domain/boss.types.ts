@@ -45,17 +45,8 @@ export interface BossData {
   healthScalingEffectId: number;
 }
 
-const BOSSES_WITH_PORTRAITS = new Set([
-  "godfrey-first-elden-lord-47200134",
-  "godfrey-first-elden-lord-47210070",
-  "godrick-the-grafted",
-  "malenia-blade-of-miquella",
-  "margit-the-fell-omen",
-  "morgott-the-omen-king",
-]);
-
-export function getBossImageUrl(bossId: string): string | null {
-  return BOSSES_WITH_PORTRAITS.has(bossId) ? `/api/assets/bosses/${bossId}` : null;
+export function createBossImageUrl(bossId: string): string {
+  return `/api/assets/bosses/${bossId}`;
 }
 
 export interface BossEncounter {

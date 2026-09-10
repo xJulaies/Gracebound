@@ -3,6 +3,7 @@ import request from "supertest";
 import { beforeEach, describe, expect, it } from "vitest";
 import { createApp } from "../../app";
 import { saveBossDataSet } from "../../infrastructure/regulation/services/saveBossDataSet";
+import { saveBossImageAsset } from "../../infrastructure/bossImages/saveBossImageAsset";
 import { useMongoMemoryServer } from "../../test/useMongoMemoryServer";
 import { unclassifiedBossMetadata, type BossData } from "./domain/boss.types";
 
@@ -38,6 +39,27 @@ const bosses: BossData[] = [
       lightning: 0,
       holy: 40,
     },
+    phases: [{
+      id: "margit-phase-two",
+      name: "Margit, Phase Two",
+      phaseNumber: 2,
+      trigger: { type: "health-percentage", threshold: 60 },
+      health: 4174,
+      defense: {
+        physical: 103,
+        magic: 103,
+        fire: 103,
+        lightning: 103,
+        holy: 103,
+      },
+      absorption: {
+        physical: { standard: 0, slash: 0, strike: 0, pierce: 0 },
+        magic: 0,
+        fire: 0,
+        lightning: 0,
+        holy: 40,
+      },
+    }],
     sourceNpcId: 21300014,
     healthScalingEffectId: 7030,
   },
@@ -79,6 +101,10 @@ beforeEach(async () => {
     gameVersion: "1.17.0",
     sourceHash,
   });
+  await Promise.all([
+    saveBossImageAsset(createBossImageAsset("margit-the-fell-omen"), "1.17.0"),
+    saveBossImageAsset(createBossImageAsset("margit-phase-two"), "1.17.0"),
+  ]);
 });
 
 describe("public boss API", () => {
@@ -140,6 +166,20 @@ describe("public boss API", () => {
     ]);
   });
 
+  it("exposes only database-backed boss and phase portrait URLs", async () => {
+    const margitResponse = await request(app).get("/api/bosses/margit-the-fell-omen");
+    const fireGiantResponse = await request(app).get("/api/bosses/fire-giant");
+
+    expect(margitResponse.body.data[0]).toMatchObject({
+      imageUrl: "/api/assets/bosses/margit-the-fell-omen",
+      phases: [{
+        id: "margit-phase-two",
+        imageUrl: "/api/assets/bosses/margit-phase-two",
+      }],
+    });
+    expect(fireGiantResponse.body.data[0].imageUrl).toBeNull();
+  });
+
   it("searches and filters the paginated boss catalog", async () => {
     const response = await request(app).get(
       "/api/bosses?search=fire&region=mountaintops-of-the-giants"
@@ -175,3 +215,17 @@ describe("public boss API", () => {
     expect(response.body.data).toEqual([]);
   });
 });
+
+function createBossImageAsset(bossId: string) {
+  const data = Buffer.from(`image-${bossId}`);
+  return {
+    bossId,
+    checksum: "a".repeat(64),
+    mimeType: "image/webp" as const,
+    width: 320,
+    height: 320,
+    size: data.length,
+    data,
+    sourceHash: "c".repeat(64),
+  };
+}

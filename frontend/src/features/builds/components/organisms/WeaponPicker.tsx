@@ -6,6 +6,10 @@ import { useDebouncedValue } from "../../../../shared/hooks/useDebouncedValue";
 import { ItemPickerLayout } from "../layouts/ItemPickerLayout";
 import { ItemDetailsPreview } from "../../../../shared/ui/organisms/ItemDetailsPreview";
 import { WeaponDetailsContent } from "../../../weapons/components/molecules/WeaponDetailsContent";
+import {
+  formatWeaponType,
+  WEAPON_TYPE_ORDER,
+} from "../../../weapons/domain/weaponTypes";
 
 interface WeaponPickerProps {
   slotLabel: string;
@@ -85,16 +89,6 @@ export function WeaponPicker({ slotLabel, onClose, onSelect }: WeaponPickerProps
   );
 }
 
-const WEAPON_TYPE_ORDER = [
-  "dagger", "straight-sword", "greatsword", "colossal-sword", "light-greatsword",
-  "thrusting-sword", "heavy-thrusting-sword", "curved-sword", "curved-greatsword",
-  "katana", "great-katana", "twinblade", "axe", "greataxe", "hammer", "flail",
-  "great-hammer", "colossal-weapon", "spear", "great-spear", "halberd", "reaper",
-  "whip", "fist", "hand-to-hand", "claw", "beast-claw", "backhand-blade",
-  "light-bow", "bow", "greatbow", "crossbow", "ballista", "glintstone-staff",
-  "sacred-seal", "torch",
-] as const;
-
 function groupWeapons(weapons: Weapon[]) {
   const order = new Map<string, number>(WEAPON_TYPE_ORDER.map((type, index) => [type, index]));
   const groups = new Map<string, Weapon[]>();
@@ -114,12 +108,4 @@ function groupWeapons(weapons: Weapon[]) {
 
 function normalizeWeaponType(weaponType: string | null) {
   return (weaponType ?? "unknown-armaments").trim().toLocaleLowerCase().replaceAll(" ", "-");
-}
-
-function formatWeaponType(weaponType: string | null) {
-  if (!weaponType) return "Unknown armament type";
-  return weaponType
-    .split("-")
-    .map((part) => part[0]?.toUpperCase() + part.slice(1))
-    .join(" ");
 }

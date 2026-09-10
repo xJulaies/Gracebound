@@ -222,12 +222,15 @@ Rykard, Maliketh, Radagon/Elden Beast). Godfrey/Hoarah Loux and both Malenia
 forms share an NPC row, so their verified encounter transitions live in
 `bossPhaseProfiles.ts`. Phase records retain their own health, defense, and
 absorption, and the damage API validates the requested phase against its boss.
+Boss imports store a composite SHA-256 fingerprint covering the Regulation
+source, curated boss definitions, and phase profiles. A curated phase change
+therefore produces new provenance even when `regulation.bin` is unchanged.
 
 Append `--dry-run` to either import command to validate and map the complete
 dataset without connecting to or changing MongoDB.
 
 Version-specific verified weapon counts protect the database from incomplete
-imports. Regulation 1.17.0 contains 468 player-facing weapons and 3,192
+imports. Regulation 1.17.0 contains 487 player-facing weapons and 3,343
 calculation variants. Eight names missing from the Param row-name data are
 resolved from the matching English `WeaponName.fmg`. Two additional unnamed
 rows have no player-facing text entry and are excluded as internal data. The

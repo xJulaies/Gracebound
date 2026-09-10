@@ -54,6 +54,7 @@ export interface Boss {
   phases?: Array<{
     id: string;
     name: string;
+    imageUrl: string | null;
     phaseNumber: number;
     trigger: { type: "health-percentage"; threshold: number } | { type: "health-depleted" } | null;
     health: number;

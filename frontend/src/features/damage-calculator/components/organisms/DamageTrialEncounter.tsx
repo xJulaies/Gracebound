@@ -1,5 +1,6 @@
 import type { Build } from "../../../builds/types/build.types";
 import type { Boss } from "../../../bosses/types/boss.types";
+import { createActiveBossProfile } from "../../domain/createActiveBossProfile";
 import { useDamageTrialSession } from "../../hooks/useDamageTrialSession";
 import { useDamageTrialEffects } from "../../hooks/useDamageTrialEffects";
 import { DamageTrialBossTarget } from "../molecules/DamageTrialBossTarget";
@@ -11,15 +12,11 @@ import { DamageTrialEffectsPanel } from "./DamageTrialEffectsPanel";
 export function DamageTrialEncounter({ build, boss }: { build: Build; boss: Boss }) {
   const effects = useDamageTrialEffects(build);
   const session = useDamageTrialSession(build.id, boss, effects.selection);
-  const activeBoss = session.activePhase
-    ? {
-        ...boss,
-        name: session.activePhase.name,
-        health: session.currentMaximumHealth,
-        defense: session.activePhase.defense,
-        absorption: session.activePhase.absorption,
-      }
-    : boss;
+  const activeBoss = createActiveBossProfile(
+    boss,
+    session.activePhase,
+    session.currentMaximumHealth,
+  );
 
   return (
     <div className="damage-trial-encounter-layout">

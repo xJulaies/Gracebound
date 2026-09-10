@@ -8,6 +8,7 @@ import { baseGameBossDefinitions } from "../infrastructure/regulation/data/baseG
 import { mapRegulationBosses } from "../infrastructure/regulation/mappers/mapRegulationBoss";
 import { parseNpcParamCsv } from "../infrastructure/regulation/parsers/parseNpcParamCsv";
 import { parseSpEffectParamCsv } from "../infrastructure/regulation/parsers/parseSpEffectParamCsv";
+import { createBossCatalogSourceHash } from "../infrastructure/regulation/services/createBossCatalogSourceHash";
 import { saveBossDataSet } from "../infrastructure/regulation/services/saveBossDataSet";
 import { validateBossCatalogVersion } from "../infrastructure/regulation/services/validateBossCatalogVersion";
 
@@ -19,7 +20,7 @@ const REQUIRED_EXPORTS = {
 async function importRegulationBossData() {
   const exportDirectory = requiredArgument("--exports");
   const regulationFile = requiredArgument("--regulation");
-  const [npcCsv, effectCsv, sourceHash] = await Promise.all([
+  const [npcCsv, effectCsv, regulationSourceHash] = await Promise.all([
     readExport(exportDirectory, REQUIRED_EXPORTS.npcs),
     readExport(exportDirectory, REQUIRED_EXPORTS.effects),
     sha256(regulationFile),
@@ -29,6 +30,7 @@ async function importRegulationBossData() {
     parseNpcParamCsv(npcCsv),
     parseSpEffectParamCsv(effectCsv),
   );
+  const sourceHash = createBossCatalogSourceHash(regulationSourceHash);
   validateBossCatalogVersion(bosses, settings.SUPPORTED_GAME_VERSION);
 
   console.log(`Validated ${bosses.length} base-game Regulation boss profiles`);

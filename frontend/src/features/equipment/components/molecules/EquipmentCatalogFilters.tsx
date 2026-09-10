@@ -2,14 +2,7 @@ import type {
   EquipmentCatalogSearch,
   EquipmentFilterKey,
 } from "../../types/equipmentCatalog.types";
-
-const weaponTypes = [
-  "dagger", "straight-sword", "greatsword", "colossal-sword", "twinblade",
-  "thrusting-sword", "heavy-thrusting-sword", "curved-sword",
-  "curved-greatsword", "katana", "axe", "greataxe", "hammer",
-  "great-hammer", "flail", "spear", "great-spear", "halberd", "reaper",
-  "fist", "claw", "whip", "colossal-weapon", "torch",
-] as const;
+import { WEAPON_TYPE_ORDER } from "../../../weapons/domain/weaponTypes";
 
 const affinities = [
   "standard", "heavy", "keen", "quality", "fire", "flame-art",
@@ -35,7 +28,7 @@ export function EquipmentCatalogFilters({
           <FilterSelect
             label="Weapon type"
             onChange={(value) => onChange("weaponType", value)}
-            options={weaponTypes}
+            options={WEAPON_TYPE_ORDER}
             value={filters.weaponType}
           />
           <FilterSelect

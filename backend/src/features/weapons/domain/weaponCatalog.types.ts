@@ -4,6 +4,52 @@ import type { WeaponSkillProfile } from "./weaponSkill.types";
 import type { SpellType } from "../../spells/domain/spell.types";
 import type { ItemText } from "../../../shared/domain/itemText.types";
 
+export const WEAPON_TYPES = [
+  "dagger",
+  "straight-sword",
+  "greatsword",
+  "colossal-sword",
+  "light-greatsword",
+  "thrusting-sword",
+  "heavy-thrusting-sword",
+  "curved-sword",
+  "curved-greatsword",
+  "katana",
+  "great-katana",
+  "twinblade",
+  "axe",
+  "greataxe",
+  "hammer",
+  "flail",
+  "great-hammer",
+  "colossal-weapon",
+  "spear",
+  "great-spear",
+  "halberd",
+  "reaper",
+  "whip",
+  "fist",
+  "hand-to-hand",
+  "claw",
+  "beast-claw",
+  "backhand-blade",
+  "perfume-bottle",
+  "light-bow",
+  "bow",
+  "greatbow",
+  "crossbow",
+  "ballista",
+  "glintstone-staff",
+  "sacred-seal",
+  "small-shield",
+  "medium-shield",
+  "greatshield",
+  "thrusting-shield",
+  "torch",
+] as const;
+
+export type WeaponType = (typeof WEAPON_TYPES)[number];
+
 export const WEAPON_AFFINITIES = [
   "standard",
   "heavy",
@@ -34,7 +80,7 @@ export interface WeaponCatalogEntry extends ItemText {
   name: string;
   categoryId: number;
   weaponTypeId: number;
-  weaponType: string | null;
+  weaponType: WeaponType;
   weight: number;
   iconId: number;
   swordArtId: number | null;

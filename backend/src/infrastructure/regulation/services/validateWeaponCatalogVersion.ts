@@ -4,8 +4,7 @@ const EXPECTED_WEAPON_COUNTS: Record<
   string,
   { canonicalWeapons: number; calculationVariants: number }
 > = {
-  "1.16.1": { canonicalWeapons: 460, calculationVariants: 3112 },
-  "1.17.0": { canonicalWeapons: 468, calculationVariants: 3192 },
+  "1.17.0": { canonicalWeapons: 487, calculationVariants: 3343 },
 };
 
 export function validateWeaponCatalogVersion(

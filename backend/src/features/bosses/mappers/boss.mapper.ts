@@ -1,11 +1,14 @@
 import type { BossRecord } from "../models/boss.model";
-import { getBossImageUrl } from "../domain/boss.types";
+import { createBossImageUrl } from "../domain/boss.types";
 
-export function mapBossResponse(record: BossRecord) {
+export function mapBossResponse(
+  record: BossRecord,
+  availableImageIds: ReadonlySet<string> = new Set(),
+) {
   return {
     id: record.id,
     name: record.name,
-    imageUrl: getBossImageUrl(record.id),
+    imageUrl: getAvailableBossImageUrl(record.id, availableImageIds),
     encounters: record.encounters?.map((encounter) => ({ ...encounter })) ?? [],
     rank: record.rank ?? null,
     progression: record.progression ?? null,
@@ -23,6 +26,7 @@ export function mapBossResponse(record: BossRecord) {
     phases: record.phases?.map((phase) => ({
       id: phase.id,
       name: phase.name,
+      imageUrl: getAvailableBossImageUrl(phase.id, availableImageIds),
       phaseNumber: phase.phaseNumber,
       trigger: phase.trigger ? { ...phase.trigger } : null,
       health: phase.health,
@@ -37,4 +41,11 @@ export function mapBossResponse(record: BossRecord) {
     })) ?? [],
     gameVersion: record.gameVersion,
   };
+}
+
+function getAvailableBossImageUrl(
+  bossId: string,
+  availableImageIds: ReadonlySet<string>,
+): string | null {
+  return availableImageIds.has(bossId) ? createBossImageUrl(bossId) : null;
 }

@@ -150,4 +150,46 @@ describe("saveBossDataSet", () => {
       }),
     ).rejects.toThrow("Boss dataset contains duplicate IDs");
   });
+
+  it.each([
+    {
+      label: "a percentage trigger without a threshold",
+      trigger: { type: "health-percentage" },
+      message: "health-percentage triggers must define a threshold",
+    },
+    {
+      label: "a depleted-health trigger with a threshold",
+      trigger: { type: "health-depleted", threshold: 50 },
+      message: "health-depleted triggers must not define a threshold",
+    },
+    {
+      label: "an unknown trigger type",
+      trigger: { type: "cutscene" },
+      message: "is not a valid enum value",
+    },
+  ])("rejects $label", async ({ trigger, message }) => {
+    const bossWithInvalidTrigger = {
+      ...bosses[0]!,
+      phases: [
+        {
+          id: "phase-one",
+          name: "Phase one",
+          phaseNumber: 1,
+          trigger,
+          health: bosses[0]!.health,
+          defense,
+          absorption,
+        },
+      ],
+    } as unknown as BossData;
+
+    await expect(
+      saveBossDataSet([bossWithInvalidTrigger], {
+        gameVersion: "1.17.0",
+        sourceHash,
+      }),
+    ).rejects.toThrow(message);
+
+    expect(await BossModel.countDocuments()).toBe(0);
+  });
 });

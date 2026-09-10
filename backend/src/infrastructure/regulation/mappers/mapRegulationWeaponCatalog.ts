@@ -9,10 +9,8 @@ import type { RegulationWeaponTables } from "./mapRegulationWeaponData";
 import { mapRegulationWeapon } from "./mapRegulationWeaponData";
 import type { WeaponParamRow } from "../schemas/weaponParam.schema";
 import { addRegulationWeaponNames } from "../data/regulationWeaponNames";
-import { meleeWeaponClassDefinitions } from "../data/meleeWeaponClassDefinitions";
+import { getRegulationWeaponType } from "../data/regulationWeaponTypes";
 import type { ArmorEffectRow } from "../schemas/armor.schema";
-
-const PLAYER_WEAPON_CATEGORIES = new Set([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]);
 
 export function mapRegulationWeaponCatalog(
   gameVersion: string,
@@ -37,9 +35,13 @@ export function mapRegulationWeaponCatalog(
 
   for (const canonicalRow of canonicalRows) {
     const id = slugify(canonicalRow.Name);
+    const weaponType = getRegulationWeaponType(canonicalRow.wepType);
 
     if (catalog[id]) {
       throw new Error(`Duplicate canonical weapon ID ${id}`);
+    }
+    if (!weaponType) {
+      throw new Error(`Unsupported player weapon type ${canonicalRow.wepType} for ${canonicalRow.Name}`);
     }
 
     const variantRows = namedTables.weapons
@@ -75,10 +77,7 @@ export function mapRegulationWeaponCatalog(
       name: canonicalRow.Name,
       categoryId: canonicalRow.weaponCategory,
       weaponTypeId: canonicalRow.wepType,
-      weaponType:
-        meleeWeaponClassDefinitions.find(
-          ({ motionCategoryId }) => motionCategoryId === canonicalRow.wepmotionCategory,
-        )?.slug ?? null,
+      weaponType,
       weight: canonicalRow.weight,
       iconId: canonicalRow.iconId,
       swordArtId:
@@ -175,7 +174,7 @@ function validateCalculations(dataSet: WeaponDataSet): number {
 export function isCanonicalPlayerWeapon(row: WeaponParamRow): boolean {
   return row.ID === row.originEquipWep &&
     row.Name.trim().length > 0 &&
-    PLAYER_WEAPON_CATEGORIES.has(row.weaponCategory);
+    getRegulationWeaponType(row.wepType) !== undefined;
 }
 
 export function getWeaponAffinity(

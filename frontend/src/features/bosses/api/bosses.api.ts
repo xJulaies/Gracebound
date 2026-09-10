@@ -27,5 +27,9 @@ function resolveBossAssets(boss: Boss): Boss {
   return {
     ...boss,
     imageUrl: boss.imageUrl ? resolveApiAssetUrl(boss.imageUrl) : null,
+    phases: boss.phases?.map((phase) => ({
+      ...phase,
+      imageUrl: phase.imageUrl ? resolveApiAssetUrl(phase.imageUrl) : null,
+    })),
   };
 }

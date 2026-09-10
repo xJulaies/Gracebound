@@ -78,6 +78,24 @@ describe("saveWeaponCatalog", () => {
     expect(await WeaponVariantModel.countDocuments()).toBe(3);
   });
 
+  it("persists the Regulation dagger category", async () => {
+    const dataSet = createRegulationWeaponCatalogFixture();
+    dataSet.catalog.longsword!.categoryId = 0;
+    dataSet.catalog.longsword!.weaponTypeId = 1;
+    dataSet.catalog.longsword!.weaponType = "dagger";
+
+    await saveWeaponCatalog(dataSet, {
+      gameVersion: REGULATION_TEST_GAME_VERSION,
+      sourceHash: REGULATION_TEST_SOURCE_HASH,
+    });
+
+    await expect(WeaponCatalogModel.findOne({ id: "longsword" }).lean()).resolves.toMatchObject({
+      categoryId: 0,
+      weaponTypeId: 1,
+      weaponType: "dagger",
+    });
+  });
+
   it("rolls back all collections when a later write fails", async () => {
     vi.spyOn(ScalingCurveModel, "insertMany").mockRejectedValueOnce(
       new Error("Simulated curve failure"),

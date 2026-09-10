@@ -4,6 +4,7 @@ import type {
   BossAbsorption,
   BossData,
   BossPhase,
+  BossPhaseTrigger,
   PhysicalAbsorption,
 } from "../domain/boss.types";
 import { BOSS_LOCATION_TYPES, BOSS_REGIONS } from "../domain/boss.types";
@@ -45,12 +46,49 @@ const bossEncounterSchema = new Schema(
   { _id: false },
 );
 
+interface BossPhaseTriggerRecord {
+  type: BossPhaseTrigger["type"];
+  threshold?: number;
+}
+
+const bossPhaseTriggerSchema = new Schema<BossPhaseTriggerRecord>(
+  {
+    type: {
+      type: String,
+      enum: ["health-percentage", "health-depleted"],
+      required: true,
+    },
+    threshold: {
+      type: Number,
+      min: 1,
+      max: 99,
+    },
+  },
+  { _id: false, strict: "throw" },
+);
+
+bossPhaseTriggerSchema.pre("validate", function validatePhaseTrigger() {
+  if (this.type === "health-percentage" && this.threshold === undefined) {
+    this.invalidate(
+      "threshold",
+      "health-percentage triggers must define a threshold",
+    );
+  }
+
+  if (this.type === "health-depleted" && this.threshold !== undefined) {
+    this.invalidate(
+      "threshold",
+      "health-depleted triggers must not define a threshold",
+    );
+  }
+});
+
 const bossPhaseSchema = new Schema<BossPhase>(
   {
     id: { type: String, required: true },
     name: { type: String, required: true },
     phaseNumber: { type: Number, required: true, min: 1 },
-    trigger: { type: Schema.Types.Mixed, default: null },
+    trigger: { type: bossPhaseTriggerSchema, default: null },
     health: { type: Number, required: true, min: 1 },
     defense: { type: damageTypesSchema, required: true },
     absorption: { type: bossAbsorptionSchema, required: true },

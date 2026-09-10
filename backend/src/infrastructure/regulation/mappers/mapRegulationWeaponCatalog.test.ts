@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import type { WeaponParamRow } from "../schemas/weaponParam.schema";
+import { getRegulationWeaponType } from "../data/regulationWeaponTypes";
 import {
   getWeaponAffinity,
   isCanonicalPlayerWeapon,
@@ -7,15 +8,37 @@ import {
 } from "./mapRegulationWeaponCatalog";
 
 describe("isCanonicalPlayerWeapon", () => {
-  it("includes self-referencing player armaments including fist weapons", () => {
-    expect(isCanonicalPlayerWeapon(row(21000000, 21000000, 9, "Caestus"))).toBe(true);
+  it("includes self-referencing player armaments including daggers and fist weapons", () => {
+    expect(isCanonicalPlayerWeapon(row(1000000, 1000000, 0, "Dagger", 1))).toBe(true);
+    expect(isCanonicalPlayerWeapon(row(21000000, 21000000, 9, "Caestus", 35))).toBe(true);
   });
 
   it("excludes affinity, NPC, unnamed, and non-weapon rows", () => {
     expect(isCanonicalPlayerWeapon(row(2000100, 2000000, 1, "Heavy Longsword"))).toBe(false);
     expect(isCanonicalPlayerWeapon(row(2092000, 2090000, 1, "[NPC] Inseparable Sword"))).toBe(false);
     expect(isCanonicalPlayerWeapon(row(1000, 1000, 1, ""))).toBe(false);
-    expect(isCanonicalPlayerWeapon(row(170000, 170000, 0, "Throwing Dagger"))).toBe(false);
+    expect(isCanonicalPlayerWeapon(row(170000, 170000, 0, "Throwing Dagger", 0))).toBe(false);
+  });
+});
+
+describe("getRegulationWeaponType", () => {
+  it.each([
+    [1, "dagger"],
+    [23, "great-hammer"],
+    [50, "light-bow"],
+    [51, "bow"],
+    [57, "glintstone-staff"],
+    [61, "sacred-seal"],
+    [69, "greatshield"],
+    [89, "perfume-bottle"],
+    [90, "thrusting-shield"],
+    [91, "dagger"],
+  ] as const)("maps Regulation weapon type %s to %s", (sourceTypeId, weaponType) => {
+    expect(getRegulationWeaponType(sourceTypeId)).toBe(weaponType);
+  });
+
+  it("does not invent a type for an unknown Regulation value", () => {
+    expect(getRegulationWeaponType(999)).toBeUndefined();
   });
 });
 
@@ -46,6 +69,12 @@ describe("getWeaponAffinity", () => {
   });
 });
 
-function row(ID: number, originEquipWep: number, weaponCategory: number, Name: string) {
-  return { ID, originEquipWep, weaponCategory, Name } as WeaponParamRow;
+function row(
+  ID: number,
+  originEquipWep: number,
+  weaponCategory: number,
+  Name: string,
+  wepType = 3,
+) {
+  return { ID, originEquipWep, weaponCategory, Name, wepType } as WeaponParamRow;
 }

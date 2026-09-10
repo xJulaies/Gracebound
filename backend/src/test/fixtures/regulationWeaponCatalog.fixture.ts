@@ -1,5 +1,8 @@
 import { weaponFixtures } from "../../features/weapons/data/weapon.fixtures";
-import type { WeaponCatalogDataSet } from "../../features/weapons/domain/weaponCatalog.types";
+import type {
+  WeaponCatalogDataSet,
+  WeaponCatalogEntry,
+} from "../../features/weapons/domain/weaponCatalog.types";
 import type { WeaponAttackProfile } from "../../features/weapons/domain/weaponAttack.types";
 import type { WeaponSkillProfile } from "../../features/weapons/domain/weaponSkill.types";
 
@@ -107,7 +110,7 @@ function catalogWeapon(
   sourceId: number,
   name: string,
   attack?: WeaponAttackProfile | WeaponAttackProfile[],
-) {
+): WeaponCatalogEntry {
   return {
     id,
     sourceId,
