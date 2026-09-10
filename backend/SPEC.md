@@ -53,7 +53,7 @@ No npm workspaces, Nx, or Turborepo are required.
 - Zod
 - Clerk
 - REST
-- ERDB
+- Smithbox Regulation exports
 - Vitest
 - Supertest
 - npm
@@ -119,7 +119,7 @@ src/
   infrastructure/
     database/
     auth/
-    erdb/
+    regulation/
 
   shared/
     errors/
@@ -155,10 +155,8 @@ the primary source of technical item, attack, NPC, boss, and calculation data.
 
 No secondary fan API should be used as part of the normal application architecture unless the project specification is deliberately changed.
 
-ERDB remains a comparison and fallback source while regulation-derived weapon
-coverage is being verified.
-
-The frontend never communicates directly with ERDB.
+The Regulation import is the sole game-data ingestion pipeline. The frontend
+never communicates directly with raw game-data sources.
 
 Boss combat values are derived from validated `NpcParam` and `SpEffectParam`
 exports. Weapon attacks and selected Ashes of War additionally use the relevant
@@ -182,7 +180,7 @@ Local regulation exports
   -> REST API
 ```
 
-The backend must not expose Smithbox or ERDB response structures directly.
+The backend must not expose Smithbox response structures directly.
 
 The application remains independent from source-specific schema details through
 validated mapping into its own domain models.
@@ -200,28 +198,14 @@ Requirements:
 - explicit mapping
 - stable application identifiers where possible
 - documented supported game version
-- no access to regulation files or ERDB during normal application requests
+- no access to Regulation files during normal application requests
 
 Game data is treated as read-only during normal application usage.
 
-The implemented weapon import uses the official local ERDB API container:
-
-```text
-ghcr.io/eldenringdatabase/erdb-api:0.4.0
-```
-
-For the configured game version, the backend loads and validates:
-
-```text
-armaments
-reinforcements
-correction-attack
-correction-graph
-```
-
-The raw responses are validated with Zod, mapped to the Gracebound weapon
-domain, and persisted only after successful validation and mapping. The normal
-application does not call ERDB during user requests.
+For the configured game version, the backend validates Smithbox CSV exports,
+maps them to the Gracebound domain, and persists them only after successful
+validation and mapping. Normal application requests read the normalized MongoDB
+dataset and never access the source exports.
 
 ---
 
@@ -239,7 +223,7 @@ reinforcementData
 attackData
 ```
 
-Exact collection structure depends on the finalized ERDB mapping.
+Collection structure follows the normalized Regulation mapping.
 
 Game data and user-owned application data should remain logically separated.
 
@@ -267,7 +251,7 @@ The normalized boss contract contains:
 - lightning attack
 - holy attack
 - reinforcement information
-- ERDB mapping identifiers where internally required
+- Regulation source identifiers where internally required
 
 The active application game version is `1.17.0`. Its Regulation export
 normalizes 468 player armaments and 3,192 calculation variants. Eight new
@@ -307,7 +291,7 @@ Potential fields:
 - weight
 - defensive values
 
-Exact fields depend on available ERDB-derived data.
+Exact fields depend on available Regulation-derived data.
 
 Implemented endpoints are `GET /api/armor` and `GET /api/armor/:armorId`.
 The list accepts optional `slot`, `search`, `page`, and `limit` parameters so
@@ -1416,7 +1400,7 @@ Zod validates:
 - query parameters
 - build data
 - damage calculator input
-- relevant imported ERDB-derived data
+- relevant imported Regulation-derived data
 
 Invalid requests return appropriate 4xx responses.
 
@@ -1555,7 +1539,7 @@ bosses
 calculation-related data
 ```
 
-Exact game-data persistence may evolve during ERDB integration.
+Exact game-data persistence may evolve with future Regulation versions.
 
 ---
 

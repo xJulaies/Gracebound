@@ -18,7 +18,7 @@ const reinforcementLevelSchema = new Schema<ReinforcementLevel>(
 export interface ReinforcementRecord {
   id: string;
   levels: ReinforcementLevel[];
-  source: "ERDB" | "REGULATION";
+  source: "REGULATION";
   sourceHash?: string;
   gameVersion: string;
   importedAt: Date;

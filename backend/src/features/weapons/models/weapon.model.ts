@@ -43,7 +43,7 @@ const correctionsSchema = new Schema<WeaponCorrections>(
 );
 
 export type WeaponRecord = WeaponCalculationData & {
-  source: "ERDB" | "REGULATION";
+  source: "REGULATION";
   sourceHash?: string;
   importedAt: Date;
 };

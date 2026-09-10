@@ -25,7 +25,7 @@ export const attributesSchema = new Schema<Attributes>(
 );
 
 export const sourceFields = {
-  source: { type: String, required: true, enum: ["ERDB", "REGULATION"] },
+  source: { type: String, required: true, enum: ["REGULATION"] },
   gameVersion: { type: String, required: true },
   sourceHash: { type: String, match: /^[a-f0-9]{64}$/ },
   importedAt: { type: Date, required: true },

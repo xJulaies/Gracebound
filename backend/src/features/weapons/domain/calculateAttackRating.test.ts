@@ -7,15 +7,15 @@ import {
 } from "./calculateAttackRating";
 
 describe("calculateScalingCorrection", () => {
-  it("interpolates the elemental curve between ERDB stages", () => {
-    const curve = weaponFixtures.scalingCurves["erdb-4"];
+  it("interpolates the elemental Regulation curve between stages", () => {
+    const curve = weaponFixtures.scalingCurves["regulation-4"];
 
     expect(curve).toBeDefined();
     expect(calculateScalingCorrection(70, curve!)).toBeCloseTo(0.9);
   });
 
   it("uses the non-linear adjustment of the default curve", () => {
-    const curve = weaponFixtures.scalingCurves["erdb-0"];
+    const curve = weaponFixtures.scalingCurves["regulation-0"];
 
     expect(curve).toBeDefined();
     expect(calculateScalingCorrection(12, curve!)).toBeCloseTo(
@@ -52,7 +52,7 @@ describe("calculateCatalystScaling", () => {
 });
 
 describe("calculateAttackRating", () => {
-  it("calculates Moonveil +10 split attack rating from ERDB 1.10.0 data", () => {
+  it("calculates Moonveil +10 split attack rating from Regulation reference data", () => {
     const weapon = weaponFixtures.weapons.moonveil;
 
     expect(weapon).toBeDefined();

@@ -152,6 +152,66 @@ export const standardAshOfWarSkillDefinitions = [
     },
   },
   {
+    sourceGemId: 20200,
+    definition: {
+      id: "ice-spear",
+      swordArtId: 202,
+      behaviorVariationId: 0,
+      attacks: [
+        {
+          id: "ice-spear-projectile",
+          name: "Ice Spear (Projectile)",
+          fpCostField: "useMagicPoint_L2",
+          components: [{ kind: "projectile", sourceBehaviorId: 300000075, behaviorJudgeId: 75 }],
+        },
+      ],
+    },
+  },
+  {
+    sourceGemId: 20300,
+    definition: {
+      id: "glintstone-pebble",
+      swordArtId: 203,
+      behaviorVariationId: 0,
+      attacks: [
+        {
+          id: "glintstone-pebble-projectile",
+          name: "Glintstone Pebble (Projectile)",
+          fpCostField: "useMagicPoint_L2",
+          components: [{ kind: "projectile", sourceBehaviorId: 300000330, behaviorJudgeId: 330 }],
+        },
+      ],
+    },
+  },
+  {
+    sourceGemId: 22400,
+    definition: {
+      id: "blood-blade",
+      swordArtId: 224,
+      behaviorVariationId: 0,
+      attacks: [
+        {
+          id: "blood-blade-projectile-1",
+          name: "Blood Blade (Projectile)",
+          fpCostField: "useMagicPoint_L2",
+          components: [{ kind: "projectile", sourceBehaviorId: 300000631, behaviorJudgeId: 631 }],
+        },
+        {
+          id: "blood-blade-projectile-2",
+          name: "Blood Blade (Follow-up 1 Projectile)",
+          fpCostField: "useMagicPoint_R2",
+          components: [{ kind: "projectile", sourceBehaviorId: 300000634, behaviorJudgeId: 634 }],
+        },
+        {
+          id: "blood-blade-projectile-3",
+          name: "Blood Blade (Follow-up 2 Projectile)",
+          fpCostField: "useMagicPoint_R2",
+          components: [{ kind: "projectile", sourceBehaviorId: 300000637, behaviorJudgeId: 637 }],
+        },
+      ],
+    },
+  },
+  {
     sourceGemId: 22600,
     definition: {
       id: "spectral-lance",

@@ -196,7 +196,7 @@ interface Weapon {
 
 Do not duplicate types unnecessarily.
 
-Frontend-facing API types should represent the backend API contract, not raw ERDB structures.
+Frontend-facing API types should represent the backend API contract, not raw Regulation structures.
 
 The spell catalog owns its type, school, and search state in the route. Show
 only schools compatible with the selected Sorcery or Incantation type and clear
@@ -329,7 +329,7 @@ The authenticated identity is resolved by the backend through Clerk.
 
 The frontend communicates with the application's own backend.
 
-Do not call ERDB directly from React components.
+Do not read raw game-data sources directly from React components.
 
 Preferred flow:
 
@@ -337,7 +337,7 @@ Preferred flow:
 React
   -> Backend REST API
   -> Application domain layer
-  -> ERDB-derived data / MongoDB
+  -> Regulation-derived data / MongoDB
 ```
 
 Create centralized API functions.
@@ -356,7 +356,7 @@ Avoid raw endpoint strings scattered throughout UI components.
 
 # Game Data Boundary
 
-The frontend must not depend on ERDB response structures.
+The frontend must not depend on raw Regulation structures.
 
 The backend exposes application-specific domain models.
 

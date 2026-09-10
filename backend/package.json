@@ -12,7 +12,6 @@
     "typecheck": "tsc --noEmit",
     "lint": "eslint src",
     "lint:fix": "eslint src --fix",
-    "data:import:erdb": "tsx src/scripts/importWeaponData.ts",
     "data:import:bosses": "tsx src/scripts/importRegulationBossData.ts",
     "data:import:talismans": "tsx src/scripts/importRegulationTalismanData.ts",
     "data:import:classes": "tsx src/scripts/importRegulationCharacterClassData.ts",

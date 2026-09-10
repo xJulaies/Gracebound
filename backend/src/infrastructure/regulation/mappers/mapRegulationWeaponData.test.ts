@@ -9,7 +9,7 @@ import type {
 import { mapRegulationWeapon, mapScalingCurve } from "./mapRegulationWeaponData";
 
 describe("mapScalingCurve", () => {
-  it("reconstructs ERDB's non-linear default correction graph", () => {
+  it("reconstructs the non-linear default correction graph", () => {
     const curve = mapScalingCurve(graph(0, [1, 18, 60, 80, 150], [0, 25, 75, 90, 110], [1.2, -1.2, 1, 1, 1]));
 
     expect(curve.values).toHaveLength(151);
@@ -18,7 +18,7 @@ describe("mapScalingCurve", () => {
 });
 
 describe("mapRegulationWeapon", () => {
-  it("matches the established Moonveil +10 ERDB attack rating", () => {
+  it("matches the established Moonveil +10 reference attack rating", () => {
     const dataSet = mapRegulationWeapon(9060000, "1.17.0", moonveilTables());
     const weapon = dataSet.weapons.moonveil;
 

@@ -189,7 +189,7 @@ such a route exists.
 
 # Data Source Boundary
 
-The frontend does not communicate directly with ERDB.
+The frontend does not communicate directly with raw game-data sources.
 
 The frontend consumes only the application's own backend REST API.
 
@@ -197,10 +197,10 @@ The frontend consumes only the application's own backend REST API.
 Frontend
   -> Backend API
   -> Application domain layer
-  -> ERDB-derived game data
+  -> Regulation-derived game data
 ```
 
-ERDB-specific structures must not leak into frontend feature code.
+Regulation-specific structures must not leak into frontend feature code.
 
 ---
 
@@ -365,7 +365,7 @@ Boss detail may include:
 - absorption or resistance values
 - related information available from the backend
 
-Boss defensive values should be usable by the Damage Calculator where supported by the imported ERDB-derived dataset.
+Boss defensive values should be usable by the Damage Calculator where supported by the imported Regulation-derived dataset.
 
 ---
 

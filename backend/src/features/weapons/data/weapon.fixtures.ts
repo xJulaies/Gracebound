@@ -84,8 +84,7 @@ function createCurveValues(
 }
 
 /**
- * Small, read-only reference dataset extracted from ERDB 1.10.0.
- * It proves the domain contract before a complete importer is introduced.
+ * Small, read-only Regulation reference dataset for weapon-domain tests.
  */
 export const weaponFixtures: WeaponDataSet = {
   weapons: {
@@ -93,9 +92,9 @@ export const weaponFixtures: WeaponDataSet = {
       id: "moonveil",
       sourceId: 9060000,
       name: "Moonveil",
-      gameVersion: "1.10.0",
+      gameVersion: "1.17.0",
       maxUpgradeLevel: 10,
-      reinforcementId: "erdb-2200",
+      reinforcementId: "regulation-2200",
       requirements: {
         ...noAttributes,
         strength: 12,
@@ -117,24 +116,24 @@ export const weaponFixtures: WeaponDataSet = {
       },
       corrections: {
         physical: [
-          { attribute: "strength", curveId: "erdb-0", influenceRatio: 1 },
-          { attribute: "dexterity", curveId: "erdb-0", influenceRatio: 1 },
+          { attribute: "strength", curveId: "regulation-0", influenceRatio: 1 },
+          { attribute: "dexterity", curveId: "regulation-0", influenceRatio: 1 },
         ],
         magic: [
           {
             attribute: "intelligence",
-            curveId: "erdb-4",
+            curveId: "regulation-4",
             influenceRatio: 1,
           },
         ],
         fire: [
-          { attribute: "faith", curveId: "erdb-0", influenceRatio: 1 },
+          { attribute: "faith", curveId: "regulation-0", influenceRatio: 1 },
         ],
         lightning: [
-          { attribute: "dexterity", curveId: "erdb-0", influenceRatio: 1 },
+          { attribute: "dexterity", curveId: "regulation-0", influenceRatio: 1 },
         ],
         holy: [
-          { attribute: "faith", curveId: "erdb-0", influenceRatio: 1 },
+          { attribute: "faith", curveId: "regulation-0", influenceRatio: 1 },
         ],
       },
     },
@@ -142,9 +141,9 @@ export const weaponFixtures: WeaponDataSet = {
       id: "grafted-blade-greatsword",
       sourceId: 4100000,
       name: "Grafted Blade Greatsword",
-      gameVersion: "1.10.0",
+      gameVersion: "1.17.0",
       maxUpgradeLevel: 10,
-      reinforcementId: "erdb-2200",
+      reinforcementId: "regulation-2200",
       requirements: {
         ...noAttributes,
         strength: 40,
@@ -164,34 +163,34 @@ export const weaponFixtures: WeaponDataSet = {
       },
       corrections: {
         physical: [
-          { attribute: "strength", curveId: "erdb-0", influenceRatio: 1 },
-          { attribute: "dexterity", curveId: "erdb-0", influenceRatio: 1 },
+          { attribute: "strength", curveId: "regulation-0", influenceRatio: 1 },
+          { attribute: "dexterity", curveId: "regulation-0", influenceRatio: 1 },
         ],
         magic: [
           {
             attribute: "intelligence",
-            curveId: "erdb-0",
+            curveId: "regulation-0",
             influenceRatio: 1,
           },
         ],
         fire: [
-          { attribute: "faith", curveId: "erdb-0", influenceRatio: 1 },
+          { attribute: "faith", curveId: "regulation-0", influenceRatio: 1 },
         ],
         lightning: [
-          { attribute: "dexterity", curveId: "erdb-0", influenceRatio: 1 },
+          { attribute: "dexterity", curveId: "regulation-0", influenceRatio: 1 },
         ],
         holy: [
-          { attribute: "faith", curveId: "erdb-0", influenceRatio: 1 },
+          { attribute: "faith", curveId: "regulation-0", influenceRatio: 1 },
         ],
       },
     },
   },
   reinforcements: {
-    "erdb-2200": somberReinforcement,
+    "regulation-2200": somberReinforcement,
   },
   scalingCurves: {
-    "erdb-0": {
-      id: "erdb-0",
+    "regulation-0": {
+      id: "regulation-0",
       values: createCurveValues([
         { attribute: 1, correction: 0, adjustmentToNext: 1.2 },
         { attribute: 18, correction: 0.25, adjustmentToNext: -1.2 },
@@ -200,8 +199,8 @@ export const weaponFixtures: WeaponDataSet = {
         { attribute: 150, correction: 1.1, adjustmentToNext: 1 },
       ]),
     },
-    "erdb-4": {
-      id: "erdb-4",
+    "regulation-4": {
+      id: "regulation-4",
       values: createCurveValues([
         { attribute: 1, correction: 0, adjustmentToNext: 1 },
         { attribute: 20, correction: 0.4, adjustmentToNext: 1 },

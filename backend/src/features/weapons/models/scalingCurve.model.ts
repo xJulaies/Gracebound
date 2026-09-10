@@ -3,7 +3,7 @@ import type { ScalingCurve } from "../domain/weapon.types";
 import { sourceFields } from "./gameData.schemas";
 
 export type ScalingCurveRecord = ScalingCurve & {
-  source: "ERDB" | "REGULATION";
+  source: "REGULATION";
   sourceHash?: string;
   gameVersion: string;
   importedAt: Date;

@@ -12,7 +12,6 @@ describe("parseEnvironment", () => {
       CLERK_SECRET_KEY: "sk_live_secret",
       MAX_BUILDS_PER_USER: "250",
       SUPPORTED_GAME_VERSION: "1.10.0",
-      ERDB_BASE_URL: "http://127.0.0.1:8107/v1",
     });
 
     expect(result).toEqual({
@@ -24,7 +23,6 @@ describe("parseEnvironment", () => {
       CLERK_SECRET_KEY: "sk_live_secret",
       MAX_BUILDS_PER_USER: 250,
       SUPPORTED_GAME_VERSION: "1.10.0",
-      ERDB_BASE_URL: "http://127.0.0.1:8107/v1",
     });
   });
 
@@ -40,7 +38,6 @@ describe("parseEnvironment", () => {
     expect(result.CORS_ORIGIN).toBe("http://localhost:5173");
     expect(result.MAX_BUILDS_PER_USER).toBe(100);
     expect(result.SUPPORTED_GAME_VERSION).toBe("1.17.0");
-    expect(result.ERDB_BASE_URL).toBe("http://127.0.0.1:8107/v1");
   });
 
   it.each(["not-a-number", "0", "65536"])(

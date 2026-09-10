@@ -56,7 +56,6 @@ The backend follows a feature-based controller/service/repository structure. The
 - npm
 - a MongoDB Atlas database or another compatible replica-set deployment
 - a Clerk application for authentication
-- Docker Desktop only when using the optional local ERDB fallback
 
 ## Local setup
 
@@ -83,7 +82,6 @@ CLERK_PUBLISHABLE_KEY=<your-publishable-key>
 CLERK_SECRET_KEY=<your-secret-key>
 MAX_BUILDS_PER_USER=100
 SUPPORTED_GAME_VERSION=1.17.0
-ERDB_BASE_URL=http://127.0.0.1:8107/v1
 ```
 
 Configure `frontend/.env`:
@@ -155,7 +153,7 @@ JSON endpoints use a consistent envelope:
 
 ## Game data and assets
 
-Smithbox exports from a local `regulation.bin` are the primary source for versioned game data. Import scripts validate and normalize those exports before writing to MongoDB. ERDB remains an optional comparison and fallback source for weapon data; it is not required to run the application.
+Smithbox exports from a local `regulation.bin` are the sole source for versioned game data. Import scripts validate and normalize those exports before writing to MongoDB.
 
 Useful backend commands include:
 
@@ -196,7 +194,6 @@ Backend integration tests use MongoDB Memory Server, so they do not write test d
 - [Frontend product specification](frontend/SPEC.md)
 - [Backend implementation rules](backend/AGENTS.md)
 - [Backend product specification](backend/SPEC.md)
-- [Local ERDB fallback](backend/src/infrastructure/erdb/README.md)
 
 ## Next priorities
 

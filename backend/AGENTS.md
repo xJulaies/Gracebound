@@ -77,7 +77,6 @@ src/
   infrastructure/
     database/
     auth/
-    erdb/
     regulation/
 
   shared/
@@ -372,9 +371,9 @@ names from the matching English `WeaponName.fmg` and keep the smallest possible
 version-specific mapping in code. Unnamed rows that also have no player-facing
 FMG entry remain excluded as internal data.
 
-ERDB remains an existing comparison and fallback source during migration. Do
-not remove the ERDB importer until regulation-derived weapon results have been
-tested against known reference weapons and all required mappings are covered.
+Regulation-derived weapon results are verified against known reference weapons.
+Do not introduce a secondary runtime or import data source without a concrete,
+documented requirement.
 
 The regulation weapon catalog treats a canonical player armament separately
 from its calculation variants. Standard, Heavy, Keen, Quality, Fire, Flame Art,
@@ -388,8 +387,7 @@ non-armament rows must be excluded structurally and reported by the importer.
 
 Game data should be imported or transformed through a repeatable process.
 
-The application must not read Smithbox exports or call ERDB during normal user
-requests.
+The application must not read Smithbox exports during normal user requests.
 
 The import pipeline should conceptually follow:
 
@@ -413,20 +411,6 @@ catalog may be updated, so text imports must never create DLC or raw FMG
 records. Store normalized `summary` and `description` fields on catalog
 documents, expose missing values as `null`, and keep the raw JSON outside Git.
 
-The existing weapon import uses the official ERDB API container
-`ghcr.io/eldenringdatabase/erdb-api:0.4.0` locally. The importer requests only
-`armaments`, `reinforcements`, `correction-attack`, and `correction-graph` for
-the configured game version. It must validate all four raw responses before
-mapping or connecting to MongoDB.
-
-It remains available during the controlled migration to regulation-derived
-weapon data. The container performs a precache step before serving HTTP. Import commands
-must not run until its logs report that Uvicorn is running on port `8107`.
-Operational commands and configuration belong in
-`src/infrastructure/erdb/README.md`.
-
----
-
 # Game Data Persistence
 
 Game data and user-owned application data must remain logically separated.
@@ -445,8 +429,8 @@ attackData
 
 The exact schema depends on the finalized regulation mapping.
 
-Do not store raw regulation or ERDB records if normalized application models
-are more appropriate.
+Do not store raw Regulation records if normalized application models are more
+appropriate.
 
 ## Icon assets
 
@@ -1205,7 +1189,7 @@ Before modifying the backend:
 5. Treat user-owned endpoints as protected by default.
 6. Enforce ownership server-side.
 7. Never accept client-controlled ownership as authoritative.
-8. Keep regulation and ERDB structures behind the import and mapping boundary.
+8. Keep Regulation structures behind the import and mapping boundary.
 9. Add or update tests for business-critical logic.
 10. Avoid modifying unrelated features.
 

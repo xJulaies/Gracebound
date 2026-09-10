@@ -16,7 +16,6 @@ const environmentSchema = z.object({
     .string()
     .regex(/^\d+\.\d+\.\d+$/)
     .default("1.17.0"),
-  ERDB_BASE_URL: z.url().default("http://127.0.0.1:8107/v1"),
 }).superRefine((environment, context) => {
   if (!URL.canParse(environment.CORS_ORIGIN)) {
     return;
