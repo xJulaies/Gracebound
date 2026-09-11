@@ -1,6 +1,6 @@
 # Elden Ring Companion — Frontend Specification
 
-Version: 0.3
+Version: 1.0
 
 ---
 
@@ -18,6 +18,25 @@ Its primary product pillars are:
 2. Build Planner
 3. Damage Calculator
 4. Public and Private User Builds
+
+## Current implementation baseline
+
+The frontend currently implements the public home, combined equipment catalog,
+spell catalog, boss catalog and boss details, public builds and build details,
+authenticated build creation/editing/duplication/deletion, legal pages, and the
+authenticated Damage Trial. `/weapons` remains a compatibility redirect to the
+Armaments category of `/equipment`.
+
+The build editor supports character class and attributes, six weapon slots with
+variants/upgrades/Ashes, armor, talismans, spells and catalyst, Great Rune,
+Crystal Tears, buffs, backend-calculated stats, explicit persistence, and dirty-
+state protection. The Damage Trial consumes saved builds, validates actions
+through the backend, supports boss phases and effect toggles, and keeps its
+health/log/undo/reset state in memory only.
+
+The UI is mobile-first and progressively enhances into wider multi-column
+workspaces. The frontend depends only on Gracebound's REST contract and asset
+URLs; it contains no Regulation parsing or damage formulas.
 
 ---
 
@@ -92,25 +111,15 @@ Primary users are Elden Ring players who want to:
 
 # Core Navigation
 
-Initial navigation:
+Current primary navigation:
 
 ```text
 Home
-
-Compendium
-  Armaments
-  Armor
-  Talismans
-  Bosses
-
+Equipment
+Spells
+Bosses
 Builds
-  Public Builds
-  My Builds
-  Create Build
-
 Damage Calculator
-
-Account
 ```
 
 ## Public Layout
@@ -120,15 +129,22 @@ route. The root route remains UI-neutral and renders only its child outlet. The
 public layout surrounds its outlet with the shared public header, navigation,
 and footer without adding a URL segment.
 
-Initial route hierarchy:
+Current route hierarchy:
 
 ```text
 rootRoute
 └── publicLayoutRoute
     ├── indexRoute
+    ├── equipmentRoute
     ├── weaponsRoute
+    ├── spellsRoute
     ├── bossesRoute
+    ├── bossDetailsRoute
     ├── buildsRoute
+    ├── publicBuildDetailsRoute
+    ├── createBuildRoute
+    ├── myBuildsRoute
+    ├── editBuildRoute
     ├── damageCalculatorRoute
     ├── imprintRoute
     └── privacyRoute
@@ -152,7 +168,7 @@ toggle remains directly accessible in the header, while navigation links and
 authentication controls are available inside the drawer. The drawer opens from
 the right and must:
 
-- show the public Home, Armaments, Bosses, Builds, and Damage Calculator links
+- show the public Home, Equipment, Spells, Bosses, Builds, and Damage Calculator links
 - preserve the active-route indication
 - close after route selection
 - close through its explicit close button, backdrop interaction, or Escape
@@ -204,15 +220,16 @@ Regulation-specific structures must not leak into frontend feature code.
 
 ---
 
-# MVP
+# Current Product Scope
 
 ## Compendium
 
-The MVP contains:
+The public catalog contains:
 
 - Armaments
 - Armor
 - Talismans
+- Spells
 - Bosses
 
 Each category should provide:
@@ -222,7 +239,7 @@ Each category should provide:
 - filtering
 - sorting where useful
 - pagination where useful
-- detail page
+- accessible detail view or dedicated detail page, according to feature scope
 
 ---
 
@@ -253,7 +270,7 @@ Exact fields depend on the normalized backend domain model.
 The public navigation exposes one `Equipment` destination at `/equipment`
 instead of separate top-level destinations for armaments, armor, and talismans.
 The legacy `/weapons` path redirects to the Armaments category so existing
-links remain useful. The catalog is implemented incrementally:
+links remain useful. The catalog is implemented through these interaction layers:
 
 1. establish the route, navigation, responsive header, and URL-owned category
    and search state;
@@ -268,7 +285,7 @@ links remain useful. The catalog is implemented incrementally:
    manual load-more control; category-specific filters and sorting follow as
    separate increments.
 
-The initial categories are `All`, `Armaments`, `Armor`, and `Talismans`.
+The current categories are `All`, `Armaments`, `Armor`, and `Talismans`.
 Category and search values remain shareable URL search parameters, for example
 `/equipment?category=talismans&search=claw`. The unified page coordinates the
 three existing backend resources without replacing their domain types or REST
@@ -332,7 +349,9 @@ Talisman overview should provide:
 - description or effect summary
 - relevant effect information
 
-Talisman damage modifiers are not required for the initial damage-calculator MVP.
+Supported talisman modifiers are applied by backend build-stat and damage
+calculations. The frontend displays their effects and calculation status but
+does not reproduce their formulas.
 
 ---
 
@@ -451,7 +470,10 @@ Potential character stats:
 - Faith
 - Arcane
 
-Build inputs must be validated with Zod.
+Build inputs must be validated at runtime with feature-owned Zod schemas and
+managed with TanStack Form where persisted form complexity requires it. The
+backend validates the complete write and calculation contract authoritatively;
+frontend validation does not replace that security boundary.
 
 ## Build Editor MVP Contract
 
@@ -479,7 +501,7 @@ Rules:
 - Resource, defense, resistance, and item-discovery values come from the backend calculation response.
 - Softcap behavior comes from imported game progression and scaling curves.
 - The frontend must not reproduce level, resource, protection, weapon-scaling, or softcap formulas.
-- A future softcap hint may compare backend-calculated outcomes for adjacent values; it must remain explanatory and must not become a second calculation authority.
+- A softcap hint may compare backend-calculated outcomes for adjacent values; it must remain explanatory and must not become a second calculation authority.
 
 Performance behavior:
 
@@ -577,15 +599,16 @@ Defense, and Resistances. Only the selected detail view is rendered so the
 right-hand region remains scannable instead of becoming one long status list.
 The inspector may become sticky below the public navigation on wide screens,
 but should avoid an unnecessary nested scrollbar.
-Selecting or editing an equipped weapon makes it the focused weapon without
-changing the loadout. Focus is UI state separate from saved equipment state;
-the same interaction can later be extended to an equipped catalyst and spell
-without introducing a universal abstraction before it is needed.
+Selecting or editing an equipped weapon or spell makes it the focused offense
+entry without changing the loadout. Focus is UI state separate from saved
+equipment state. Spell previews use the active equipped catalyst and remain
+unavailable when no compatible catalyst is selected.
 
-Narrow viewports use task-focused tabs instead of compressing the complete
-desktop workspace. The initial mobile sections are Character, Equipment,
-Spells, Buffs, and Results. A compact result summary may remain accessible
-while moving between tabs, but it must not obscure the active controls.
+Narrow viewports use the three task-focused Leveling, Equipment, and Status
+tabs instead of compressing the complete desktop workspace. Equipment owns the
+loadout, spell, and buff selections; Status owns calculated results. A compact
+result summary may remain accessible while moving between tabs, but it must not
+obscure the active controls.
 The compact Build Editor tabs follow the ARIA automatic-activation pattern.
 Only the active tab participates in the normal Tab sequence; Arrow Left/Right
 wrap between tabs, while Home and End select the first and last tab. Every tab
@@ -714,7 +737,7 @@ Public builds should support:
 
 Ratings, comments, and social features are stretch goals.
 
-The initial `/builds` overview is implemented as two responsive sections:
+The `/builds` overview is implemented as two responsive sections:
 
 - a Clerk-aware creation callout that offers sign-in to anonymous visitors
 - a public build gallery backed by `GET /api/builds`
@@ -730,10 +753,10 @@ record through the authenticated create endpoint; anonymous users receive the
 Clerk sign-in action first. Owner identity remains absent until a dedicated
 public owner-display contract exists.
 
-The dedicated `/builds/new` route is the authenticated entry into build
-creation. Anonymous visitors receive a Clerk sign-in prompt; authenticated
-users begin with the existing character-class selector. The attribute editor
-and build persistence remain later vertical increments on this route.
+The dedicated `/builds/new` route is the authenticated entry into the complete
+build editor. Anonymous visitors receive a Clerk sign-in prompt; authenticated
+users choose a character class, configure the loadout, preview calculated
+stats, and explicitly save the build.
 
 Authenticated users reach their personal build collection at `/my-builds`,
 presented as **Tarnished Records** rather than a generic analytics dashboard.
@@ -758,9 +781,9 @@ unavailable state instead of silently substituting another item.
 
 The Damage Calculator is one of the primary technical features of the application.
 
-Anonymous users may use the calculator with manually selected values.
-
-Authenticated users may additionally load data from one of their saved builds.
+The current Damage Trial is authenticated and operates on saved builds. The
+general backend calculation endpoint also supports manual requests, but the
+frontend does not currently expose a separate anonymous manual calculator.
 
 Users should be able to select:
 
@@ -853,7 +876,7 @@ The UI should clearly distinguish:
 
 # Damage Calculation Scope
 
-The frontend should support the MVP calculation pipeline:
+The frontend supports this calculation pipeline:
 
 ```text
 Weapon
@@ -865,7 +888,7 @@ Weapon
 -> Estimated Damage Per Hit
 ```
 
-Not required for MVP:
+Outside the current calculation contract:
 
 - DPS
 - complete combo simulation
@@ -911,7 +934,12 @@ Protected queries must also handle unauthenticated and forbidden states.
 
 # Forms
 
-Use TanStack Form and Zod for complex forms.
+Use TanStack Form for complex persisted forms and feature-owned Zod schemas for
+runtime validation. Zod currently protects build metadata, draft hydration,
+outbound writes and calculations, catalog URL state, environment input, and
+untrusted API responses. The build editor's persisted form state still uses
+manual React state and must be migrated to TanStack Form without coupling
+transient picker, tab, dialog, or focus state to the persisted form model.
 
 Primary forms include:
 
@@ -928,7 +956,8 @@ Do not introduce Redux or Zustand by default.
 Use:
 - TanStack Query for server state
 - TanStack Router for URL state
-- TanStack Form for form state
+- TanStack Form for persisted form state
+- Zod for runtime parsing and validation
 - React state for local UI state
 
 ---
@@ -986,11 +1015,11 @@ Usability is more important than visual imitation.
 
 The public navbar uses the privately stored Gracebound wordmark through the
 backend branding-asset endpoint. The source and generated logo files are not
-committed to the frontend repository. The experimental home hero is currently
-rendered as a full-width responsive image section. It uses a compact portrait
+committed to the frontend repository. The home hero is rendered as a full-width
+responsive image section. It uses a compact portrait
 derivative on narrow viewports and a separately prepared 2048x1152 asset from the
 `gracebound-hero-desktop` endpoint on wider viewports. The artwork itself has no
-interactive responsibility; semantic content and the future call to action
+interactive responsibility; semantic content and the build call to action
 remain separate HTML components.
 
 The full-page Grace and Night backgrounds are private MongoDB branding assets.
@@ -1104,9 +1133,9 @@ The mathematical damage engine is tested in the backend.
 
 ---
 
-# Out of Scope for MVP
+# Current Out of Scope
 
-Not required initially:
+Not part of the current contract:
 
 - comments
 - ratings

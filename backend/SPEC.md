@@ -1,6 +1,6 @@
 # Elden Ring Companion — Backend Specification
 
-Version: 0.5
+Version: 1.0
 
 ---
 
@@ -99,6 +99,25 @@ The backend provides two distinct calculation results:
 
 Both calculations use backend domain logic. The frontend visualizes the results
 but does not reproduce or replace the formulas.
+
+## Current implementation baseline
+
+The active application contract targets Elden Ring `1.17.0` and uses Regulation
+exports as its sole game-data source. The imported baseline contains 487
+weapons, 3,343 variants, 11,748 direct attack profiles for 336 melee weapons,
+586 armor pieces, 116 talismans, 171 spells, 116 Ashes of War, 177 boss combat
+profiles, seven Great Runes, and 32 Crystal Tears.
+
+Catalog support is explicit rather than implied: 45 spells, 29 Ashes of War,
+114 talismans, three Great Runes, and 22 Crystal Tears are calculation-supported.
+Every other record in those catalogs is returned as `catalog-only` and must be
+rejected by calculations that require a verified effect.
+
+Implemented public APIs cover all catalogs, public builds, build-stat previews,
+general damage calculations, and binary assets. Authenticated `/api/me/builds`
+routes provide owner-scoped CRUD and saved-build damage trials. Calculated
+results and trial history are transient; build documents store selections, not
+derived output.
 
 ---
 
@@ -211,19 +230,32 @@ dataset and never access the source exports.
 
 # Game Data Collections
 
-Potential collections:
+The current normalized collections are:
 
 ```text
 weapons
+weaponVariants
 armor
 talismans
 bosses
+spells
+ashesOfWar
+greatRunes
+crystalTears
+characterClasses
+characterProgression
 scalingCurves
 reinforcementData
-attackData
+iconassets
+uiAssets
+characterclassimageassets
+brandingimageassets
+bossimageassets
 ```
 
-Collection structure follows the normalized Regulation mapping.
+Verified direct attacks and fixed skills are embedded in canonical weapon
+documents rather than stored in a separate attack collection. Interchangeable
+Ashes of War use their own catalog.
 
 Game data and user-owned application data should remain logically separated.
 
@@ -353,8 +385,8 @@ Radagon's Scarseal, Radagon's Soreseal, Marika's Scarseal, and Marika's
 Soreseal extend the same permanent group. Their complete catalog effects retain
 all eight attribute bonuses and their Regulation-derived incoming-damage
 multipliers. The outgoing weapon calculator applies the five weapon-scaling
-attributes; Vigor, Mind, Endurance, and incoming damage remain available as
-normalized effect metadata for later player-defense calculations.
+attributes; build-stat calculations also consume the complete attribute and
+incoming-damage metadata for resources, defenses, and absorptions.
 
 Magic, Lightning, Fire, and Sacred Scorpion Charm form the first permanent
 damage-multiplier group. Their Regulation PvE values apply +12% only to the
@@ -379,8 +411,8 @@ for build defense calculations; they do not change outgoing boss damage.
 
 The three base-game tiers of Crimson, Cerulean, and Viridian Amber Medallions,
 Arsenal Charm including Great-Jar's Arsenal, and Erdtree's Favor expose their
-permanent maximum HP, FP, stamina, and equip-load multipliers. Absolute resource
-values remain a later build-stat calculation concern.
+permanent maximum HP, FP, stamina, and equip-load multipliers. Build-stat
+calculations apply them to the backend-owned character resource curves.
 
 Stalwart, Immunizing, and Clarifying Horn Charms, both Prince of Death variants,
 and both Mottled Necklaces expose their permanent Regulation point bonuses for
@@ -388,8 +420,8 @@ poison, rot, bleed, frost, sleep, madness, and death blight separately.
 
 Graven-School and Graven-Mass expose sorcery-only damage multipliers. Faithful's
 Canvas and Flock's Canvas expose incantation-only damage multipliers. These
-scopes are retained for the later spell calculator and do not modify weapon or
-Ash-of-War damage.
+scopes are consumed by matching spell-damage requests and do not modify weapon
+or Ash-of-War damage.
 
 Silver and Gold Scarabs, Moon of Nokstella, Green Turtle Talisman, Bull-Goat's
 Talisman, and Carian Filigreed Crest expose their permanent utility values for
@@ -482,7 +514,9 @@ Item Discovery uses `CalcCorrectGraph` 140 at effective Arcane. Convert its
 factor to displayed points by multiplying by 100 and flooring, then add flat
 equipment bonuses such as Silver Scarab's 75 points.
 
-Talisman modifiers are not required to affect the initial damage-calculation MVP.
+Every supported talisman modifier must remain typed and may be applied only
+when the selected server-owned action or build-stat calculation proves its
+scope. Catalog-only talismans are rejected by calculations.
 
 ---
 
@@ -645,15 +679,17 @@ client-authored rules table.
 
 # Equipment
 
-Initial build equipment includes:
+Persisted build equipment includes:
 
-- primary weapon
-- weapon upgrade level
-- selected Ash of War where the weapon supports one
-- armor
-- talismans
-
-Additional slots may be introduced if required.
+- six weapon slots with canonical weapon, calculation variant, upgrade level,
+  and an optional compatible Ash of War
+- one active catalyst and an optional catalyst-scaled weapon buff
+- four armor slots
+- up to four unique talismans
+- up to twelve unique spells and the acquired Memory Stone count
+- one Great Rune
+- up to two unique Crystal Tears
+- up to one Aura and one Body buff spell
 
 Selecting equipment and applying its calculation effects are separate concerns.
 A talisman or armor item may be stored in a build before every special effect is
@@ -767,10 +803,10 @@ Lightning Spear exposes 360/285/122 lightning profiles for spear impact,
 secondary strike, and repeated wave. Fortissax's Lightning Spear exposes two
 sets: 367/288/122 and 374/292/123 lightning. Repeated Bullet rows are not
 multiplied into guaranteed totals. Internal `Light Spear` names are normalized
-to their player-facing `Lightning Spear` names. Thirty-four spells are
-supported and 137 remain `catalog-only`.
+to their player-facing `Lightning Spear` names. Forty-five spells are supported
+and 126 remain `catalog-only`.
 
-The initial buff catalog supports Golden Vow (aura, 80 seconds, ×1.15 all
+The buff catalog supports Golden Vow (aura, 80 seconds, ×1.15 all
 outgoing PvE damage) and Flame Grant Me Strength (body, 30 seconds, ×1.20
 physical/fire). `buffSpellIds` accepts at most one buff per slot and combines
 these two multiplicatively with existing talisman and armor modifiers.
@@ -1097,7 +1133,7 @@ ownerId = authenticatedUserId
 
 # Offensive Output and Damage API
 
-Initial endpoint:
+Public endpoint:
 
 ```text
 POST /api/damage/calculate
@@ -1145,12 +1181,13 @@ returns offensive output without a boss-specific damage result.
 
 For normal weapon attacks, `attackId` resolves an imported Regulation attack
 profile. Motion values and physical attack type are server-owned values and are
-not accepted from normal weapon requests. The verified direct-melee slice covers
+not accepted from normal weapon requests. The verified direct-attack slice covers
 29 motion categories with their available one- and two-handed light chains,
 heavy and charged-heavy attacks, running, rolling and backstep attacks, guard
-counters, and offhand light chains. Regulation 1.17.0 maps 9,810 attack profiles
-to 318 melee weapons. Ambiguous jump, critical, mounted, projectile, spell, and
-special behaviors remain excluded until separately verified.
+counters, offhand light chains, and separately verified special actions.
+Regulation 1.17.0 maps 11,748 attack profiles to 336 melee weapons. Unverified
+mounted, projectile, spell, and exceptional behaviors remain excluded until
+separately verified.
 Weapon-specific direct behaviors override the motion-category fallback when the
 weapon's `behaviorVariationId` defines the same verified attack.
 
@@ -1167,20 +1204,21 @@ weapon; interchangeable skills are selected through the standalone Ash-of-War
 catalog.
 
 The standalone Ash-of-War catalog contains all 116 playable Regulation 1.17.0
-`EquipParamGem` rows. It stores compatible weapon types and affinities. Twenty
-entries are currently `supported`. Thirteen expose verified damage actions:
-Square Off, Flame of the Redmanes, Lion's
-Claw, Impaling Thrust, Piercing Fang, Stamp (Upward Cut), Stamp (Sweep), and
-Giant Hunt, Wild Strikes, Charge Forth, Unsheathe, Prayerful Strike, and
-Thunderbolt. Wild Strikes stores
+`EquipParamGem` rows. It stores compatible weapon types and affinities.
+Twenty-nine entries are currently `supported`. Twenty-two expose verified
+damage actions: Square Off, Flame of the Redmanes, Lion's Claw, Impaling
+Thrust, Piercing Fang, Stamp (Upward Cut), Stamp (Sweep), Giant Hunt, Wild
+Strikes, Charge Forth, Unsheathe, Prayerful Strike, Thunderbolt, Black Flame
+Tornado, Spectral Lance, Storm Stomp, Storm Blade, Beast's Roar, Vacuum Slice,
+Ice Spear, Glintstone Pebble, and Blood Blade. Wild Strikes stores
 separate profiles for each compatible weapon type so the backend resolves the
 correct class-specific motion values. Prayerful Strike damage is supported with
 its Regulation 235 motion value and 20 FP cost, resolving the inherited physical
 attack type per compatible weapon class; its healing remains an explicit
 stateless-calculator limitation. Thunderbolt follows Behavior 300000350 through
 Bullet 2080 to AtkParam 301600840 and exposes 120 added lightning damage at a 10
-FP cost. The remaining entries are `catalog-only`
-until their damage components or buff effects are verified. Seven additional
+FP cost. The remaining 87 entries are `catalog-only` until their damage
+components or buff effects are verified. Seven additional
 entries expose verified buff effects: Sacred Blade (+90 holy, 40 seconds),
 Flaming Strike (+90 fire, 40 seconds), Lightning Slash (+85 lightning, 40
 seconds), Determination (×1.60 next hit within 10 seconds), Royal Knight's
@@ -1189,7 +1227,7 @@ buildup, 60 seconds), and Cragblade (×1.15 physical attack power and ×1.10 poi
 damage, 60 seconds). Seppuku self-damage and Sacred Blade's anti-undead behavior
 remain explicit limitations. Public routes are:
 
-The completed MVP Ash-of-War calculation scope is:
+The current Ash-of-War calculation scope is:
 
 | Ash of War | Supported actions |
 | --- | --- |
@@ -1204,10 +1242,21 @@ The completed MVP Ash-of-War calculation scope is:
 | Wild Strikes | both loop hits and both complete follow-ups for all nine compatible weapon types |
 | Charge Forth | full sequence and early-release sequence |
 | Unsheathe | light and heavy follow-up |
+| Prayerful Strike | class-specific weapon hit; healing excluded |
+| Thunderbolt | projectile |
+| Black Flame Tornado | normal and fully charged sequences |
+| Spectral Lance | projectile |
+| Storm Stomp | projectile shockwave |
+| Storm Blade | initial and two follow-up projectile/weapon-hit actions |
+| Beast's Roar | projectile and adjacent shockwave |
+| Vacuum Slice | projectile and class-specific weapon hit |
+| Ice Spear | projectile |
+| Glintstone Pebble | projectile |
+| Blood Blade | initial projectile and two projectile follow-ups |
 
 This list refers only to interchangeable Ashes in the standalone catalog.
 Transient Moonlight is a completed fixed Moonveil skill and is not counted
-among these eleven Ashes.
+among these twenty-two Ashes.
 
 ```text
 GET /api/ashes-of-war
@@ -1289,7 +1338,7 @@ does not infer total hit counts or duration.
 
 Damage calculations are backend domain logic.
 
-Initial pipeline:
+Current pipeline:
 
 ```text
 Weapon Data
@@ -1303,7 +1352,7 @@ Weapon Data
   -> Optional estimated boss damage
 ```
 
-Initial damage types:
+Supported damage types:
 
 - physical
 - magic
@@ -1345,7 +1394,7 @@ Known unsupported mechanics must be documented explicitly.
 
 ---
 
-# Damage MVP Scope
+# Current Damage Scope
 
 Included:
 
@@ -1368,7 +1417,10 @@ Included:
 - lightning damage
 - holy damage
 - selected regulation-verified Ash of War damage
+- selected regulation-verified spell damage
 - multi-component skill attacks such as a weapon hit plus projectile
+- supported armor, talisman, Great Rune, Crystal Tear, spell-buff, and
+  Ash-of-War-buff effects when their required state is available
 
 ---
 
@@ -1383,11 +1435,12 @@ otherwise:
 - poison and other status proc damage
 - frost proc damage
 - complete status-effect system
-- full buff system
+- complete buff and runtime-state simulation
 - PvP-specific calculations
-- damage for the 137 `catalog-only` spells
-- the 96 `catalog-only` Ashes of War and unverified fixed weapon skills
-- complete talisman damage modifiers
+- damage for the 126 `catalog-only` spells
+- the 87 `catalog-only` Ashes of War and unverified fixed weapon skills
+- conditional talisman activation without validated HP, event, critical, kill,
+  or successive-hit state
 
 ---
 
@@ -1437,6 +1490,7 @@ GET  /api/assets/icons/:iconId
 GET  /api/assets/character-classes/:classId
 GET  /api/assets/ui/:assetId
 GET  /api/assets/branding/:assetId
+GET  /api/assets/bosses/:bossId
 ```
 
 Protected authenticated-user routes:
@@ -1475,12 +1529,11 @@ Before a complete catalog becomes a demonstrated performance problem, do not
 add speculative pagination abstractions. If pagination is introduced, preserve
 the array response contract and expose the total through `X-Total-Count`.
 
-Future query capabilities may include:
+Additional route-specific query capabilities may include:
 
-- pagination
-- search
-- filtering
-- sorting
+- extending pagination to catalogs that currently return complete arrays
+- extending search and filtering to additional catalogs
+- stable sorting options beyond the current documented orders
 
 Large datasets should not be sent completely to the client when unnecessary.
 
@@ -1615,7 +1668,7 @@ Required configuration should be validated during startup.
 
 ---
 
-# Out of Scope for MVP
+# Current Out of Scope
 
 Not required:
 

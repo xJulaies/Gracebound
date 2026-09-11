@@ -1,5 +1,7 @@
 import { apiRequest } from "../../../shared/api/apiClient";
 import { resolveApiAssetUrl } from "../../../shared/api/resolveApiAssetUrl";
+import { identifierSchema } from "../../../shared/schemas/game.schemas";
+import { talismanQuerySchema, talismanSchema } from "../schemas/talisman.schemas";
 import type { Talisman } from "../types/talisman.types";
 
 export interface TalismanQuery {
@@ -10,15 +12,18 @@ export interface TalismanQuery {
 }
 
 export async function getTalismans(query: TalismanQuery = {}) {
+  const validatedQuery = talismanQuerySchema.parse(query);
   const parameters = new URLSearchParams();
-  if (query.search) parameters.set("search", query.search);
-  if (query.page !== undefined) parameters.set("page", String(query.page));
-  if (query.limit !== undefined) parameters.set("limit", String(query.limit));
-  if (query.calculationStatus) {
-    parameters.set("calculationStatus", query.calculationStatus);
+  if (validatedQuery.search) parameters.set("search", validatedQuery.search);
+  if (validatedQuery.page !== undefined) parameters.set("page", String(validatedQuery.page));
+  if (validatedQuery.limit !== undefined) parameters.set("limit", String(validatedQuery.limit));
+  if (validatedQuery.calculationStatus) {
+    parameters.set("calculationStatus", validatedQuery.calculationStatus);
   }
   const suffix = parameters.size > 0 ? `?${parameters.toString()}` : "";
-  const response = await apiRequest<Talisman>(`/talismans${suffix}`);
+  const response = await apiRequest<Talisman>(`/talismans${suffix}`, {
+    responseSchema: talismanSchema,
+  });
 
   return {
     ...response,
@@ -30,7 +35,10 @@ export async function getTalismans(query: TalismanQuery = {}) {
 }
 
 export async function getTalisman(talismanId: string) {
-  const response = await apiRequest<Talisman>(`/talismans/${encodeURIComponent(talismanId)}`);
+  const validatedId = identifierSchema.parse(talismanId);
+  const response = await apiRequest<Talisman>(`/talismans/${encodeURIComponent(validatedId)}`, {
+    responseSchema: talismanSchema,
+  });
   return {
     ...response,
     data: response.data.map((talisman) => ({

@@ -1,5 +1,6 @@
 import { apiRequest } from "../../../shared/api/apiClient";
 import { resolveApiAssetUrl } from "../../../shared/api/resolveApiAssetUrl";
+import { characterClassSchema } from "../schemas/characterClass.schemas";
 import type { CharacterClass } from "../types/characterClass.types";
 
 type CharacterClassApiResponse = Omit<CharacterClass, "imageUrl"> & {
@@ -9,6 +10,7 @@ type CharacterClassApiResponse = Omit<CharacterClass, "imageUrl"> & {
 export async function getCharacterClasses() {
   const response = await apiRequest<CharacterClassApiResponse>(
     "/character-classes",
+    { responseSchema: characterClassSchema },
   );
 
   return {

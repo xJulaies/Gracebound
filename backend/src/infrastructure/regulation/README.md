@@ -25,24 +25,25 @@ AttackElementCorrect, and CalcCorrectGraph data with a Regulation base value of
 mapped and can select the correct component.
 
 The weapon import also reads `BehaviorParam_PC.csv` and `AtkParam_Pc.csv` for
-the explicitly verified direct-melee slice. Version 1.17.0 maps 9,810 attack
-profiles to 318 weapons across 29 motion categories. Jump, critical, mounted,
-projectile, spell, and special behaviors remain excluded until their animation
-mappings and calculation rules are separately verified.
+the explicitly verified direct-attack slice. Version 1.17.0 maps 11,748 attack
+profiles to 336 melee weapons across 29 motion categories. Unverified mounted,
+projectile, spell, and exceptional behaviors remain excluded until their
+animation mappings and calculation rules are separately verified.
 Weapon-specific direct behaviors, such as altered heavy attacks, replace the
 class fallback when the weapon's `behaviorVariationId` supplies one.
 
 The importer also reads `SwordArtsParam.csv`, `Bullet.csv`, and
-`FinalDamageRateParam.csv`. The first persisted skill slice maps both Transient
-Moonlight attacks into separate projectile and weapon-hit components.
+`FinalDamageRateParam.csv`. Fixed and interchangeable skill profiles map
+verified attacks into separate projectile and weapon-hit components while
+retaining their own FP costs and final-damage rates.
 
 The generic mapper is additionally verified against pure weapon-hit, pure
-projectile, mixed, and weapon-class-dependent definitions. Nineteen standalone
+projectile, mixed, and weapon-class-dependent definitions. Twenty-two standalone
 Ashes currently have verified damage profiles: Square Off, Flame of the
 Redmanes, Lion's Claw, Impaling Thrust, Piercing Fang, Stamp (Upward Cut), Stamp
 (Sweep), Giant Hunt, Wild Strikes, Charge Forth, Unsheathe, Prayerful Strike,
 Thunderbolt, Black Flame Tornado, Spectral Lance, Storm Stomp, Storm Blade,
-Beast's Roar, and Vacuum Slice. Wild Strikes
+Beast's Roar, Vacuum Slice, Ice Spear, Glintstone Pebble, and Blood Blade. Wild Strikes
 keeps separate Regulation-derived skill profiles for all nine compatible weapon
 types. Prayerful Strike retains class-specific physical attack types; its
 healing effect remains outside the stateless damage calculation. Thunderbolt is
@@ -55,8 +56,8 @@ calculation.
 Regulation 1.17.0 contributes 116 playable Ash-of-War rows. Every entry exposes
 weapon-type and affinity compatibility. Unverified entries are imported as
 `catalog-only` with no damage or buff profile; only `supported` entries may be
-used by the damage endpoint. Twenty-six are supported: nineteen damage profiles and
-seven verified weapon-buff profiles. Buff values come from their named
+used by the damage endpoint. Twenty-nine are supported: twenty-two damage
+profiles and seven verified weapon-buff profiles. Buff values come from their named
 `SpEffectParam` rows, including duration, next-hit consumption, attack-power and
 outgoing multipliers, flat added damage, status buildup, and poise damage.
 
@@ -196,6 +197,7 @@ The import transaction replaces only the selected game version in:
 - `weaponVariants`
 - `reinforcementData`
 - `scalingCurves`
+- `ashesOfWar`
 
 All records store the game version, SHA-256 hash of `regulation.bin`, import
 timestamp, and `REGULATION` source marker. A failed write rolls back every

@@ -53,6 +53,33 @@ describe("getDamageTrialActionOptions", () => {
 
     expect(options.some(({ group }) => group === "spell")).toBe(false);
   });
+
+  it("keeps valid weapon actions when one saved spell cannot be loaded", async () => {
+    vi.mocked(getSpell).mockRejectedValueOnce(new Error("Invalid spell response"));
+
+    const options = await getDamageTrialActionOptions(build);
+
+    expect(options.some(({ group }) => group === "armament")).toBe(true);
+    expect(options.some(({ group }) => group === "spell")).toBe(false);
+  });
+
+  it("keeps base weapon attacks when the selected Ash of War cannot be loaded", async () => {
+    vi.mocked(getAshOfWar).mockRejectedValueOnce(new Error("Invalid Ash response"));
+
+    const options = await getDamageTrialActionOptions(build);
+
+    expect(options.some(({ action }) => action.kind === "weapon-attack")).toBe(true);
+    expect(options.some(({ action }) => action.kind === "weapon-skill")).toBe(false);
+  });
+
+  it("reports an error when no saved combat source can be loaded", async () => {
+    vi.mocked(getWeapon).mockRejectedValue(new Error("Invalid weapon response"));
+    vi.mocked(getSpell).mockRejectedValue(new Error("Invalid spell response"));
+
+    await expect(getDamageTrialActionOptions(build)).rejects.toThrow(
+      "Invalid weapon response",
+    );
+  });
 });
 
 const weapon = {

@@ -1,4 +1,5 @@
 import { API_URL } from "../config/environment";
+import { z } from "zod";
 
 export interface ApiResponse<T> {
   status: number;
@@ -9,9 +10,10 @@ export interface ApiResponse<T> {
 
 type GetToken = () => Promise<string | null>;
 
-interface ApiRequestOptions extends Omit<RequestInit, "headers"> {
+interface ApiRequestOptions<T> extends Omit<RequestInit, "headers"> {
   getToken?: GetToken;
   headers?: Record<string, string>;
+  responseSchema?: z.ZodType<T>;
 }
 
 export class ApiError extends Error {
@@ -24,11 +26,27 @@ export class ApiError extends Error {
   }
 }
 
-export async function apiRequest<T>(
+export class ApiResponseValidationError extends Error {
+  constructor(public readonly issues: z.ZodError["issues"]) {
+    const firstIssue = issues[0];
+    const detail = firstIssue
+      ? ` ${firstIssue.path.join(".") || "response"}: ${firstIssue.message}`
+      : "";
+    super(`The server returned an invalid response.${detail}`);
+    this.name = "ApiResponseValidationError";
+  }
+}
+
+export async function apiRequest<T = unknown>(
   path: string,
-  options: ApiRequestOptions = {},
+  options: ApiRequestOptions<T> = {},
 ): Promise<ApiResponse<T>> {
-  const { getToken, headers: additionalHeaders, ...requestOptions } = options;
+  const {
+    getToken,
+    headers: additionalHeaders,
+    responseSchema,
+    ...requestOptions
+  } = options;
   const token = await getToken?.();
   const headers = new Headers(additionalHeaders);
 
@@ -44,7 +62,20 @@ export async function apiRequest<T>(
     ...requestOptions,
     headers,
   });
-  const body = (await response.json()) as ApiResponse<T>;
+  const rawBody: unknown = await response.json();
+  const itemSchema: z.ZodType<T> = responseSchema ?? z.custom<T>();
+  const envelopeSchema = z.strictObject({
+    status: z.number().int(),
+    message: z.string(),
+    data: z.array(itemSchema),
+  });
+  const parsedBody = envelopeSchema.safeParse(rawBody);
+
+  if (!parsedBody.success) {
+    throw new ApiResponseValidationError(parsedBody.error.issues);
+  }
+
+  const body = parsedBody.data;
 
   if (!response.ok) {
     throw new ApiError(response.status, body.message || "Request failed");

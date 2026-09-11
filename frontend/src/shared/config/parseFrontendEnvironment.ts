@@ -1,3 +1,5 @@
+import { z } from "zod";
+
 const DEFAULT_API_URL = "http://localhost:3000/api";
 
 interface FrontendEnvironmentInput {
@@ -14,46 +16,52 @@ export function parseFrontendEnvironment(
   mode: string,
 ): FrontendEnvironment {
   const isProduction = mode === "production";
-  const apiUrlInput = readOptionalString(input.VITE_API_URL);
-  const clerkPublishableKey = readOptionalString(
-    input.VITE_CLERK_PUBLISHABLE_KEY,
-  ) ?? null;
-  const invalidFields: string[] = [];
+  const schema = createFrontendEnvironmentSchema(isProduction);
+  const result = schema.safeParse(input);
 
-  if (isProduction && !apiUrlInput) {
-    invalidFields.push("VITE_API_URL");
-  }
-
-  const apiUrl = validateApiUrl(apiUrlInput || DEFAULT_API_URL, isProduction);
-  if (!apiUrl) invalidFields.push("VITE_API_URL");
-
-  if (clerkPublishableKey && !clerkPublishableKey.startsWith("pk_")) {
-    invalidFields.push("VITE_CLERK_PUBLISHABLE_KEY");
-  } else if (isProduction && !clerkPublishableKey?.startsWith("pk_live_")) {
-    invalidFields.push("VITE_CLERK_PUBLISHABLE_KEY");
-  }
-
-  const uniqueInvalidFields = [...new Set(invalidFields)];
-  if (uniqueInvalidFields.length > 0 || !apiUrl) {
+  if (!result.success) {
+    const invalidFields = [...new Set(result.error.issues.map(
+      ({ path }) => String(path[0] ?? "environment"),
+    ))];
     throw new Error(
-      `Invalid frontend environment configuration: ${uniqueInvalidFields.join(", ")}`,
+      `Invalid frontend environment configuration: ${invalidFields.join(", ")}`,
     );
   }
 
-  return {
-    apiUrl,
-    clerkPublishableKey,
-  };
+  return result.data;
 }
 
-function validateApiUrl(value: string, requireHttps: boolean): string | null {
+const optionalTrimmedStringSchema = z.preprocess(
+  (value) => typeof value === "string" ? value.trim() || undefined : undefined,
+  z.string().optional(),
+);
+
+function createFrontendEnvironmentSchema(isProduction: boolean) {
+  return z.object({
+    VITE_API_URL: optionalTrimmedStringSchema,
+    VITE_CLERK_PUBLISHABLE_KEY: optionalTrimmedStringSchema,
+  }).superRefine((environment, context) => {
+    const apiUrl = environment.VITE_API_URL;
+    if (isProduction && !apiUrl) {
+      context.addIssue({ code: "custom", path: ["VITE_API_URL"], message: "Required in production" });
+    } else if (apiUrl && !isValidApiUrl(apiUrl, isProduction)) {
+      context.addIssue({ code: "custom", path: ["VITE_API_URL"], message: "Invalid API URL" });
+    }
+
+    const clerkKey = environment.VITE_CLERK_PUBLISHABLE_KEY;
+    if (clerkKey && !clerkKey.startsWith("pk_")) {
+      context.addIssue({ code: "custom", path: ["VITE_CLERK_PUBLISHABLE_KEY"], message: "Invalid Clerk key" });
+    } else if (isProduction && !clerkKey?.startsWith("pk_live_")) {
+      context.addIssue({ code: "custom", path: ["VITE_CLERK_PUBLISHABLE_KEY"], message: "Live key required" });
+    }
+  }).transform((environment) => ({
+    apiUrl: (environment.VITE_API_URL ?? DEFAULT_API_URL).replace(/\/$/, ""),
+    clerkPublishableKey: environment.VITE_CLERK_PUBLISHABLE_KEY ?? null,
+  }));
+}
+
+function isValidApiUrl(value: string, requireHttps: boolean): boolean {
   const match = /^(https?):\/\/([^/?#\s]+)(\/[^?#\s]*)?$/i.exec(value);
-  if (!match || match[2].includes("@")) return null;
-  if (requireHttps && match[1].toLowerCase() !== "https") return null;
-  return value.replace(/\/$/, "");
-}
-
-function readOptionalString(value: unknown): string | undefined {
-  if (typeof value !== "string") return undefined;
-  return value.trim() || undefined;
+  if (!match || match[2]?.includes("@")) return false;
+  return !requireHttps || match[1]?.toLowerCase() === "https";
 }

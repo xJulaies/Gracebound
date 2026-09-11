@@ -1,5 +1,7 @@
 import { apiRequest } from "../../../shared/api/apiClient";
 import { resolveApiAssetUrl } from "../../../shared/api/resolveApiAssetUrl";
+import { identifierSchema } from "../../../shared/schemas/game.schemas";
+import { ashOfWarQuerySchema, ashOfWarSchema } from "../schemas/ashOfWar.schemas";
 import type { AshOfWar } from "../types/ashOfWar.types";
 
 export interface AshOfWarQuery {
@@ -8,11 +10,14 @@ export interface AshOfWarQuery {
 }
 
 export async function getAshesOfWar(query: AshOfWarQuery = {}) {
+  const validatedQuery = ashOfWarQuerySchema.parse(query);
   const parameters = new URLSearchParams();
-  if (query.weaponType) parameters.set("weaponType", query.weaponType);
-  if (query.affinity) parameters.set("affinity", query.affinity);
+  if (validatedQuery.weaponType) parameters.set("weaponType", validatedQuery.weaponType);
+  if (validatedQuery.affinity) parameters.set("affinity", validatedQuery.affinity);
   const suffix = parameters.size > 0 ? `?${parameters.toString()}` : "";
-  const response = await apiRequest<AshOfWar>(`/ashes-of-war${suffix}`);
+  const response = await apiRequest<AshOfWar>(`/ashes-of-war${suffix}`, {
+    responseSchema: ashOfWarSchema,
+  });
 
   return {
     ...response,
@@ -24,8 +29,10 @@ export async function getAshesOfWar(query: AshOfWarQuery = {}) {
 }
 
 export async function getAshOfWar(ashOfWarId: string) {
+  const validatedId = identifierSchema.parse(ashOfWarId);
   const response = await apiRequest<AshOfWar>(
-    `/ashes-of-war/${encodeURIComponent(ashOfWarId)}`,
+    `/ashes-of-war/${encodeURIComponent(validatedId)}`,
+    { responseSchema: ashOfWarSchema },
   );
   return {
     ...response,

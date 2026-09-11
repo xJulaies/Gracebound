@@ -1,6 +1,7 @@
 import { keepPreviousData, useQuery } from "@tanstack/react-query";
 import { useEffect, useMemo, useState } from "react";
 import { calculateBuildStats } from "../api/builds.api";
+import { buildStatsInputSchema } from "../schemas/build.schemas";
 import type { BuildStatsInput } from "../types/build.types";
 
 const DEFAULT_DEBOUNCE_MS = 350;
@@ -24,7 +25,7 @@ export function useBuildStatsPreviewQuery(
   const requestInput = useMemo(
     () =>
       debouncedInput
-        ? (JSON.parse(debouncedInput) as BuildStatsInput)
+        ? buildStatsInputSchema.parse(JSON.parse(debouncedInput))
         : null,
     [debouncedInput],
   );

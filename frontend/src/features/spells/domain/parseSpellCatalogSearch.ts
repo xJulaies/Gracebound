@@ -7,16 +7,26 @@ import {
   type SpellSchool,
   type SpellTypeFilter,
 } from "../types/spell.types";
+import { z } from "zod";
+
+const spellCatalogSearchSchema = z.object({
+  type: z.enum(SPELL_TYPES).catch("all"),
+  school: z.enum(SPELL_SCHOOLS).optional().catch(undefined),
+  search: z.preprocess(
+    (value) => typeof value === "string" ? value.slice(0, 100) : "",
+    z.string(),
+  ),
+});
 
 export function parseSpellCatalogSearch(
   search: Record<string, unknown>,
 ): SpellCatalogSearch {
-  const type = isSpellType(search.type) ? search.type : "all";
-  const school = isSpellSchool(search.school) ? search.school : undefined;
+  const parsed = spellCatalogSearchSchema.parse(search);
+  const { type, school } = parsed;
 
   return {
     type,
-    search: typeof search.search === "string" ? search.search.slice(0, 100) : "",
+    search: parsed.search,
     ...(schoolIsAvailable(type, school) && { school }),
   };
 }
@@ -30,12 +40,4 @@ function schoolIsAvailable(
     ? SORCERY_SCHOOLS
     : INCANTATION_SCHOOLS;
   return schools.includes(school);
-}
-
-function isSpellType(value: unknown): value is SpellTypeFilter {
-  return typeof value === "string" && SPELL_TYPES.some((type) => type === value);
-}
-
-function isSpellSchool(value: unknown): value is SpellSchool {
-  return typeof value === "string" && SPELL_SCHOOLS.some((school) => school === value);
 }

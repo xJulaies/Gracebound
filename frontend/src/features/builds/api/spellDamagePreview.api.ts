@@ -3,6 +3,10 @@ import type { CharacterStats } from "../../../shared/types/game.types";
 import type { Spell } from "../../spells/types/spell.types";
 import type { EquippedWeapon } from "../types/editor.types";
 import type { OffensePreviewAction, SpellOffensePreview } from "../types/offensePreview.types";
+import {
+  damagePreviewResponseSchema,
+  spellDamagePreviewRequestSchema,
+} from "../schemas/build.schemas";
 
 interface DamageResponse {
   attackRating: { total: number };
@@ -28,21 +32,23 @@ export async function getSpellOffensePreview(
     ...(spell.chargedAttack ? [{ charged: true, label: "Charged cast" }] : []),
   ];
   const actions = await Promise.all(castModes.map(async ({ charged, label }) => {
+    const request = spellDamagePreviewRequestSchema.parse({
+      spellId: spell.id,
+      catalystWeaponId: catalyst.weapon.id,
+      catalystVariantId: catalyst.variantId,
+      upgradeLevel: catalyst.upgradeLevel,
+      charged,
+      stats: pickDamageStats(stats),
+      talismanIds: equipment.talismanIds,
+      greatRuneId: equipment.greatRuneId,
+      crystalTearIds: equipment.crystalTearIds,
+      buffSpellIds: equipment.buffSpellIds,
+    });
     const response = await apiRequest<DamageResponse>("/damage/calculate", {
-      body: JSON.stringify({
-        spellId: spell.id,
-        catalystWeaponId: catalyst.weapon.id,
-        catalystVariantId: catalyst.variantId,
-        upgradeLevel: catalyst.upgradeLevel,
-        charged,
-        stats: pickDamageStats(stats),
-        talismanIds: equipment.talismanIds,
-        greatRuneId: equipment.greatRuneId,
-        crystalTearIds: equipment.crystalTearIds,
-        buffSpellIds: equipment.buffSpellIds,
-      }),
+      body: JSON.stringify(request),
       method: "POST",
       signal,
+      responseSchema: damagePreviewResponseSchema,
     });
     const result = response.data[0];
     if (!result) throw new Error("Spell damage preview is unavailable");

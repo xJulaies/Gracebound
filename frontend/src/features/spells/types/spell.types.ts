@@ -42,7 +42,14 @@ export interface Spell {
   iconId: number;
   iconUrl: string;
   calculationStatus: "catalog-only" | "supported";
-  buffEffect: { slot: "aura" | "body" | "weapon"; durationSeconds: number } | null;
+  buffEffect: {
+    slot: "aura" | "body" | "weapon";
+    durationSeconds: number;
+    outgoingDamageMultipliers: DamageTypes;
+    weaponAddedDamageScaling: DamageTypes;
+    weaponAddedStatusBuildup: StatusResistances;
+    limitations: string[];
+  } | null;
   attack: SpellAttack | null;
   chargedAttack: SpellAttack | null;
   gameVersion: string;
@@ -59,10 +66,7 @@ interface SpellAttack {
   }>;
 }
 
-interface DamageTypes {
-  physical: number;
-  magic: number;
-  fire: number;
-  lightning: number;
-  holy: number;
-}
+import type {
+  DamageTypes,
+  StatusResistances,
+} from "../../../shared/types/game.types";

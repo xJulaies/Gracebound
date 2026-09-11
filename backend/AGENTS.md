@@ -415,19 +415,31 @@ documents, expose missing values as `null`, and keep the raw JSON outside Git.
 
 Game data and user-owned application data must remain logically separated.
 
-Possible game-data collections include:
+Current normalized game-data collections include:
 
 ```text
 weapons
+weaponVariants
 armor
 talismans
 bosses
+spells
+ashesOfWar
+greatRunes
+crystalTears
+characterClasses
+characterProgression
 scalingCurves
 reinforcementData
-attackData
+iconassets
+uiAssets
+characterclassimageassets
+brandingimageassets
+bossimageassets
 ```
 
-The exact schema depends on the finalized regulation mapping.
+Verified direct attacks and fixed skills are embedded in canonical weapon
+documents; interchangeable Ashes of War use their own catalog.
 
 Do not store raw Regulation records if normalized application models are more
 appropriate.
@@ -533,6 +545,7 @@ GET /api/bosses/:bossId
 GET /api/assets/icons/:iconId
 GET /api/assets/character-classes/:classId
 GET /api/assets/ui/:assetId
+GET /api/assets/bosses/:bossId
 GET /api/assets/branding/gracebound-hero
 GET /api/assets/branding/gracebound-hero-mobile
 GET /api/assets/branding/gracebound-hero-desktop
@@ -668,7 +681,8 @@ Radagon's and Marika's Scarseal/Soreseal are also supported permanent effects.
 Never model only their beneficial attributes: persist all eight attribute
 bonuses together with their incoming physical, magic, fire, lightning, and holy
 damage multipliers. The weapon calculator consumes only relevant scaling stats;
-the remaining normalized metadata belongs to future player-defense logic.
+build-stat calculations consume the remaining metadata for resources, defenses,
+absorptions, and resistances.
 
 The four Scorpion Charms are the verified permanent elemental-multiplier group.
 Use the PvE `atkEnemyDmgCorrectRate_*` fields: +12% applies only to the matching
@@ -759,7 +773,8 @@ Winged Sword Insignia, Rotten Winged Sword Insignia, and Millicent's Prosthesis
 must retain their Regulation accumulator thresholds and boost stages rather than
 one maximum multiplier. Read linked trigger/boost `SpEffectParam` rows, preserve
 stage duration, and include Millicent's permanent +5 Dexterity. Stage activation
-requires a future server-owned successive-hit state.
+requires server-owned successive-hit state that is not part of the current
+stateless damage request.
 
 Lord of Blood's Exultation and Kindred of Rot's Exultation use separate nearby
 blood-loss and poison/rot triggers. Validate their Regulation state-change IDs,
@@ -906,20 +921,23 @@ The repository selects a variant from the persisted weapon type; clients never
 submit an internal variant identifier. Wild Strikes is the verified reference
 case. Do not reuse one reference weapon's profile across incompatible classes.
 
-The completed MVP Ash-of-War calculation set is: Square Off, Flame of the
-Redmanes, Lion's Claw, Impaling Thrust, Piercing Fang, Stamp (Upward Cut), Stamp
-(Sweep), Giant Hunt, Wild Strikes, Charge Forth, Unsheathe, Prayerful Strike,
-and Thunderbolt. Treat this as
-the canonical supported list. All other catalog Ashes remain `catalog-only`
-until their complete behavior chain is explicitly verified. Transient Moonlight
-is a fixed weapon skill and does not belong to this list.
+The standalone Ash-of-War catalog contains 116 entries. Twenty-nine are
+currently supported: twenty-two verified damage profiles and seven verified
+weapon-buff profiles. The damage set is Square Off, Flame of the Redmanes,
+Lion's Claw, Impaling Thrust, Piercing Fang, Stamp (Upward Cut), Stamp (Sweep),
+Giant Hunt, Wild Strikes, Charge Forth, Unsheathe, Prayerful Strike,
+Thunderbolt, Black Flame Tornado, Spectral Lance, Storm Stomp, Storm Blade,
+Beast's Roar, Vacuum Slice, Ice Spear, Glintstone Pebble, and Blood Blade. All
+other catalog Ashes remain `catalog-only` until their behavior chain is
+explicitly verified. Transient Moonlight is a fixed weapon skill and does not
+belong to this list.
 
 Thunderbolt is the verified pure-projectile reference for BehaviorParam_PC
 300000350, Bullet 2080, and AtkParam_Pc 301600840. Preserve its 120 added
 lightning damage and 10 FP cost; do not add an unverified weapon-hit component.
 
 Buff-only Ashes use a typed `buffEffect` rather than fake damage components.
-The verified initial set is Sacred Blade, Flaming Strike, Lightning Slash,
+The verified set is Sacred Blade, Flaming Strike, Lightning Slash,
 Determination, Royal Knight's Resolve, Seppuku, and Cragblade. Apply attack-
 power multipliers and flat added damage before motion values, and outgoing
 multipliers afterward. Determination and Royal Knight's Resolve are next-hit
@@ -958,7 +976,7 @@ This keeps them deterministic and testable.
 
 # Damage Calculation Pipeline
 
-Initial target pipeline:
+Current target pipeline:
 
 ```text
 Weapon Data
@@ -971,7 +989,7 @@ Weapon Data
   -> Estimated Damage Per Hit
 ```
 
-Initial damage types:
+Supported damage types:
 
 - physical
 - magic
@@ -983,12 +1001,12 @@ Initial damage types:
 
 # Damage Scope
 
-MVP supports direct weapon hit damage and selected, regulation-verified Ashes
-of War. A skill may contain multiple damage components such as a weapon hit and
-a projectile. Each component must retain its own motion values, added damage,
-physical attack type, and final damage rates.
+The current calculator supports direct weapon-hit and spell damage plus selected,
+Regulation-verified Ashes of War. A skill may contain multiple damage components
+such as a weapon hit and a projectile. Each component must retain its own motion
+values, added damage, physical attack type, and final damage rates.
 
-Not required for MVP:
+Outside the current contract:
 
 - DPS
 - complete combo simulation
@@ -996,11 +1014,11 @@ Not required for MVP:
 - bleed proc damage
 - poison and other status proc damage
 - frost proc damage
-- full buff systems
+- complete buff and runtime-state simulation
 - damage for `catalog-only` spells
 - complete Ash-of-War and fixed weapon-skill calculation coverage
 - PvP-specific calculations
-- complete talisman modifier support
+- conditional talisman activation without validated runtime state
 
 Unsupported mechanics must be documented rather than silently approximated.
 
@@ -1219,7 +1237,7 @@ Spell damage uses verified direct, area, spread, channelled, multi-projectile,
 and multi-component profiles. Resolve
 Magic primary bullet references to Bullet and AtkParam_Pc, treat the attack's
 per-type attack values as spell motion values, and apply FinalDamageRateParam.
-The canonical current total is 34 supported spells and 137 `catalog-only`
+The canonical current total is 45 supported spells and 126 `catalog-only`
 spells. Only profiles produced by the verified mapper may become `supported`;
 all others remain `catalog-only`.
 

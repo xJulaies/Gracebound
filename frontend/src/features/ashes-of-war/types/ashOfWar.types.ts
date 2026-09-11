@@ -1,3 +1,8 @@
+import type {
+  DamageTypes,
+  StatusResistances,
+} from "../../../shared/types/game.types";
+
 export interface AshOfWar {
   id: string;
   name: string;
@@ -11,6 +16,12 @@ export interface AshOfWar {
   buffEffect: {
     durationSeconds: number;
     consumption: "duration" | "next-hit";
+    attackPowerMultipliers: DamageTypes;
+    outgoingDamageMultipliers: DamageTypes;
+    addedDamage: DamageTypes;
+    addedStatusBuildup: StatusResistances;
+    poiseDamageMultiplier: number;
+    limitations: string[];
   } | null;
   attacks: Array<{ id: string; name: string; fpCost: number }>;
   gameVersion: string;

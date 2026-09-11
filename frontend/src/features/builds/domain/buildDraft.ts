@@ -4,6 +4,10 @@ import type {
   BuildEditorDraft,
   WeaponEditorSlotId,
 } from "../types/editor.types";
+import {
+  parseBuildEditorDraft,
+  parseBuildWriteInput,
+} from "../schemas/build.schemas";
 
 const weaponSlotMap: Record<WeaponEditorSlotId, WeaponSlotId> = {
   "right-hand-1": "rightHand1",
@@ -22,34 +26,36 @@ const armorSlotMap: Record<ArmorEditorSlotId, keyof BuildWriteInput["equipment"]
 };
 
 export function toBuildWriteInput(draft: BuildEditorDraft): BuildWriteInput {
-  return {
-    name: draft.name,
-    description: draft.description,
-    visibility: draft.visibility,
-    characterClassId: draft.characterClassId,
-    level: draft.level,
-    stats: { ...draft.stats },
-    memoryStoneCount: draft.memoryStoneCount,
-    spellIds: [...draft.spellIds],
+  const validatedDraft = parseBuildEditorDraft(draft);
+
+  return parseBuildWriteInput({
+    name: validatedDraft.name,
+    description: validatedDraft.description,
+    visibility: validatedDraft.visibility,
+    characterClassId: validatedDraft.characterClassId,
+    level: validatedDraft.level,
+    stats: { ...validatedDraft.stats },
+    memoryStoneCount: validatedDraft.memoryStoneCount,
+    spellIds: [...validatedDraft.spellIds],
     equipment: {
       weaponSlots: mapRecord(
-        draft.weaponSlots,
+        validatedDraft.weaponSlots,
         weaponSlotMap,
         (selection) => selection ? { ...selection } : null,
       ),
-      catalyst: draft.catalyst ? { ...draft.catalyst } : null,
-      armor: mapRecord(draft.armor, armorSlotMap, (armorId) => armorId),
-      greatRuneId: draft.greatRuneId,
-      crystalTearIds: [...draft.crystalTearIds],
-      talismanIds: [...draft.talismanIds],
-      buffSpellIds: [...draft.buffSpellIds],
-      weaponBuff: draft.weaponBuff ? { ...draft.weaponBuff } : null,
+      catalyst: validatedDraft.catalyst ? { ...validatedDraft.catalyst } : null,
+      armor: mapRecord(validatedDraft.armor, armorSlotMap, (armorId) => armorId),
+      greatRuneId: validatedDraft.greatRuneId,
+      crystalTearIds: [...validatedDraft.crystalTearIds],
+      talismanIds: [...validatedDraft.talismanIds],
+      buffSpellIds: [...validatedDraft.buffSpellIds],
+      weaponBuff: validatedDraft.weaponBuff ? { ...validatedDraft.weaponBuff } : null,
     },
-  };
+  });
 }
 
 export function toBuildEditorDraft(build: Build): BuildEditorDraft {
-  return {
+  return parseBuildEditorDraft({
     name: build.name,
     description: build.description,
     visibility: build.visibility,
@@ -74,7 +80,7 @@ export function toBuildEditorDraft(build: Build): BuildEditorDraft {
     talismanIds: [...build.equipment.talismanIds],
     buffSpellIds: [...build.equipment.buffSpellIds],
     weaponBuff: build.equipment.weaponBuff ? { ...build.equipment.weaponBuff } : null,
-  };
+  });
 }
 
 function mapRecord<

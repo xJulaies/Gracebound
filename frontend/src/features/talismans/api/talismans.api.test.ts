@@ -9,7 +9,18 @@ describe("getTalismans", () => {
       new Response(JSON.stringify({
         status: 200,
         message: "Talismans found",
-        data: [{ id: "axe-talisman", iconUrl: "/api/assets/icons/2130" }],
+        data: [{
+          id: "axe-talisman",
+          name: "Axe Talisman",
+          summary: null,
+          description: null,
+          iconId: 2130,
+          iconUrl: "/api/assets/icons/2130",
+          weight: 0.8,
+          calculationStatus: "supported",
+          effects: {},
+          gameVersion: "1.17.0",
+        }],
       }), {
         status: 200,
         headers: { "Content-Type": "application/json", "X-Total-Count": "116" },

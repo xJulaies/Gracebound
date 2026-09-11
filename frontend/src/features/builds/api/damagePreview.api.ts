@@ -3,6 +3,10 @@ import type { CharacterStats } from "../../../shared/types/game.types";
 import type { EquippedWeapon } from "../types/editor.types";
 import type { WeaponBuffSelection } from "../types/build.types";
 import type { OffensePreviewAction, WeaponOffensePreview } from "../types/offensePreview.types";
+import {
+  damagePreviewResponseSchema,
+  weaponDamagePreviewRequestSchema,
+} from "../schemas/build.schemas";
 
 interface DamageResponse {
   attackRating: { total: number };
@@ -27,23 +31,25 @@ export async function getWeaponOffensePreview(
 ): Promise<WeaponOffensePreview> {
   const actions = selectPreviewActions(weapon);
   const results = await Promise.all(actions.map(async ({ id, kind, label }) => {
+    const request = weaponDamagePreviewRequestSchema.parse({
+      weaponId: weapon.weapon.id,
+      weaponVariantId: weapon.variantId,
+      upgradeLevel: weapon.upgradeLevel,
+      stats: pickDamageStats(stats),
+      armorIds: equipment.armorIds,
+      talismanIds: equipment.talismanIds,
+      greatRuneId: equipment.greatRuneId,
+      crystalTearIds: equipment.crystalTearIds,
+      buffSpellIds: equipment.buffSpellIds,
+      weaponBuff: equipment.weaponBuff,
+      skillBuffAshOfWarId: equipment.skillBuffAshOfWarId,
+      [kind]: id,
+    });
     const response = await apiRequest<DamageResponse>("/damage/calculate", {
-      body: JSON.stringify({
-        weaponId: weapon.weapon.id,
-        weaponVariantId: weapon.variantId,
-        upgradeLevel: weapon.upgradeLevel,
-        stats: pickDamageStats(stats),
-        armorIds: equipment.armorIds,
-        talismanIds: equipment.talismanIds,
-        greatRuneId: equipment.greatRuneId,
-        crystalTearIds: equipment.crystalTearIds,
-        buffSpellIds: equipment.buffSpellIds,
-        weaponBuff: equipment.weaponBuff,
-        skillBuffAshOfWarId: equipment.skillBuffAshOfWarId,
-        [kind]: id,
-      }),
+      body: JSON.stringify(request),
       method: "POST",
       signal,
+      responseSchema: damagePreviewResponseSchema,
     });
     const result = response.data[0];
     if (!result) throw new Error("Damage preview is unavailable");

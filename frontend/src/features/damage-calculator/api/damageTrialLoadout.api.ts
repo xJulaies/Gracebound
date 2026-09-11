@@ -17,13 +17,24 @@ export async function getDamageTrialActionOptions(build: Build): Promise<DamageT
   });
   const catalystRequest = build.equipment.catalyst
     ? getWeapon(build.equipment.catalyst.weaponId)
-    : null;
-  const [weaponOptions, catalystResponse, spells] = await Promise.all([
-    Promise.all(equippedWeapons.map(({ selection, slotId }) => getWeaponOptions(selection, slotId))),
-    catalystRequest,
-    Promise.all(build.spellIds.map(async (spellId) => getFirst((await getSpell(spellId)).data, "spell"))),
+        .then(({ data }) => getFirst(data, "catalyst"))
+    : Promise.resolve(null);
+  const [weaponResults, [catalystResult], spellResults] = await Promise.all([
+    Promise.allSettled(equippedWeapons.map(
+      ({ selection, slotId }) => getWeaponOptions(selection, slotId),
+    )),
+    Promise.allSettled([catalystRequest]),
+    Promise.allSettled(build.spellIds.map(async (spellId) =>
+      getFirst((await getSpell(spellId)).data, "spell"),
+    )),
   ]);
-  const catalyst = catalystResponse ? getFirst(catalystResponse.data, "catalyst") : null;
+  const weaponOptions = weaponResults.flatMap((result) =>
+    result.status === "fulfilled" ? result.value : [],
+  );
+  const catalyst = catalystResult?.status === "fulfilled" ? catalystResult.value : null;
+  const spells = spellResults.flatMap((result) =>
+    result.status === "fulfilled" ? [result.value] : [],
+  );
   const catalystSlotId = build.equipment.catalyst
     ? equippedWeapons.find(({ selection }) => (
         selection.weaponId === build.equipment.catalyst?.weaponId
@@ -45,21 +56,31 @@ export async function getDamageTrialActionOptions(build: Build): Promise<DamageT
         }))
     : [];
 
-  return [...weaponOptions.flat(), ...spellOptions];
+  const options = [...weaponOptions, ...spellOptions];
+  const failure = [...weaponResults, catalystResult, ...spellResults].find(
+    (result): result is PromiseRejectedResult => result?.status === "rejected",
+  );
+
+  if (options.length === 0 && failure) throw failure.reason;
+  return options;
 }
 
 async function getWeaponOptions(
   selection: WeaponSelection,
   slotId: WeaponSlotId,
 ): Promise<DamageTrialActionOption[]> {
-  const [weaponResponse, ashResponse] = await Promise.all([
+  const [weaponResult, ashResult] = await Promise.allSettled([
     getWeapon(selection.weaponId),
-    selection.ashOfWarId ? getAshOfWar(selection.ashOfWarId) : null,
+    selection.ashOfWarId
+      ? getAshOfWar(selection.ashOfWarId)
+      : Promise.resolve(null),
   ]);
-  const weapon = getFirst(weaponResponse.data, "armament");
+  if (weaponResult.status === "rejected") throw weaponResult.reason;
+  const weapon = getFirst(weaponResult.value.data, "armament");
   const affinity = weapon.variants.find(({ id }) => id === selection.variantId)?.affinity;
   const sourceName = `${formatAffinity(affinity)}${weapon.name} +${selection.upgradeLevel}`;
   const actions = selectWeaponAttacks(weapon);
+  const ashResponse = ashResult.status === "fulfilled" ? ashResult.value : null;
   const ashOfWar = ashResponse ? getFirst(ashResponse.data, "Ash of War") : null;
   const skills = ashOfWar?.attacks.length
     ? ashOfWar.attacks.map((attack) => ({

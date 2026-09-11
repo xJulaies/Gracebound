@@ -1,6 +1,10 @@
 import { useRef, useState, type FormEvent } from "react";
 import { createPortal } from "react-dom";
 import { useModalDialog } from "../../../../shared/hooks/useModalDialog";
+import {
+  buildEditorMetadataSchema,
+  getZodErrorMessage,
+} from "../../schemas/build.schemas";
 import type { BuildEditorMetadata } from "../../types/editor.types";
 import type { BuildSaveMode } from "../../hooks/useBuildPersistence";
 
@@ -26,23 +30,17 @@ export function BuildSaveDialog({
   useModalDialog({ dialogRef, initialFocusRef: nameInputRef, onClose });
 
   const submit = async (mode: BuildSaveMode) => {
-    const normalized = {
-      ...metadata,
-      name: metadata.name.trim(),
-      description: metadata.description.trim(),
-    };
-    if (!normalized.name) {
-      setValidationError("Give this build a name before saving.");
-      nameInputRef.current?.focus();
-      return;
-    }
-    if (normalized.name.length > 80 || normalized.description.length > 1000) {
-      setValidationError("The build name or description is too long.");
+    const result = buildEditorMetadataSchema.safeParse(metadata);
+    if (!result.success) {
+      setValidationError(getZodErrorMessage(result.error, "Check the build details and try again."));
+      if (result.error.issues.some(({ path }) => path[0] === "name")) {
+        nameInputRef.current?.focus();
+      }
       return;
     }
     setValidationError(null);
     try {
-      await onSave(normalized, mode);
+      await onSave(result.data, mode);
     } catch {
       // The mutation owns the user-facing error state.
     }

@@ -119,7 +119,7 @@ Move a component into `shared/ui` only when it is genuinely reusable across mult
 Cross-feature visual semantics belong in shared UI and central theme tokens once
 they have real consumers. In particular, physical, magic, fire, lightning, and
 holy damage colors and stat presentation must remain consistent across the
-builder, boss catalog, and future damage simulator. Feature components must not
+builder, boss catalog, and damage simulator. Feature components must not
 recreate independent damage-type color maps.
 
 The build editor must remain a feature-owned workspace assembled from focused
@@ -271,21 +271,22 @@ Reusable query options may be extracted when multiple parts of the application r
 
 # TanStack Form and Zod
 
-Use TanStack Form for complex forms.
+Use TanStack Form for complex persisted forms, including build creation and
+editing. Keep persistable form state separate from transient picker, tab,
+dialog, and focus state.
 
-Use Zod for frontend validation.
+Use feature-owned Zod schemas for runtime validation of user input, outbound
+write payloads, URL search state where applicable, and untrusted API responses.
+TypeScript types alone are not runtime validation. Frontend validation improves
+feedback and prevents malformed client state, while the backend remains the
+final validation and security authority.
 
-Validation schemas should normally live inside the responsible feature.
-
-Example:
-
-```text
-features/builds/schemas/build.schema.ts
-```
-
-Frontend validation improves user experience.
-
-The backend remains the final validation authority.
+The current build editor uses feature-owned React hooks and controlled inputs.
+Its metadata, draft hydration, outbound writes, calculation requests, URL
+search state, environment input, and untrusted API responses are protected by
+feature-owned Zod schemas. Migrating the persisted form state itself to
+TanStack Form remains an open contract requirement; transient picker, tab,
+dialog, and focus state should stay outside that form model.
 
 ---
 
@@ -408,11 +409,9 @@ Usability takes priority over imitation.
 
 # Responsive Design
 
-Desktop is the primary design target.
-
-The application must remain usable on:
-- tablet
-- mobile
+Design mobile-first, then enhance the layout for tablet and desktop. No layout
+may rely on a desktop minimum width or introduce page-level horizontal
+scrolling on narrow viewports.
 
 Complex tables may transform into cards or simplified layouts on smaller screens.
 
@@ -590,8 +589,9 @@ Do not introduce Redux, Zustand, or another global state library unless a concre
 Use:
 - TanStack Query for server state
 - TanStack Router for URL state
-- TanStack Form for form state
-- React state for local UI state
+- TanStack Form for persisted complex form state
+- Zod for frontend runtime validation and parsing
+- React state for local component and interaction state
 
 ---
 

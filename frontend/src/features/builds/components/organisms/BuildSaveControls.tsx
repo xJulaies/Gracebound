@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { ApiError } from "../../../../shared/api/apiClient";
 import { useBuildPersistence } from "../../hooks/useBuildPersistence";
+import { getZodErrorMessage } from "../../schemas/build.schemas";
 import type { BuildEditorDraft, BuildEditorMetadata } from "../../types/editor.types";
 import { BuildSaveDialog } from "./BuildSaveDialog";
 
@@ -48,7 +49,9 @@ export function BuildSaveControls({
           canSaveAsNew={persistence.savedBuildId !== null}
           errorMessage={persistence.error instanceof ApiError
             ? persistence.error.message
-            : persistence.isError ? "The build could not be saved. Try again." : null}
+            : persistence.isError
+              ? getZodErrorMessage(persistence.error, "The build could not be saved. Try again.")
+              : null}
           initialMetadata={{
             name: draft.name,
             description: draft.description,

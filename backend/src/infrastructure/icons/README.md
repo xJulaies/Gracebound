@@ -41,7 +41,7 @@ transactionally. The importer rejects incomplete manifests, modified files,
 duplicate ID mappings, and datasets above 150 MiB.
 
 Audit the stored assets against every icon ID referenced by the active weapon,
-armor, talisman, spell, and Ash of War catalogs:
+armor, talisman, spell, Ash of War, Great Rune, and Crystal Tear catalogs:
 
 ```powershell
 npm run data:icons:audit
@@ -76,3 +76,41 @@ npm run data:ui-assets:import -- --manifest "C:\Smithbox\game-data\ui-assets-1.1
 The public endpoint is `GET /api/assets/ui/:assetId`. It accepts only IDs from
 the maintained allowlist and returns the active game's WebP bytes with cache
 validation metadata.
+
+## Character-class images
+
+The ten class portraits are stored separately from item icons. A complete
+manifest must contain exactly one 520x624 WebP for every starting class and
+remain below the 5 MiB total budget:
+
+```powershell
+npm run data:class-images:import -- --manifest "C:\path\to\class-images\manifest.json" --dry-run
+npm run data:class-images:import -- --manifest "C:\path\to\class-images\manifest.json"
+```
+
+They are served through `GET /api/assets/character-classes/:classId`.
+
+## Branding and boss portraits
+
+Branding sources and generated variants remain outside Git. Import an approved
+source under an allowlisted asset ID, then derive the maintained narrow-screen
+variants from the stored originals:
+
+```powershell
+npm run data:branding-image:import -- --source "C:\path\to\source.png" --asset-id "gracebound-navbar-logo" --dry-run
+npm run data:branding-image:import -- --source "C:\path\to\source.png" --asset-id "gracebound-navbar-logo"
+npm run data:branding-images:responsive
+```
+
+Branding assets are served through `GET /api/assets/branding/:assetId`.
+
+Boss portraits are normalized to 320x320 WebP and capped at 256 KiB. The boss
+ID must match the catalog or a verified phase profile:
+
+```powershell
+npm run data:boss-image:import -- --source "C:\path\to\boss.png" --boss-id "malenia-goddess-of-rot" --dry-run
+npm run data:boss-image:import -- --source "C:\path\to\boss.png" --boss-id "malenia-goddess-of-rot"
+```
+
+They are served through `GET /api/assets/bosses/:bossId` and stored separately
+from boss combat documents.

@@ -6,7 +6,10 @@ Gracebound is an unofficial Elden Ring companion for exploring game data, planni
 
 ## Current state
 
-The backend already contains the main data and calculation foundation. The frontend is in active development and currently establishes the public experience and the beginning of the build flow.
+Gracebound now provides the complete portfolio flow from Regulation-backed
+catalog exploration through authenticated build creation and an interactive,
+phase-aware boss damage trial. Remaining gaps are explicit game-mechanic
+coverage gaps rather than missing application architecture.
 
 ### Available today
 
@@ -22,9 +25,19 @@ The backend already contains the main data and calculation foundation. The front
 - a responsive public frontend layout with Grace and Night themes
 - a responsive landing-page hero and animated character-class carousel
 - a builds overview with public build cards and a Clerk-aware creation entry point
-- an authenticated `/builds/new` flow that starts with character-class selection
+- a complete authenticated build editor with six weapon slots, armor,
+  talismans, spells, catalyst, Great Rune, Crystal Tears, and buff selections
+- owned-build editing, duplication, deletion, visibility control, and public
+  build details
+- an authenticated Damage Trial with effect toggles, phase transitions, sticky
+  mobile boss status, action history, undo, and reset
 
-Some catalog entries are intentionally marked as catalog-only until their individual combat behavior has been verified. Gracebound does not currently promise complete DPS, PvP, status-proc, or every possible Elden Ring mechanic.
+The active `1.17.0` dataset contains 487 weapons, 586 armor pieces, 116
+talismans, 171 spells, 116 Ashes of War, 177 boss combat profiles, seven Great
+Runes, and 32 Crystal Tears. Calculation coverage is explicit: 45 spells, 29
+Ashes, 114 talismans, three Great Runes, and 22 Crystal Tears are supported;
+the remaining entries stay catalog-only. Gracebound does not claim complete
+DPS, PvP, status-proc, DLC, or every exceptional Elden Ring mechanic.
 
 ## Architecture
 
@@ -46,7 +59,7 @@ The backend follows a feature-based controller/service/repository structure. The
 | --- | --- |
 | React 19, TypeScript, Vite | Node.js, Express 5, TypeScript |
 | TanStack Router and Query | MongoDB and Mongoose |
-| Tailwind CSS | Zod validation |
+| Tailwind CSS and Zod validation | Zod validation |
 | Clerk | Clerk |
 | Vitest and React Testing Library | Vitest, Supertest, MongoDB Memory Server |
 
@@ -188,6 +201,17 @@ npm run build
 
 Backend integration tests use MongoDB Memory Server, so they do not write test data to the configured development or Atlas database.
 
+Repository-verifiable behavior is covered by backend and frontend typechecking,
+linting, unit/integration tests, and production builds. Frontend runtime
+boundaries now use feature-owned Zod schemas for form data, URL state,
+environment input, outbound payloads, and API responses. One known form contract
+gap remains: the build editor's persisted state still uses manual React state
+instead of the required TanStack Form integration.
+Catalog-only mechanics are an explicit support boundary rather than silently
+approximated behavior. Release verification must additionally cover real-browser
+responsive and keyboard interaction plus deployment-owned HTTPS and security
+headers, because repository tests cannot prove those conditions.
+
 ## Documentation
 
 - [Frontend implementation rules](frontend/AGENTS.md)
@@ -195,19 +219,18 @@ Backend integration tests use MongoDB Memory Server, so they do not write test d
 - [Backend implementation rules](backend/AGENTS.md)
 - [Backend product specification](backend/SPEC.md)
 
-## Next priorities
+## Verified boundaries
 
-Build persistence is implemented incrementally in this order:
+- Runtime game data comes exclusively from normalized Regulation imports in
+  MongoDB; no secondary game-data service is used.
+- Ownership, catalog compatibility, game version, and damage inputs are
+  validated by the backend. Private builds are never returned by public routes.
+- Damage Trial history and calculated results are transient and are not
+  persisted. Private visibility remains the build default.
+- Responsive layouts are mobile-first and progressively enhanced for wider
+  screens. Interactive overlays and navigation follow the documented keyboard
+  and focus contracts.
 
-1. [completed] finalize the saved-build contract and persist the server-selected game version
-2. [completed] complete TDD coverage for authenticated create, read, update, and delete flows
-3. [completed] extract a maintainable editor draft and map it to and from the API contract
-4. [completed] add manual save, save-changes, save-as-new, dirty-state protection, and a save dialog
-5. [completed: owner workflow] implement the owned-build list and protected owner edit route with catalog hydration
-6. [completed] complete public build cards, public details, and authenticated copying as a private record
-7. add one reversible like per authenticated user and public build, then allow like sorting
-8. connect saved builds to boss-independent and boss-specific damage simulation
-
-Calculated results are recomputed and are not persisted. Private visibility is
-the default. Likes use a separate relation with a unique build/user pair rather
-than embedding user IDs in build documents.
+Potential future work includes broader verified Ash-of-War and spell coverage,
+DLC data after local source validation, richer status-state simulation, and
+optional social features. These are outside the current supported contract.

@@ -1,5 +1,10 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { ApiError, apiRequest } from "./apiClient";
+import { z } from "zod";
+import {
+  ApiError,
+  ApiResponseValidationError,
+  apiRequest,
+} from "./apiClient";
 
 afterEach(() => {
   vi.unstubAllGlobals();
@@ -39,5 +44,35 @@ describe("apiRequest", () => {
     await expect(apiRequest("/me/builds")).rejects.toEqual(
       new ApiError(401, "Unauthorized"),
     );
+  });
+
+  it("validates response items with the supplied Zod schema", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn().mockResolvedValue(
+        new Response(
+          JSON.stringify({ status: 200, message: "Found", data: [{ id: 42 }] }),
+          { status: 200, headers: { "Content-Type": "application/json" } },
+        ),
+      ),
+    );
+
+    await expect(apiRequest("/items", {
+      responseSchema: z.strictObject({ id: z.string() }),
+    })).rejects.toBeInstanceOf(ApiResponseValidationError);
+  });
+
+  it("rejects malformed response envelopes even without an item schema", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn().mockResolvedValue(
+        new Response(
+          JSON.stringify({ status: "200", data: [] }),
+          { status: 200, headers: { "Content-Type": "application/json" } },
+        ),
+      ),
+    );
+
+    await expect(apiRequest("/items")).rejects.toBeInstanceOf(ApiResponseValidationError);
   });
 });

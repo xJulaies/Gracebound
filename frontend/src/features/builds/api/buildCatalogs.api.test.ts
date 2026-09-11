@@ -41,12 +41,35 @@ describe("build catalog API", () => {
       .mockResolvedValueOnce(new Response(JSON.stringify({
         status: 200,
         message: "Great Runes found",
-        data: [{ id: "godricks-great-rune", iconUrl: "/api/assets/icons/3201" }],
+        data: [{
+          id: "godricks-great-rune",
+          name: "Godrick's Great Rune",
+          summary: null,
+          description: null,
+          iconId: 3201,
+          iconUrl: "/api/assets/icons/3201",
+          activation: "rune-arc",
+          calculationStatus: "catalog-only",
+          effects: null,
+          limitations: ["Test fixture"],
+          gameVersion: "1.17.0",
+        }],
       }), { status: 200, headers: { "Content-Type": "application/json" } }))
       .mockResolvedValueOnce(new Response(JSON.stringify({
         status: 200,
         message: "Crystal Tears found",
-        data: [{ id: "strength-knot-crystal-tear", iconUrl: "/api/assets/icons/423" }],
+        data: [{
+          id: "strength-knot-crystal-tear",
+          name: "Strength-knot Crystal Tear",
+          summary: null,
+          description: null,
+          iconId: 423,
+          iconUrl: "/api/assets/icons/423",
+          calculationStatus: "catalog-only",
+          effects: null,
+          limitations: ["Test fixture"],
+          gameVersion: "1.17.0",
+        }],
       }), { status: 200, headers: { "Content-Type": "application/json" } }));
     vi.stubGlobal("fetch", fetchMock);
 
